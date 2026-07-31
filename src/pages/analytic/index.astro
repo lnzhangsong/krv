@@ -1,5 +1,6 @@
 ---
 import Base from '../../layouts/Base.astro';
+import PageHead from '../../components/PageHead.astro';
 import SentenceReader from '../../components/SentenceReader.astro';
 import { commentDB } from '../../lib/commentDB';
 import { parseSentences } from '../../lib/parse';
@@ -24,11 +25,11 @@ const sentences = raw.flatMap((r) => parseSentences(r.text, r.id, r.seq));
 
 <Base title={title} current="/analytic/" badge={`导读 · 全部${total}条见句读全库`} searchPlaceholder="搜索：范畴/统觉/图型/因果律…" readingOn>
   <main class="container narrow py-9">
-    <div class="chip">Part B · 要素论第二部 · 导读</div>
-    <h1 class="h1-page mt-2.5">
-      先验分析论<br />
-      <span class="text-[13px] text-muted font-sans">从 12 范畴到牛顿定律先天化 — 这一章回答"知识如何客观有效"</span>
-    </h1>
+    <PageHead
+      chip="Part B · 要素论第二部 · 导读"
+      title="先验分析论"
+      subtitle="从 12 范畴到牛顿定律先天化 — 这一章回答「知识如何客观有效」"
+    />
 
     <!-- 本章任务 -->
     <div class="card mt-5">

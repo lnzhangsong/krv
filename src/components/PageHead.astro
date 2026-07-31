@@ -1,0 +1,20 @@
+---
+interface Props {
+  chip: string;
+  title: string;
+  subtitle?: string;
+}
+const { chip, title, subtitle } = Astro.props;
+---
+
+<div class="page-head">
+  <div class="chip">{chip}</div>
+  <h1 class="h1-page mt-3">{title}</h1>
+  {subtitle && <p class="lead mt-2 max-w-[70ch]">{subtitle}</p>}
+</div>
+
+<style>
+  .page-head {
+    margin-bottom: 6px;
+  }
+</style>

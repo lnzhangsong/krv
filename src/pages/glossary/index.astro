@@ -1,5 +1,6 @@
 ---
 import Base from '../../layouts/Base.astro';
+import PageHead from '../../components/PageHead.astro';
 const title = '术语库 · 58词分类速查 | 纯批导读';
 
 interface Term { k: string; b: string; d: string; x?: string }
@@ -102,9 +103,11 @@ const total = groups.reduce((s, g) => s + g.terms.length, 0);
 
 <Base title={title} current="/glossary/" badge={`${total}词分类速查`} searchPlaceholder="全站搜索：先天/统觉/二律…">
   <main class="container py-9">
-    <div class="chip">术语库 · {total}词 · 按批判哲学体系分类</div>
-    <h1 class="h1-page mt-2.5">术语库 & 概念速查</h1>
-    <p class="lead">按"总纲→感性论→分析论→辩证论→方法论"的课程顺序分组，每条含一句话定义与关键区别；点击右上角搜索可定位对应句读。</p>
+    <PageHead
+      chip={`术语库 · ${total}词 · 按批判哲学体系分类`}
+      title="术语库 & 概念速查"
+      subtitle="按「总纲→感性论→分析论→辩证论→方法论」的课程顺序分组，每条含一句话定义与关键区别；点击右上角搜索可定位对应句读。"
+    />
     <div class="my-4">
       <input
         id="localFilter"

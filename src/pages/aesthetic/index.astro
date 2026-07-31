@@ -1,5 +1,6 @@
 ---
 import Base from '../../layouts/Base.astro';
+import PageHead from '../../components/PageHead.astro';
 import SentenceReader from '../../components/SentenceReader.astro';
 import { commentDB } from '../../lib/commentDB';
 import { parseSentences } from '../../lib/parse';
@@ -24,11 +25,11 @@ const sentences = raw.flatMap((r) => parseSentences(r.text, r.id, r.seq));
 
 <Base title={title} current="/aesthetic/" badge={`导读 · 全部${total}条见句读全库`} searchPlaceholder="搜索：空间/时间/先验唯心…" readingOn>
   <main class="container narrow py-9">
-    <div class="chip">Part A · 要素论第一部 · 导读</div>
-    <h1 class="h1-page mt-2.5">
-      先验感性论<br />
-      <span class="text-[13px] text-muted font-sans">时空不是被发现的，是被戴上的 — 这一章回答"数学如何可能"</span>
-    </h1>
+    <PageHead
+      chip="Part A · 要素论第一部 · 导读"
+      title="先验感性论"
+      subtitle="时空不是被发现的，是被戴上的 — 这一章回答「数学如何可能」"
+    />
 
     <!-- 本章任务 -->
     <div class="card mt-5">

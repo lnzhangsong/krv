@@ -1,5 +1,6 @@
 ---
 import Base from '../../layouts/Base.astro';
+import PageHead from '../../components/PageHead.astro';
 import { DatabaseSync } from 'node:sqlite';
 import path from 'node:path';
 import { SEQ_TOTAL } from '../../lib/chapters';
@@ -20,10 +21,10 @@ function highlightKant(text: string): string {
 
 <Base title={title} current="/quanwen/" badge="全文阅览 7593段" searchPlaceholder="全站搜索：存在不是谓词/统觉…">
   <main class="container narrow py-7">
-    <div class="chip">FULL TEXT · 邓晓芒句读全文直读 · {chunks.length}段 · {totalChars.toLocaleString()}字</div>
-    <h1 class="serif text-4xl mt-3 mb-1">
-      邓晓芒《纯粹理性批判》句读 · 全文
-    </h1>
+    <PageHead
+      chip={`FULL TEXT · 全文直读 · ${chunks.length}段 · ${totalChars.toLocaleString()}字`}
+      title="邓晓芒《纯粹理性批判》句读 · 全文"
+    />
 
     <div id="body" class="read-flow">
       {
@@ -207,13 +208,14 @@ function highlightKant(text: string): string {
       text-align: justify;
       text-indent: 2em;
     }
-    /* 康德原文高亮：与邓晓芒讲解区分 */
+    /* 康德原文高亮：与逐句助读的「原文」视觉语言一致（蓝色系） */
     .rf-text .kant-q {
       color: var(--color-accent);
       font-weight: 700;
       background: color-mix(in srgb, var(--color-accent) 7%, transparent);
-      border-radius: 4px;
-      padding: 1px 3px;
+      border-bottom: 2px solid color-mix(in srgb, var(--color-accent) 30%, transparent);
+      border-radius: 3px;
+      padding: 0 2px;
       text-indent: 0;
     }
     .rf-text .kant-q:hover {

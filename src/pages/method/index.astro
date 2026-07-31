@@ -1,5 +1,6 @@
 ---
 import Base from '../../layouts/Base.astro';
+import PageHead from '../../components/PageHead.astro';
 import SentenceReader from '../../components/SentenceReader.astro';
 import { commentDB } from '../../lib/commentDB';
 import { parseSentences } from '../../lib/parse';
@@ -24,11 +25,11 @@ const sentences = raw.flatMap((r) => parseSentences(r.text, r.id, r.seq));
 
 <Base title={title} current="/method/" badge={`导读 · 全部${total}条见句读全库`} searchPlaceholder="搜索：训练/至善/建筑术…" readingOn>
   <main class="container narrow py-9">
-    <div class="chip">Part II · 方法论 · 导读 · 未来形而上学说明书</div>
-    <h1 class="h1-page mt-2.5">
-      方法论<br />
-      <span class="text-[13px] text-muted font-sans">纯粹理性的训练、法规、建筑术、历史 — 全书收官，通向第二批判</span>
-    </h1>
+    <PageHead
+      chip="Part II · 方法论 · 导读"
+      title="先验方法论"
+      subtitle="纯粹理性的训练、法规、建筑术、历史 — 全书收官，通向第二批判"
+    />
 
     <!-- 本章任务 -->
     <div class="card mt-5">

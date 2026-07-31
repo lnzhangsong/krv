@@ -1,5 +1,6 @@
 ---
 import Base from '../../layouts/Base.astro';
+import PageHead from '../../components/PageHead.astro';
 import SentenceReader from '../../components/SentenceReader.astro';
 import { commentDB } from '../../lib/commentDB';
 import { parseSentences } from '../../lib/parse';
@@ -39,11 +40,11 @@ const sentenceTotal = chapterSentences.reduce((s, c) => s + c.sentences.length, 
 
 <Base title={title} current="/deng/" badge={`${total}条精选 + ${sentenceTotal}句逐句`} searchPlaceholder="全站搜索：二律背反/统觉/存在不是谓词…" readingOn>
   <main class="container narrow py-8">
-    <div class="chip">DENG XIAOMANG 句读全库 V5 · {total}条精选 · {sentenceTotal}句逐句讲解 · 按章节</div>
-    <h1 class="serif text-[38px] leading-tight mt-3.5 mb-2">
-      邓晓芒句读 · 精选{sentenceTotal}+ 句逐句讲解<br />
-      <span class="text-sm text-muted font-sans tracking-[.18em]">逐句精读实验室 — 一句原文配一段讲解 · 完整原文见「全文直读」</span>
-    </h1>
+    <PageHead
+      chip={`DENG XIAOMANG · 句读全库 · ${total}条精选 + ${sentenceTotal}句逐句讲解`}
+      title="邓晓芒句读 · 逐句讲解"
+      subtitle="一句康德原文，配一段邓晓芒讲解；完整原文见「全文直读」。"
+    />
 
     {
       chapterSentences.map((ch) => (
