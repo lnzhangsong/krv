@@ -46,7 +46,16 @@ const totalChars = chunks.reduce((s, c) => s + c.text.length, 0);
       <button id="prev" class="toggle">← 上一页</button>
       <span class="font-mono text-xs text-muted">第 <b id="pageNum" class="text-ink">1</b> / <span id="pageTotal">--</span> 页</span>
       <button id="next" class="toggle">下一页 →</button>
-      <span class="font-mono text-[11px] text-muted ml-auto">每页 30 段 · 共 {chunks.length} 段 · 点击目录可跳页</span>
+      <span class="font-mono text-[11px] text-muted ml-auto hidden sm:inline">每页 {15} 段 · 共 {chunks.length} 段 · 键盘 ← → 翻页</span>
+    </div>
+
+    <div class="card mb-4 p-3 bg-bg2">
+      <label class="font-mono text-[11px] text-muted" for="jumpInput">按原书页码跳转（1–2381）：</label>
+      <div class="flex gap-2 mt-1.5 flex-wrap">
+        <input id="jumpInput" type="number" min="1" max="2381" placeholder="如 500" class="w-[110px] border border-line rounded-full px-3 py-1.5 bg-card font-mono text-sm outline-none focus:border-accent2" />
+        <button id="jumpBtn" class="toggle">跳转</button>
+        <span id="jumpHint" class="self-center font-mono text-[11px] text-muted"></span>
+      </div>
     </div>
 
     <div id="body">
@@ -71,7 +80,7 @@ const totalChars = chunks.reduce((s, c) => s + c.text.length, 0);
   </main>
 
   <script>
-    const PAGE = 30;
+    const PAGE = 15;
     const input = document.getElementById('qfilter') as HTMLInputElement;
     const cnt = document.getElementById('cnt') as HTMLElement;
     const cards = Array.from(document.querySelectorAll('#body .card')) as HTMLElement[];
@@ -123,6 +132,7 @@ const totalChars = chunks.reduce((s, c) => s + c.text.length, 0);
         input.value = '';
         filtering = false;
         matched = [];
+        cnt.textContent = `${cards.length} 段`;
       }
       page = Math.floor(i / PAGE) + 1;
       applyPage();
@@ -133,9 +143,46 @@ const totalChars = chunks.reduce((s, c) => s + c.text.length, 0);
       });
     }
 
+    // 按原书页码跳转
+    function jumpToBookPage(p: number) {
+      const q = p;
+      // 找到包含该页码的段落卡片
+      const card = cards.find((c) => {
+        const pt = parseInt(c.dataset.pt ?? '', 10);
+        return pt <= q && q < pt + 3;
+      });
+      const hint = document.getElementById('jumpHint') as HTMLElement;
+      if (!card) {
+        if (hint) hint.textContent = `未找到页 ${q}`;
+        return;
+      }
+      if (hint) hint.textContent = `已定位到 页 ${q}（段落 #${card.id}）`;
+      gotoStart(String((card.dataset.pt ?? '')));
+    }
+
     // 分页按钮
     ['prev', 'prevB'].forEach((id) => document.getElementById(id)?.addEventListener('click', () => goPage(page - 1)));
     ['next', 'nextB'].forEach((id) => document.getElementById(id)?.addEventListener('click', () => goPage(page + 1)));
+
+    // 书页跳转
+    const jumpInput = document.getElementById('jumpInput') as HTMLInputElement;
+    const jumpBtn = document.getElementById('jumpBtn') as HTMLButtonElement;
+    const doJump = () => {
+      const p = parseInt(jumpInput.value, 10);
+      if (p >= 1 && p <= 2381) jumpToBookPage(p);
+    };
+    jumpBtn?.addEventListener('click', doJump);
+    jumpInput?.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') doJump();
+    });
+
+    // 键盘翻页（排除输入框内按键）
+    document.addEventListener('keydown', (e) => {
+      const tag = (e.target as HTMLElement).tagName;
+      if (tag === 'INPUT' || tag === 'TEXTAREA') return;
+      if (e.key === 'ArrowLeft') goPage(page - 1);
+      if (e.key === 'ArrowRight') goPage(page + 1);
+    });
 
     // 目录跳页
     document.querySelectorAll('#toc .toclink').forEach((el) =>
