@@ -48,17 +48,23 @@ const navMore: { href: string; label: string; desc: string }[] = [
     <header class="sticky top-0 z-[100] backdrop-blur-[20px] saturate-[180%] border-b border-line">
       <div class="max-w-[1320px] mx-auto px-7 h-[68px] flex items-center justify-between gap-4">
         <div class="flex items-center gap-2.5 shrink-0">
-          <a href="/" class="font-mono font-extrabold tracking-tight">KRV V5</a>
-          <span class="badge hidden md:inline-block">{badge ?? '110句读 · Astro + Tailwind'}</span>
+          <a href="/" class="flex items-center gap-2 group">
+            <span class="logo-dot" aria-hidden="true"></span>
+            <span class="font-mono font-extrabold tracking-tight text-[15px] group-hover:text-accent2 transition-colors">KRV V5</span>
+          </a>
+          <span class="badge hidden md:inline-block">{badge ?? '217句读 · Astro + Tailwind'}</span>
         </div>
         <div class="flex items-center gap-2 min-w-0">
           <div id="searchWrap" class="relative shrink min-w-0">
+            <span class="search-icon" aria-hidden="true">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+            </span>
             <input
               id="globalSearch"
               placeholder={searchPlaceholder}
-              class="border border-line rounded-full px-4 py-2 w-[200px] md:w-[240px] xl:w-[280px] bg-card font-mono text-sm outline-none focus:border-accent2"
+              class="border border-line rounded-full pl-8 pr-4 py-2 w-[200px] md:w-[240px] xl:w-[280px] bg-card font-mono text-sm outline-none transition-all focus:border-accent2 focus:ring-2 focus:ring-[color-mix(in_srgb,var(--color-accent2)_25%,transparent)]"
             />
-            <div id="searchResults" class="hidden absolute top-[42px] left-0 right-0 bg-card border border-line rounded-xl shadow-[var(--shadow-soft)] max-h-[420px] overflow-auto z-50 text-left"></div>
+            <div id="searchResults" class="hidden absolute top-[42px] left-0 right-0 bg-card border border-line rounded-xl shadow-[var(--shadow-pop)] max-h-[420px] overflow-auto z-50 text-left"></div>
           </div>
           <nav class="hidden lg:flex items-center gap-1 font-mono text-[11px] text-muted">
             {navMain.map((n) => (
@@ -94,9 +100,15 @@ const navMore: { href: string; label: string; desc: string }[] = [
 
     <slot />
 
-    <footer class="max-w-[1320px] mx-auto px-7 py-10 flex flex-wrap justify-between gap-3 text-sm text-muted border-t border-line mt-12">
-      <span>KRV V5 · Astro + Tailwind 重构 · 仅学习交流</span>
-      <span class="font-mono text-xs">commentDB 217条 · 离线全文 2381页 · 数据本地内置</span>
+    <footer class="max-w-[1320px] mx-auto px-7 py-12 flex flex-wrap justify-between gap-3 text-sm text-muted border-t border-line mt-14">
+      <div>
+        <div class="font-mono font-extrabold tracking-tight text-ink mb-1.5">KRV V5</div>
+        <span>康德《纯粹理性批判》导读站 · 仅学习交流</span>
+      </div>
+      <div class="text-right">
+        <div class="font-mono text-xs">commentDB 217条 · 离线全文 2381页</div>
+        <div class="font-mono text-[11px] mt-1">Astro + Tailwind v4 · 数据本地内置</div>
+      </div>
     </footer>
 
     <div id="drawer" class="flex flex-col">

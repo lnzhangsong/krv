@@ -5,12 +5,12 @@ const title = '纯粹理性批判 · V5 完整版 | 217条句读 + 全站搜索'
 
 <Base title={title} desc="KRV 1781/1787 · 文档全聚合 · 邓晓芒200万字句读提炼 · Astro + Tailwind 现代重构">
   <main class="max-w-[1320px] mx-auto px-7">
-    <section class="pt-16 pb-6 grid grid-cols-1 lg:grid-cols-[1.2fr_.8fr] gap-9">
+    <section class="pt-16 pb-6 grid grid-cols-1 lg:grid-cols-[1.2fr_.8fr] gap-10 items-start">
       <div>
         <div class="chip inline-block">KRV 1781/1787 · 邓晓芒200万字句读提炼 · 217条精读</div>
-        <h1 class="serif font-black leading-[.95] my-4" style="font-size:clamp(36px,5.5vw,62px)">
+        <h1 class="serif font-black leading-[1.02] my-5" style="font-size:clamp(38px,5.5vw,64px)">
           纯粹理性批判<br />
-          <span class="block text-[13px] tracking-[.28em] uppercase text-muted font-sans font-medium mt-3">
+          <span class="block text-[13px] tracking-[.3em] uppercase text-accent2 font-sans font-semibold mt-4">
             逐句精读 · 离线全文 · 全站搜索
           </span>
         </h1>
@@ -19,7 +19,7 @@ const title = '纯粹理性批判 · V5 完整版 | 217条句读 + 全站搜索'
           每条附邓晓芒式讲解与学习提示；另有 2381 页原文全文离线内置，可本地检索、对照阅读。
           页面结构与学习路径参考 SEP、剑桥版导言与国内外主流康德课程编排。
         </p>
-        <div class="flex flex-wrap gap-2.5 mt-5">
+        <div class="flex flex-wrap gap-3 mt-6">
           <a href="/deng/" class="btn">开始精读 →</a>
           <a href="/quanwen/" class="btn outline">浏览全文</a>
           <a href="/glossary/" class="btn link">术语库</a>
@@ -28,10 +28,10 @@ const title = '纯粹理性批判 · V5 完整版 | 217条句读 + 全站搜索'
       <div class="card self-start" style="background:linear-gradient(180deg,var(--color-card),var(--color-bg2))">
         <span class="chip accent">内容一览</span>
         <div class="grid grid-cols-2 gap-3 mt-4">
-          <div class="p-3 bg-card rounded-xl border border-line"><b class="text-[24px]">217</b><div class="font-mono text-[11px] text-muted">句读条目</div></div>
-          <div class="p-3 bg-card rounded-xl border border-line"><b class="text-[24px]">14</b><div class="font-mono text-[11px] text-muted">讲全覆盖</div></div>
-          <div class="p-3 bg-card rounded-xl border border-line"><b class="text-[24px]">2381</b><div class="font-mono text-[11px] text-muted">页全文离线</div></div>
-          <div class="p-3 bg-card rounded-xl border border-line"><b class="text-[24px]">58</b><div class="font-mono text-[11px] text-muted">术语词条</div></div>
+          <div class="stat"><b>217</b><span>句读条目</span></div>
+          <div class="stat"><b>14</b><span>讲全覆盖</span></div>
+          <div class="stat"><b>2381</b><span>页全文离线</span></div>
+          <div class="stat"><b>58</b><span>术语词条</span></div>
         </div>
         <div class="quote mt-4 text-xs">技术栈：Astro + Tailwind v4 · TypeScript · lunr 离线搜索 · 数据本地内置，纯静态可部署。</div>
       </div>

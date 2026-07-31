@@ -58,6 +58,12 @@ const total = Object.keys(commentDB).length;
       padding: 18px;
       margin: 12px 0;
       background: var(--color-card);
+      transition: border-color 0.18s, box-shadow 0.18s, transform 0.18s;
+    }
+    .entry:hover {
+      border-color: color-mix(in srgb, var(--color-accent2) 40%, var(--color-line));
+      box-shadow: var(--shadow-soft);
+      transform: translateY(-1px);
     }
     .entry .ref {
       font-size: 11px;

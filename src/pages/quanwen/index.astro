@@ -22,41 +22,8 @@ const totalChars = chunks.reduce((s, c) => s + c.text.length, 0);
   <main class="max-w-[1440px] mx-auto px-5 py-7">
     <div class="chip">FULL TEXT · PDF 全文直读 · {chunks.length}段 · {totalPages}页 · {totalChars.toLocaleString()}字</div>
     <h1 class="serif text-4xl mt-3 mb-1">
-      邓晓芒《纯粹理性批判》句读 · 全文<br />
-      <span class="text-[13px] text-muted font-sans">与句读一样直接把 PDF 内容渲染进页面，不再依赖检索/抽屉。顶部目录横向滚动跳页，输入框过滤段落。</span>
+      邓晓芒《纯粹理性批判》句读 · 全文
     </h1>
-    <p class="p text-[13px] mt-2 max-w-[80ch]">数据源：<code>data/kant.db</code>（SQLite · chunks 表 794 段×3 页），即你上传 PDF 的文字内容。构建时直读数据库生成静态页，运行时无 JSON、无 wasm，可直接打印/保存。</p>
-
-    <div class="my-4 flex gap-2.5 flex-wrap items-center">
-      <input id="qfilter" placeholder="过滤段落：存在不是谓词 / 统觉 / 第三二律…" class="flex-1 min-w-[280px] border border-line rounded-full px-[18px] py-2.5 bg-card font-mono outline-none focus:border-accent2" />
-      <span id="cnt" class="tag self-center">{chunks.length} 段</span>
-    </div>
-
-    <nav id="toc" class="flex gap-1.5 overflow-x-auto pb-2 -mx-1 px-1 mb-3" aria-label="目录">
-      {
-        chunks.map((c) => (
-          <a href={`#c${c.start}`} class="toclink whitespace-nowrap text-[11px] font-mono px-2.5 py-1 rounded-full border border-line text-muted hover:text-ink hover:border-accent2">
-            页 {c.start}-{c.end}
-          </a>
-        ))
-      }
-    </nav>
-
-    <div id="pagerTop" class="flex items-center gap-3 mb-3 flex-wrap">
-      <button id="prev" class="toggle">← 上一页</button>
-      <span class="font-mono text-xs text-muted">第 <b id="pageNum" class="text-ink">1</b> / <span id="pageTotal">--</span> 页</span>
-      <button id="next" class="toggle">下一页 →</button>
-      <span class="font-mono text-[11px] text-muted ml-auto hidden sm:inline">每页 {15} 段 · 共 {chunks.length} 段 · 键盘 ← → 翻页</span>
-    </div>
-
-    <div class="card mb-4 p-3 bg-bg2">
-      <label class="font-mono text-[11px] text-muted" for="jumpInput">按原书页码跳转（1–2381）：</label>
-      <div class="flex gap-2 mt-1.5 flex-wrap">
-        <input id="jumpInput" type="number" min="1" max="2381" placeholder="如 500" class="w-[110px] border border-line rounded-full px-3 py-1.5 bg-card font-mono text-sm outline-none focus:border-accent2" />
-        <button id="jumpBtn" class="toggle">跳转</button>
-        <span id="jumpHint" class="self-center font-mono text-[11px] text-muted"></span>
-      </div>
-    </div>
 
     <div id="body">
       {
@@ -66,58 +33,47 @@ const totalChars = chunks.reduce((s, c) => s + c.text.length, 0);
               <span class="tag font-mono text-[10px]">页 {c.start}-{c.end}</span>
               <span class="font-mono text-[10px] text-muted">#{c.id}</span>
             </div>
-            <div class="serif text-[17px] leading-[2] mt-2 whitespace-normal">{c.text}</div>
+            <div class="serif text-[17px] leading-[2.05] mt-2.5 whitespace-normal">{c.text}</div>
           </div>
         ))
       }
     </div>
 
-    <div id="pagerBottom" class="flex items-center justify-center gap-4 mt-6 pt-4 border-t border-line">
+    <div id="pagerBottom" class="float-pager">
       <button id="prevB" class="toggle">← 上一页</button>
       <span class="font-mono text-xs text-muted">第 <b id="pageNumB" class="text-ink">1</b> / <span id="pageTotalB">--</span> 页</span>
       <button id="nextB" class="toggle">下一页 →</button>
+      <span class="w-px self-stretch bg-line"></span>
+      <input id="jumpInput" type="number" min="1" max="2381" placeholder="页码 如 500" class="w-[110px] border border-line rounded-full px-3 py-1.5 bg-bg2 font-mono text-sm outline-none focus:border-accent2 transition-colors" />
+      <button id="jumpBtn" class="toggle">跳转</button>
+      <span id="jumpHint" class="font-mono text-[11px] text-muted max-w-[160px] truncate"></span>
     </div>
   </main>
 
   <script>
     const PAGE = 15;
-    const input = document.getElementById('qfilter') as HTMLInputElement;
-    const cnt = document.getElementById('cnt') as HTMLElement;
     const cards = Array.from(document.querySelectorAll('#body .card')) as HTMLElement[];
     const totalPages = Math.ceil(cards.length / PAGE);
     let page = 1;
-    let filtering = false;
-    let matched: number[] = [];
 
     function syncPageUI() {
-      const cur = filtering ? 1 : page;
-      const total = filtering ? Math.max(1, Math.ceil(matched.length / PAGE)) : totalPages;
       const set = (n: HTMLElement | null, t: HTMLElement | null) => {
-        if (n) n.textContent = String(cur);
-        if (t) t.textContent = String(total);
+        if (n) n.textContent = String(page);
+        if (t) t.textContent = String(totalPages);
       };
-      set(document.getElementById('pageNum'), document.getElementById('pageTotal'));
       set(document.getElementById('pageNumB'), document.getElementById('pageTotalB'));
     }
 
     function applyPage() {
       cards.forEach((card, i) => {
-        const inMatch = !filtering || matched.includes(i);
-        if (!inMatch) { card.style.display = 'none'; return; }
-        if (filtering) {
-          const pos = matched.indexOf(i);
-          const show = pos >= (page - 1) * PAGE && pos < page * PAGE;
-          card.style.display = show ? '' : 'none';
-        } else {
-          const show = i >= (page - 1) * PAGE && i < page * PAGE;
-          card.style.display = show ? '' : 'none';
-        }
+        const show = i >= (page - 1) * PAGE && i < page * PAGE;
+        card.style.display = show ? '' : 'none';
       });
       syncPageUI();
     }
 
     function goPage(p: number) {
-      page = Math.min(Math.max(1, p), filtering ? Math.max(1, Math.ceil(matched.length / PAGE)) : totalPages);
+      page = Math.min(Math.max(1, p), totalPages);
       applyPage();
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
@@ -127,13 +83,6 @@ const totalChars = chunks.reduce((s, c) => s + c.text.length, 0);
       if (!card) return;
       const i = cards.indexOf(card as HTMLElement);
       if (i === -1) return;
-      if (filtering) {
-        // 过滤态：如果目标不在匹配中，先清空过滤
-        input.value = '';
-        filtering = false;
-        matched = [];
-        cnt.textContent = `${cards.length} 段`;
-      }
       page = Math.floor(i / PAGE) + 1;
       applyPage();
       requestAnimationFrame(() => {
@@ -161,8 +110,8 @@ const totalChars = chunks.reduce((s, c) => s + c.text.length, 0);
     }
 
     // 分页按钮
-    ['prev', 'prevB'].forEach((id) => document.getElementById(id)?.addEventListener('click', () => goPage(page - 1)));
-    ['next', 'nextB'].forEach((id) => document.getElementById(id)?.addEventListener('click', () => goPage(page + 1)));
+    document.getElementById('prevB')?.addEventListener('click', () => goPage(page - 1));
+    document.getElementById('nextB')?.addEventListener('click', () => goPage(page + 1));
 
     // 书页跳转
     const jumpInput = document.getElementById('jumpInput') as HTMLInputElement;
@@ -184,45 +133,44 @@ const totalChars = chunks.reduce((s, c) => s + c.text.length, 0);
       if (e.key === 'ArrowRight') goPage(page + 1);
     });
 
-    // 目录跳页
-    document.querySelectorAll('#toc .toclink').forEach((el) =>
-      el.addEventListener('click', (e) => {
-        e.preventDefault();
-        const href = (el as HTMLAnchorElement).getAttribute('href') ?? '';
-        gotoStart(href.replace('#c', ''));
-      })
-    );
-
-    // 过滤
-    input.addEventListener('input', () => {
-      const q = input.value.trim().toLowerCase();
-      filtering = !!q;
-      if (filtering) {
-        matched = cards.map((card, i) => ({ card, i }))
-          .filter(({ card }) => (card.dataset.text ?? '').toLowerCase().includes(q))
-          .map(({ i }) => i);
-      }
-      page = 1;
-      applyPage();
-      cnt.textContent = filtering ? `${matched.length} / ${cards.length} 段` : `${cards.length} 段`;
-    });
-
     // 初始
-    matched = cards.map((_, i) => i);
     applyPage();
-    cnt.textContent = `${cards.length} 段`;
   </script>
 
   <style>
-    .toclink.active {
-      color: var(--color-ink);
-      background: var(--color-bg2);
-      border-color: var(--color-accent2);
-    }
     .card.flash {
       outline: 2px solid var(--color-accent2);
       outline-offset: 4px;
       transition: outline-color 0.2s;
+    }
+    .float-pager {
+      position: fixed;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 60;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 18px;
+      border-radius: 999px;
+      background: var(--color-card);
+      border: 1px solid var(--color-line);
+      box-shadow: 0 14px 44px rgba(16, 41, 71, 0.16);
+      max-width: calc(100vw - 24px);
+      overflow-x: auto;
+    }
+    @media (max-width: 640px) {
+      .float-pager #jumpHint,
+      .float-pager .bg-line {
+        display: none;
+      }
+      .float-pager #jumpInput {
+        width: 84px;
+      }
+    }
+    main {
+      padding-bottom: 96px;
     }
   </style>
 </Base>

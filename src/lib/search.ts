@@ -1,6 +1,35 @@
 import lunr from 'lunr';
 import { commentDB } from './commentDB';
 
+// lunr 默认按空白分词、trimmer 会把 CJK 当非单词字符剥掉，导致中文无法检索。
+// 这里覆盖 tokenizer：CJK 按单字切分，拉丁文按单词切分。
+function cjkTokenizer(obj: string | null | undefined, metadata?: object): lunr.Token[] {
+  if (obj == null) return [];
+  const s = String(obj).toLowerCase();
+  const out: lunr.Token[] = [];
+  let i = 0;
+  const len = s.length;
+  while (i < len) {
+    const ch = s.charAt(i);
+    if (/[\s\-]/.test(ch)) {
+      i++;
+      continue;
+    }
+    if (/[\u3400-\u9fff]/.test(ch)) {
+      out.push(new lunr.Token(ch, Object.assign({}, metadata, { position: [i, 1], index: out.length })));
+      i++;
+    } else {
+      let j = i;
+      while (j < len && !/[\s\-]/.test(s.charAt(j)) && !/[\u3400-\u9fff]/.test(s.charAt(j))) j++;
+      out.push(new lunr.Token(s.slice(i, j), Object.assign({}, metadata, { position: [i, j - i], index: out.length })));
+      i = j;
+    }
+  }
+  return out;
+}
+lunr.tokenizer = cjkTokenizer as typeof lunr.tokenizer;
+lunr.tokenizer.separator = /[\s\-]+/;
+
 export interface SearchDoc {
   id: string;
   title: string;
@@ -38,6 +67,11 @@ export function buildIndex() {
     this.field('title', { boost: 12 });
     this.field('content');
     this.pipeline.remove(lunr.stemmer);
+    this.pipeline.remove(lunr.trimmer);
+    this.pipeline.remove(lunr.stopWordFilter);
+    this.searchPipeline.remove(lunr.stemmer);
+    this.searchPipeline.remove(lunr.trimmer);
+    this.searchPipeline.remove(lunr.stopWordFilter);
     allDocs.forEach((d) => this.add(d));
   });
 }
@@ -52,8 +86,11 @@ export function search(query: string, limit = 15): SearchHit[] {
   const q = query.trim();
   if (!q) return [];
   try {
-    const tokens = q.split('').join(' ');
-    const results = idx.search(tokens + ' ' + q);
+    // 拆成单字/单词，作为必须出现的条件查询（OR 语义：命中越多排序越靠前）
+    const tokens = cjkTokenizer(q).map((t) => t.toString());
+    const results = idx.query(function (qq) {
+      tokens.forEach((t) => qq.term(t, { presence: lunr.Query.presence.OPTIONAL }));
+    });
     const seen = new Set<string>();
     const uniq: SearchHit[] = [];
     results.forEach((r) => {
