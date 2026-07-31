@@ -1,122 +1,150 @@
 ---
 import Base from '../../layouts/Base.astro';
 import { commentDB } from '../../lib/commentDB';
-const title = '先验分析论 · 48条句读全量 | 范畴/演绎/图型/原理体系完整讲解';
+const title = '先验分析论 · 导读：范畴、演绎与知识如何客观';
 
 interface Item { key: string; ref: string; original: string; deng: string; tip: string }
-const all: Item[] = Object.entries(commentDB)
-  .filter(([k]) => k.startsWith('an-'))
-  .map(([k, v]) => ({ key: k, ...v }));
-
-const groupDefs: { title: string; pred: (k: string) => boolean }[] = [
-  { title: 'B1 · 一般逻辑 vs 先验逻辑', pred: (k) => k.startsWith('an-logic') },
-  { title: 'B1 · 判断表与 12 范畴逐条', pred: (k) => k.startsWith('an-judg-') || k.startsWith('an-cat-') },
-  { title: 'B2 · 先验演绎（A 版主观 + B 版客观）', pred: (k) => k.startsWith('an-ded-') || k === 'an-apperception-synthetic' },
-  { title: 'B3 · 图型法（时间图型）', pred: (k) => k.startsWith('an-schema-') },
-  { title: 'B3续 · 原理体系（公理/预测/类比/公设）', pred: (k) => k.startsWith('an-prin-') },
-  { title: 'B4 · 现象/物自体与先验反省', pred: (k) => k.startsWith('an-phen') || k.startsWith('an-noumena') || k.startsWith('an-amphib') },
-];
-const used = new Set<string>();
-const groups = groupDefs.map((gd) => {
-  const items = all.filter((i) => !used.has(i.key) && gd.pred(i.key));
-  items.forEach((i) => used.add(i.key));
-  return { title: gd.title, items };
-}).filter((g) => g.items.length > 0);
-
-const total = all.length;
+const pick = (keys: string[]): Item[] => keys
+  .map((k) => (commentDB[k] ? { key: k, ...commentDB[k] } : null))
+  .filter((x): x is Item => x !== null);
+const total = Object.keys(commentDB).filter((k) => k.startsWith('an-')).length;
 ---
 
-<Base title={title} current="/analytic/" badge={`${total}条句读全量`} searchPlaceholder="搜索：范畴/统觉/图型/因果律…" readingOn>
+<Base title={title} current="/analytic/" badge={`导读 · 全部${total}条见句读全库`} searchPlaceholder="搜索：范畴/统觉/图型/因果律…" readingOn>
   <main class="max-w-[1320px] mx-auto px-7 py-9">
-    <div class="chip">Part B · 要素论第二部 · 构造性核心 · {total}条句读完整讲解</div>
+    <div class="chip">Part B · 要素论第二部 · 导读</div>
     <h1 class="h1-page mt-2.5">
       先验分析论<br />
-      <span class="text-[13px] text-muted font-sans">从 12 范畴到牛顿定律先天化：判断表 → 范畴表 → 演绎 → 图型 → 原理体系 — 每条含原文定位 + 邓晓芒式讲解 + 学习提示</span>
+      <span class="text-[13px] text-muted font-sans">从 12 范畴到牛顿定律先天化 — 这一章回答"知识如何客观有效"</span>
     </h1>
-    <p class="lead">全部句读讲解已直接展示在页面中，点击任意条目仍可打开右侧精读抽屉对照；右上角"精读"开关可高亮所有可点击句。</p>
 
-    <!-- B0 全书定位 -->
+    <!-- 本章任务 -->
     <div class="card mt-5">
-      <div class="h3">全书定位 · 分析论在《纯粹理性批判》中的位置</div>
-      <div class="grid grid-cols-1 md:grid-cols-4 gap-3">
-        <div class="p-3 bg-bg2 rounded-xl"><b>感性论</b><div class="font-mono text-[11px] text-muted mt-1">时空形式 · 接受杂多</div></div>
-        <div class="p-3 bg-card rounded-xl border border-line" style="outline:2px solid var(--color-accent2);outline-offset:-1px"><b>分析论 ← 本页</b><div class="font-mono text-[11px] text-muted mt-1">范畴与原理 · 知性立法</div></div>
-        <div class="p-3 bg-bg2 rounded-xl"><b>辩证论</b><div class="font-mono text-[11px] text-muted mt-1">理念越界 · 幻相揭露</div></div>
-        <div class="p-3 bg-bg2 rounded-xl"><b>方法论</b><div class="font-mono text-[11px] text-muted mt-1">科学建筑术 · 训练法规</div></div>
-      </div>
-      <div class="quote mt-3 text-xs">分析论回答全书总问题"先天综合判断如何可能"的正面部分：为自然科学（尤其是牛顿力学）的普遍必然性奠基，同时把范畴严格限定在现象界（A235/B294）。</div>
+      <div class="h3">本章任务 · 它要解决什么问题</div>
+      <p class="p text-[13.5px]">感性论给了形式（时空），但只有形式还不够——杂多需要被<b>联结</b>成对象。分析论回答：<b>知性如何用 12 范畴把直观杂多组织成客观知识？</b>核心是证明范畴对一切可能经验有效（先验演绎），并由此推出自然科学的基本原理（如因果律）——正面回击休谟。</p>
+      <div class="quote mt-3 text-xs">一句话：范畴是知性为自然立法的形式；没有它们，经验只是一堆碎片，因果律只是心理习惯。</div>
     </div>
 
-    <!-- 体系速览 -->
+    <!-- 论证路线图 -->
     <div class="card mt-5">
-      <div class="h3">分析论结构速览</div>
+      <div class="h3">论证路线图 · 五步</div>
       <div class="grid grid-cols-1 md:grid-cols-5 gap-3">
-        <div class="p-3 bg-bg2 rounded-xl"><b class="font-mono text-[11px]">概念分析论</b><div class="text-xs mt-1">判断表→范畴表（形而上学演绎）</div></div>
-        <div class="p-3 bg-bg2 rounded-xl"><b class="font-mono text-[11px]">先验演绎</b><div class="text-xs mt-1">A 三重综合 · B 统觉统一</div></div>
-        <div class="p-3 bg-bg2 rounded-xl"><b class="font-mono text-[11px]">图型法</b><div class="text-xs mt-1">时间图型：范畴→直观的中介</div></div>
-        <div class="p-3 bg-bg2 rounded-xl"><b class="font-mono text-[11px]">原理体系</b><div class="text-xs mt-1">公理/预测/类比/公设</div></div>
-        <div class="p-3 bg-bg2 rounded-xl"><b class="font-mono text-[11px]">现象/物自体</b><div class="text-xs mt-1">范畴只能经验地用</div></div>
+        <div class="p-3 bg-bg2 rounded-xl"><b class="font-mono text-[11px]">① 判断表</b><div class="text-xs mt-1">一切思维都是判断：量/质/关系/模态 × 3 = 12 种形式。</div></div>
+        <div class="p-3 bg-bg2 rounded-xl"><b class="font-mono text-[11px]">② 范畴表</b><div class="text-xs mt-1">同一功能：判断中统一表象 → 直观中统一杂多，得 12 范畴。</div></div>
+        <div class="p-3 bg-bg2 rounded-xl"><b class="font-mono text-[11px]">③ 先验演绎</b><div class="text-xs mt-1">"我思"必须伴随一切表象——统觉的统一证明范畴适用于一切经验。</div></div>
+        <div class="p-3 bg-bg2 rounded-xl"><b class="font-mono text-[11px]">④ 图型法</b><div class="text-xs mt-1">范畴是逻辑的、直观是感性的，靠"时间图型"翻译对接。</div></div>
+        <div class="p-3 bg-bg2 rounded-xl"><b class="font-mono text-[11px]">⑤ 原理体系</b><div class="text-xs mt-1">公理/预测/类比/公设——牛顿力学的先天版，回击休谟。</div></div>
       </div>
     </div>
 
-    <!-- 完整句读讲解 -->
-    {
-      groups.map((g) => (
-        <section class="mt-6">
-          <div class="section-head" style="margin:0 0 14px">
-            <div class="h3">{g.title} · {g.items.length}条</div>
-          </div>
-          {
-            g.items.map((it) => (
-              <div class="card my-3 readable" data-key={it.key}>
-                <div class="font-mono text-[11px] text-muted">{it.ref} · {it.key}</div>
-                <div class="serif font-bold my-2 leading-relaxed">「{it.original}」</div>
-                <div class="p text-sm"><b>邓晓芒讲：</b>{it.deng}</div>
-                <div class="mt-2"><span class="tag text-[10px]">{it.tip}</span></div>
-              </div>
-            ))
-          }
-        </section>
-      ))
-    }
+    <!-- 核心句读精选 -->
+    <div class="section-head" style="margin:28px 0 12px">
+      <div class="h3">核心句读精选 · 读懂本章的关键句</div>
+      <span class="font-mono text-[10px] text-muted">完整 {total} 条见 <a href="/deng/" class="underline">句读全库</a></span>
+    </div>
 
-    <!-- 休谟回击 -->
+    <div class="card mt-3">
+      <div class="h3">范畴表 · 判断表→范畴表</div>
+      {
+        pick(['an-cat-ded-idea', 'an-judg-quantity', 'an-cat-relation-cause', 'an-cat-modality', 'an-cat-table-full']).map((it) => (
+          <div class="my-2 readable" data-key={it.key}>
+            <div class="font-mono text-[10px] text-muted">{it.ref}</div>
+            <div class="serif font-bold my-1">「{it.original}」</div>
+            <div class="p text-[13px]">{it.deng}</div>
+          </div>
+        ))
+      }
+    </div>
+
+    <div class="card mt-4">
+      <div class="h3">先验演绎 · 统觉的最高原理</div>
+      {
+        pick(['an-ded-b-apper', 'an-ded-b-131', 'an-ded-b-objectivity', 'an-ded-b-limit', 'an-ded-necessity']).map((it) => (
+          <div class="my-2 readable" data-key={it.key}>
+            <div class="font-mono text-[10px] text-muted">{it.ref}</div>
+            <div class="serif font-bold my-1">「{it.original}」</div>
+            <div class="p text-[13px]">{it.deng}</div>
+          </div>
+        ))
+      }
+    </div>
+
+    <div class="card mt-4">
+      <div class="h3">图型法 · 时间图型</div>
+      {
+        pick(['an-schema-def', 'an-schema-cause', 'an-schema-sub', 'an-schema-time-all']).map((it) => (
+          <div class="my-2 readable" data-key={it.key}>
+            <div class="font-mono text-[10px] text-muted">{it.ref}</div>
+            <div class="serif font-bold my-1">「{it.original}」</div>
+            <div class="p text-[13px]">{it.deng}</div>
+          </div>
+        ))
+      }
+    </div>
+
+    <div class="card mt-4">
+      <div class="h3">原理体系 · 回击休谟的因果律</div>
+      {
+        pick(['an-prin-anal2', 'an-prin-anal2-proof', 'an-prin-anal2-objective', 'an-prin-anal1', 'an-prin-anal3']).map((it) => (
+          <div class="my-2 readable" data-key={it.key}>
+            <div class="font-mono text-[10px] text-muted">{it.ref}</div>
+            <div class="serif font-bold my-1">「{it.original}」</div>
+            <div class="p text-[13px]">{it.deng}</div>
+          </div>
+        ))
+      }
+    </div>
+
+    <div class="card mt-4">
+      <div class="h3">现象/物自体 · 划界</div>
+      {
+        pick(['an-phen-noum', 'an-phen-noum-limits', 'an-amphib']).map((it) => (
+          <div class="my-2 readable" data-key={it.key}>
+            <div class="font-mono text-[10px] text-muted">{it.ref}</div>
+            <div class="serif font-bold my-1">「{it.original}」</div>
+            <div class="p text-[13px]">{it.deng}</div>
+          </div>
+        ))
+      }
+    </div>
+
+    <!-- 疑难辨析 -->
     <div class="card mt-6" style="background:linear-gradient(180deg,var(--color-card),var(--color-bg2))">
-      <div class="h3 accent">如何回击休谟：因果性辩护的三步论证</div>
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div class="h3 accent">常见疑难辨析</div>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
-          <b class="font-mono">① 承认经验论部分</b>
-          <p class="p text-[13px] mt-1">具体因果律（"火使水热"）确实是经验归纳而来，带有或然性——康德与休谟在此并无分歧（SEP 明确这一点）。</p>
+          <b>① "范畴是主观的，知识怎么客观？"</b>
+          <p class="p text-[13px] mt-1">客观性不来自对象本身，而来自统觉的<b>必然统一</b>：主观的任意联想（看房子上下扫）与客观的规则相继（船顺流）之所以能区分，正因为范畴提供了必然规则。主观的形式保证了客观的有效。</p>
         </div>
         <div>
-          <b class="font-mono">② 区分一般原理与具体定律</b>
-          <p class="p text-[13px] mt-1">但"一切变化都有原因"（第二类比的一般因果原理）是使<b>客观时间顺序</b>得以可能的先验条件：没有它，我们无法区分客观相继与主观感知的先后。</p>
+          <b>② "康德和休谟到底争什么？"</b>
+          <p class="p text-[13px] mt-1">具体因果律（"火使水热"）两人都承认是归纳的；分歧在"一切变化都有原因"这个<b>一般原理</b>——休谟说是习惯，康德说是可能经验的条件。</p>
         </div>
         <div>
-          <b class="font-mono">③ 结论：先验不是经验</b>
-          <p class="p text-[13px] mt-1">因果律不是经验总结，而是可能经验的条件——综合先天判断。休谟的怀疑被转化为"范畴客观有效性"的证明。</p>
+          <b>③ "为什么需要两个版本的演绎？"</b>
+          <p class="p text-[13px] mt-1">A 版（1781）从三重综合"自下而上"讲，有心理学色彩；B 版（1787）直接从统觉"自上而下"讲，更严格。主流学界认为二者实质一致。</p>
+        </div>
+        <div>
+          <b>④ "图型法是不是多此一举？"</b>
+          <p class="p text-[13px] mt-1">范畴是逻辑概念、直观是感性内容，二者异质——就像"圆"的概念与画出的圆。时间图型（数=相继、因果=有规则相继）是必需的"翻译官"。</p>
         </div>
       </div>
-      <div class="quote mt-4 text-xs">参考：SEP "Kant and Hume on Causality" 明确指出第二类比在具体因果律层面与休谟基本一致，均由归纳建立；区别在于康德主张的一般因果原理是经验可能性的先验条件。</div>
     </div>
 
     <!-- 参考来源 -->
     <div class="card mt-6">
       <div class="h3">参考来源</div>
       <ul class="p text-[12.5px] leading-[1.9] mt-1" style="list-style:none;padding:0">
-        <li>· <a href="https://plato.stanford.edu/entries/kant-hume-causality/" target="_blank" rel="noopener" class="underline text-accent">SEP: Kant and Hume on Causality</a>（含第二类比 B232 原文）</li>
-        <li>· <a href="https://plato.stanford.edu/entries/kant-transcendental/" target="_blank" rel="noopener" class="underline text-accent">SEP: Kant's Transcendental Arguments</a>（A/B 版演绎说明）</li>
-        <li>· <a href="https://en.wikipedia.org/wiki/Category_(Kant)" target="_blank" rel="noopener" class="underline text-accent">Wikipedia: Category (Kant)</a>（范畴表）</li>
-        <li>· <a href="https://en.wikipedia.org/wiki/Schema_(Kant)" target="_blank" rel="noopener" class="underline text-accent">Wikipedia: Schema (Kant)</a>（图型与时间图型）</li>
-        <li>· <a href="https://hume.ucdavis.edu/kant/SCHEMA.HTM" target="_blank" rel="noopener" class="underline text-accent">UC Davis Kant Lexicon: Schema</a></li>
-        <li>· <a href="https://philpapers.org/rec/WAYTBE" target="_blank" rel="noopener" class="underline text-accent">PhilPapers: The B Edition Transcendental Deduction</a></li>
-        <li>· <a href="https://www.cssn.cn/skgz/bwyc/202504/t20250429_5871720.shtml" target="_blank" rel="noopener" class="underline text-accent">中国社会科学网：康德对范畴主观性的证明</a></li>
+        <li>· <a href="https://plato.stanford.edu/entries/kant-hume-causality/" target="_blank" rel="noopener" class="underline text-accent">SEP: Kant and Hume on Causality</a></li>
+        <li>· <a href="https://plato.stanford.edu/entries/kant-transcendental/" target="_blank" rel="noopener" class="underline text-accent">SEP: Kant's Transcendental Arguments</a></li>
+        <li>· 邓晓芒《纯粹理性批判》句读（分析论部分）· 李秋零《康德著作全集》注释本</li>
       </ul>
     </div>
 
-    <div class="flex flex-wrap gap-3 mt-[18px]">
+    <div class="flex flex-wrap gap-3 mt-6">
       <a href="/aesthetic/" class="pill">← 感性论</a>
-      <a href="/dialectic/" class="pill">辩证论 30条 →</a>
+      <a href="/deng/" class="pill">句读全库 全部{total}条 →</a>
+      <a href="/dialectic/" class="pill">下一章 辩证论 →</a>
     </div>
   </main>
 </Base>

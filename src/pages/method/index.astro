@@ -1,73 +1,122 @@
 ---
 import Base from '../../layouts/Base.astro';
 import { commentDB } from '../../lib/commentDB';
-const title = '方法论 · 13条句读全量 | 训练/法规/建筑术/历史完整讲解';
+const title = '先验方法论 · 导读：未来形而上学的说明书';
 
 interface Item { key: string; ref: string; original: string; deng: string; tip: string }
-const all: Item[] = Object.entries(commentDB)
-  .filter(([k]) => k.startsWith('meth-'))
-  .map(([k, v]) => ({ key: k, ...v }));
-
-const groupDefs: { title: string; pred: (k: string) => boolean }[] = [
-  { title: '1 · 纯粹理性的训练（Discipline）', pred: (k) => k.startsWith('meth-disc') },
-  { title: '2 · 纯粹理性的法规（Canon）与至善', pred: (k) => k.startsWith('meth-canon') || k.startsWith('meth-highest') },
-  { title: '3 · 建筑术（Architectonic）', pred: (k) => k.startsWith('meth-archi') },
-  { title: '4 · 纯粹理性的历史', pred: (k) => k.startsWith('meth-history') },
-];
-const used = new Set<string>();
-const groups = groupDefs.map((gd) => {
-  const items = all.filter((i) => !used.has(i.key) && gd.pred(i.key));
-  items.forEach((i) => used.add(i.key));
-  return { title: gd.title, items };
-}).filter((g) => g.items.length > 0);
-
-const total = all.length;
+const pick = (keys: string[]): Item[] => keys
+  .map((k) => (commentDB[k] ? { key: k, ...commentDB[k] } : null))
+  .filter((x): x is Item => x !== null);
+const total = Object.keys(commentDB).filter((k) => k.startsWith('meth-')).length;
 ---
 
-<Base title={title} current="/method/" badge={`${total}条句读全量`} searchPlaceholder="搜索：训练/至善/建筑术…" readingOn>
+<Base title={title} current="/method/" badge={`导读 · 全部${total}条见句读全库`} searchPlaceholder="搜索：训练/至善/建筑术…" readingOn>
   <main class="max-w-[1320px] mx-auto px-7 py-9">
-    <div class="chip">Part II · 方法论 · {total}条句读完整讲解 · 未来形而上学说明书</div>
+    <div class="chip">Part II · 方法论 · 导读 · 未来形而上学说明书</div>
     <h1 class="h1-page mt-2.5">
       方法论<br />
-      <span class="text-[13px] text-muted font-sans">纯粹理性的训练、法规、建筑术、历史 — 每条含原文定位 + 邓晓芒式讲解 + 学习提示</span>
+      <span class="text-[13px] text-muted font-sans">纯粹理性的训练、法规、建筑术、历史 — 全书收官，通向第二批判</span>
     </h1>
-    <p class="lead">全部句读讲解已直接展示在页面中，点击任意条目仍可打开右侧精读抽屉对照；右上角"精读"开关可高亮所有可点击句。</p>
 
-    <!-- 完整句读讲解 -->
-    {
-      groups.map((g) => (
-        <section class="mt-6">
-          <div class="section-head" style="margin:0 0 14px">
-            <div class="h3">{g.title} · {g.items.length}条</div>
+    <!-- 本章任务 -->
+    <div class="card mt-5">
+      <div class="h3">本章任务 · 它要解决什么问题</div>
+      <p class="p text-[13.5px]">前三部分（感性论/分析论/辩证论）完成了"要素论"——认识能力审查完毕。方法论则回答：<b>审查之后，未来的形而上学该怎么建？</b>它给出四样东西：训练（防止理性误用）、法规（认识无法规，实践才有法规——道德律）、建筑术（知识成体系）、历史（哲学从独断→怀疑→批判的成熟之路）。</p>
+      <div class="quote mt-3 text-xs">一句话："我不得不扬弃知识，为信仰留出地盘"——方法论把批判的成果交棒给实践理性。</div>
+    </div>
+
+    <!-- 论证路线图 -->
+    <div class="card mt-5">
+      <div class="h3">论证路线图 · 四部分</div>
+      <div class="grid grid-cols-1 md:grid-cols-4 gap-3">
+        <div class="p-3 bg-bg2 rounded-xl"><b class="font-mono text-[11px]">① 训练</b><div class="text-xs mt-1">定义/公理/证明/假设四纪律——数学构造，哲学分析，超验假设非法。</div></div>
+        <div class="p-3 bg-bg2 rounded-xl"><b class="font-mono text-[11px]">② 法规</b><div class="text-xs mt-1">认识领域理性无法规，实践领域才有法规——道德律，第二批判入口。</div></div>
+        <div class="p-3 bg-bg2 rounded-xl"><b class="font-mono text-[11px]">③ 建筑术</b><div class="text-xs mt-1">知识不是堆积而是有机体：感性/知性/理性各自有位，成体系才科学。</div></div>
+        <div class="p-3 bg-bg2 rounded-xl"><b class="font-mono text-[11px]">④ 历史</b><div class="text-xs mt-1">哲学史三阶段：独断（沃尔夫）→ 怀疑（休谟）→ 批判（康德自己）。</div></div>
+      </div>
+    </div>
+
+    <!-- 核心句读精选 -->
+    <div class="section-head" style="margin:28px 0 12px">
+      <div class="h3">核心句读精选 · 读懂本章的关键句</div>
+      <span class="font-mono text-[10px] text-muted">完整 {total} 条见 <a href="/deng/" class="underline">句读全库</a></span>
+    </div>
+
+    <div class="card mt-3">
+      <div class="h3">训练 · 理性的纪律</div>
+      {
+        pick(['meth-disc-def', 'meth-disc-axiom', 'meth-disc-hypo', 'meth-disc-polemic']).map((it) => (
+          <div class="my-2 readable" data-key={it.key}>
+            <div class="font-mono text-[10px] text-muted">{it.ref}</div>
+            <div class="serif font-bold my-1">「{it.original}」</div>
+            <div class="p text-[13px]">{it.deng}</div>
           </div>
-          {
-            g.items.map((it) => (
-              <div class="card my-3 readable" data-key={it.key}>
-                <div class="font-mono text-[11px] text-muted">{it.ref} · {it.key}</div>
-                <div class="serif font-bold my-2 leading-relaxed">「{it.original}」</div>
-                <div class="p text-sm"><b>邓晓芒讲：</b>{it.deng}</div>
-                <div class="mt-2"><span class="tag text-[10px]">{it.tip}</span></div>
-              </div>
-            ))
-          }
-        </section>
-      ))
-    }
+        ))
+      }
+    </div>
+
+    <div class="card mt-4">
+      <div class="h3">法规与至善 · 通向实践理性</div>
+      {
+        pick(['meth-canon', 'meth-canon-faith', 'meth-highest-good', 'meth-highest-good-link']).map((it) => (
+          <div class="my-2 readable" data-key={it.key}>
+            <div class="font-mono text-[10px] text-muted">{it.ref}</div>
+            <div class="serif font-bold my-1">「{it.original}」</div>
+            <div class="p text-[13px]">{it.deng}</div>
+          </div>
+        ))
+      }
+    </div>
+
+    <div class="card mt-4">
+      <div class="h3">建筑术与历史</div>
+      {
+        pick(['meth-architectonic', 'meth-history-dog', 'meth-history-scep', 'meth-history-crit']).map((it) => (
+          <div class="my-2 readable" data-key={it.key}>
+            <div class="font-mono text-[10px] text-muted">{it.ref}</div>
+            <div class="serif font-bold my-1">「{it.original}」</div>
+            <div class="p text-[13px]">{it.deng}</div>
+          </div>
+        ))
+      }
+    </div>
+
+    <!-- 疑难辨析 -->
+    <div class="card mt-6" style="background:linear-gradient(180deg,var(--color-card),var(--color-bg2))">
+      <div class="h3 accent">常见疑难辨析</div>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <b>① "哲学为什么不能像数学那样定义？"</b>
+          <p class="p text-[13px] mt-1">数学的"定义"创造对象（画一个三角形它就在），哲学的"定义"只能分析已有概念的内涵。想用数学方式构造哲学概念（如沃尔夫）是把方法用错了地方。</p>
+        </div>
+        <div>
+          <b>② "意见、知识、信仰怎么区分？"</b>
+          <p class="p text-[13px] mt-1">按主观/客观充分性：意见两者都不足，知识两者都足，信仰主观足客观不足。道德信仰（如相信至善可能）是理性的信仰，不是盲从。</p>
+        </div>
+        <div>
+          <b>③ "扬弃知识为信仰留地盘，是反科学吗？"</b>
+          <p class="p text-[13px] mt-1">恰恰相反。限制思辨理性，正是为了不让它把实践领域也吞掉——科学管现象，道德管自由，各得其所，这是双赢。</p>
+        </div>
+        <div>
+          <b>④ "方法论对今天有什么用？"</b>
+          <p class="p text-[13px] mt-1">建筑术提醒：做研究先有体系框架，不是材料堆砌；训练提醒：区分可证与不可证（哪些能科学假设、哪些不能）。这是跨越两百多年的方法论遗产。</p>
+        </div>
+      </div>
+    </div>
 
     <!-- 参考来源 -->
     <div class="card mt-6">
       <div class="h3">参考来源</div>
       <ul class="p text-[12.5px] leading-[1.9] mt-1" style="list-style:none;padding:0">
-        <li>· <a href="https://plato.stanford.edu/entries/kant-hume-causality/" target="_blank" rel="noopener" class="underline text-accent">SEP: Kant and Hume on Causality</a>（法规与实践理性边界）</li>
-        <li>· <a href="https://plato.stanford.edu/entries/kant-moral/" target="_blank" rel="noopener" class="underline text-accent">SEP: Kant's Moral Philosophy</a>（至善、德福一致）</li>
+        <li>· <a href="https://plato.stanford.edu/entries/kant-moral/" target="_blank" rel="noopener" class="underline text-accent">SEP: Kant's Moral Philosophy</a>（法规、至善）</li>
         <li>· <a href="https://plato.stanford.edu/entries/kant-religion/" target="_blank" rel="noopener" class="underline text-accent">SEP: Kant's Philosophy of Religion</a>（上帝公设与理性信仰）</li>
-        <li>· <a href="https://en.wikipedia.org/wiki/Architectonic" target="_blank" rel="noopener" class="underline text-accent">Wikipedia: Architectonic</a>（建筑术）</li>
+        <li>· 邓晓芒《纯粹理性批判》句读（方法论部分）· 李秋零《康德著作全集》注释本</li>
       </ul>
     </div>
 
-    <div class="flex flex-wrap gap-3 mt-[18px]">
+    <div class="flex flex-wrap gap-3 mt-6">
       <a href="/dialectic/" class="pill">← 辩证论</a>
-      <a href="/deng/" class="pill">句读实验室 110条 →</a>
+      <a href="/deng/" class="pill">句读全库 全部{total}条 →</a>
       <a href="/" class="pill">总览</a>
     </div>
   </main>

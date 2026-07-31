@@ -18,7 +18,6 @@ const baseDocs: SearchDoc[] = [
   { id: 'glossary', title: '术语库', url: '/glossary/', content: '先天先验超验 现象物自体 统觉 图型 二律背反 调节构成 先验唯心经验实在' },
   { id: 'sqlite', title: 'SQLite 全库', url: '/sqlite/', content: 'kant.db FTS5 全文检索 2380页 794段 217条 目录 SQL 控制台' },
   { id: 'deng-full', title: '私有全本阅览室', url: '/deng-full/', content: '邓晓芒 2381页 PDF pdf.js 全文检索 跳页 句读联动' },
-  { id: 'full', title: '完全内容版 217条', url: '/full/', content: '217条句读完全可见 打印 SEO 序言 导言 感性论 分析论 辩证论 方法论' },
 ];
 
 function getDocs(): SearchDoc[] {

@@ -1,40 +1,41 @@
 ---
 import Base from '../../layouts/Base.astro';
 import { commentDB } from '../../lib/commentDB';
-const title = '先验辩证论 · 30条句读全量 | 谬误/二律背反/上帝证明完整讲解';
+const title = '先验辩证论 · 导读：理性为何必然越界';
 
 interface Item { key: string; ref: string; original: string; deng: string; tip: string }
-const all: Item[] = Object.entries(commentDB)
-  .filter(([k]) => k.startsWith('dia-'))
-  .map(([k, v]) => ({ key: k, ...v }));
-
-const groupDefs: { title: string; pred: (k: string) => boolean }[] = [
-  { title: 'C0 · 理性理念与先验幻相（总论）', pred: (k) => k.startsWith('dia-ide') || k.startsWith('dia-illusion') },
-  { title: 'C1 · 谬误推理（理性心理学批判）', pred: (k) => k.startsWith('dia-para') },
-  { title: 'C2 · 二律背反 · 第一二律（数学的：世界有限/无限、单纯/可分）', pred: (k) => k.startsWith('dia-anti1') || k.startsWith('dia-anti2') || k === 'dia-anti-intro' || k === 'dia-anti-key' },
-  { title: 'C2 · 二律背反 · 第三四律（力学的：自由/必然）', pred: (k) => k.startsWith('dia-anti3') || k.startsWith('dia-anti4') || k === 'dia-freedom-moral' || k === 'dia-practical-door' },
-  { title: 'C3 · 理想与上帝三证明批判', pred: (k) => k.startsWith('dia-ideal') || k.startsWith('dia-onto') || k.startsWith('dia-cosmo') || k.startsWith('dia-physico') || k.startsWith('dia-regulative') },
-];
-const used = new Set<string>();
-const groups = groupDefs.map((gd) => {
-  const items = all.filter((i) => !used.has(i.key) && gd.pred(i.key));
-  items.forEach((i) => used.add(i.key));
-  return { title: gd.title, items };
-}).filter((g) => g.items.length > 0);
-
-const total = all.length;
+const pick = (keys: string[]): Item[] => keys
+  .map((k) => (commentDB[k] ? { key: k, ...commentDB[k] } : null))
+  .filter((x): x is Item => x !== null);
+const total = Object.keys(commentDB).filter((k) => k.startsWith('dia-')).length;
 ---
 
-<Base title={title} current="/dialectic/" badge={`${total}条句读全量`} searchPlaceholder="搜索：谬误/二律/存在不是谓词…" readingOn>
+<Base title={title} current="/dialectic/" badge={`导读 · 全部${total}条见句读全库`} searchPlaceholder="搜索：谬误/二律/存在不是谓词…" readingOn>
   <main class="max-w-[1320px] mx-auto px-7 py-9">
-    <div class="chip inline-block" style="border-color:#8e2a2a;color:#8e2a2a">Part C · 辩证论 幻相逻辑 · {total}条句读完整讲解</div>
+    <div class="chip inline-block" style="border-color:#8e2a2a;color:#8e2a2a">Part C · 辩证论 幻相逻辑 · 导读</div>
     <h1 class="h1-page mt-2.5">
       理性为何必然越狱？<br />
-      <span class="text-[13px] text-muted font-sans">从灵魂到世界到上帝：幻相不可避免但可被揭露 — 每条含原文定位 + 邓晓芒式讲解 + 学习提示</span>
+      <span class="text-[13px] text-muted font-sans">从灵魂到世界到上帝：幻相不可避免但可被揭露</span>
     </h1>
-    <p class="lead">全部句读讲解已直接展示在页面中，点击任意条目仍可打开右侧精读抽屉对照；右上角"精读"开关可高亮所有可点击句。二律背反正反题按组对照排列，附解决方案。</p>
 
-    <!-- 二律背反正反题速览 -->
+    <!-- 本章任务 -->
+    <div class="card mt-5" style="border:1px solid #8e2a2a">
+      <div class="h3" style="color:#8e2a2a">本章任务 · 它要解决什么问题</div>
+      <p class="p text-[13.5px]">知性用范畴立了法，但理性不满足于经验，它追求<b>无条件者</b>：灵魂（理性心理学）、世界整体（理性宇宙论）、上帝（理性神学）。辩证论证明：这些追求必然产生<b>先验幻相</b>——不是偶然错误，而是理性本性使然。批判的任务是揭露幻相、划定理性的合法界限，同时为实践理性（道德）留出地盘。</p>
+      <div class="quote mt-3 text-xs" style="border-left-color:#8e2a2a">一句话：理性想要认识无条件者，但无条件者不是经验对象——认识划界，实践立界。</div>
+    </div>
+
+    <!-- 论证路线图 -->
+    <div class="card mt-5">
+      <div class="h3">论证路线图 · 三站</div>
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+        <div class="p-3 bg-bg2 rounded-xl"><b class="font-mono text-[11px]">① 谬误推理</b><div class="text-xs mt-1">从"我思"推出灵魂实体/单纯/不朽——逻辑主词被偷换为实体，四重谬误。</div></div>
+        <div class="p-3 bg-bg2 rounded-xl"><b class="font-mono text-[11px]">② 二律背反</b><div class="text-xs mt-1">把世界当整体问有限/无限等——正反皆可证。数学二律皆假，力学二律皆真分域。</div></div>
+        <div class="p-3 bg-bg2 rounded-xl"><b class="font-mono text-[11px]">③ 上帝证明</b><div class="text-xs mt-1">本体论（存在不是谓词）、宇宙论（偷用本体论）、自然神学（至多证建筑师）——三种证明全部破产。</div></div>
+      </div>
+    </div>
+
+    <!-- 二律背反速览 -->
     <div class="card mt-5" style="border:1px solid #8e2a2a">
       <div class="h3" style="color:#8e2a2a">四组二律背反速览</div>
       <table class="table mt-2">
@@ -48,45 +49,105 @@ const total = all.length;
           <tr><td><b>第四</b>（力学）</td><td>有绝对必然存在者</td><td>无必然，一切偶然</td><td>皆真（分属现象/物自体）</td></tr>
         </tbody>
       </table>
-      <div class="quote mt-3 text-xs">邓晓芒要点：数学二律把"世界整体"当成已完成的总体去问有限无限——预设错，故皆假；力学二律把自由/必然放在现象界与物自体两个层面——不冲突，故皆真，为道德留出地盘。</div>
+      <div class="quote mt-3 text-xs" style="border-left-color:#8e2a2a">邓晓芒要点：数学二律把"世界整体"当成已完成的总体去问有限无限——预设错，故皆假；力学二律把自由/必然放在现象界与物自体两个层面——不冲突，故皆真，为道德留出地盘。</div>
     </div>
 
-    <!-- 完整句读讲解 -->
-    {
-      groups.map((g) => (
-        <section class="mt-6">
-          <div class="section-head" style="margin:0 0 14px">
-            <div class="h3">{g.title} · {g.items.length}条</div>
+    <!-- 核心句读精选 -->
+    <div class="section-head" style="margin:28px 0 12px">
+      <div class="h3">核心句读精选 · 读懂本章的关键句</div>
+      <span class="font-mono text-[10px] text-muted">完整 {total} 条见 <a href="/deng/" class="underline">句读全库</a></span>
+    </div>
+
+    <div class="card mt-3">
+      <div class="h3">理念与幻相 · 总论</div>
+      {
+        pick(['dia-ide-logic', 'dia-illusion', 'dia-idea-soul', 'dia-idea-world', 'dia-idea-god']).map((it) => (
+          <div class="my-2 readable" data-key={it.key}>
+            <div class="font-mono text-[10px] text-muted">{it.ref}</div>
+            <div class="serif font-bold my-1">「{it.original}」</div>
+            <div class="p text-[13px]">{it.deng}</div>
           </div>
-          {
-            g.items.map((it) => (
-              <div class="card my-3 readable" data-key={it.key}>
-                <div class="font-mono text-[11px] text-muted">{it.ref} · {it.key}</div>
-                <div class="serif font-bold my-2 leading-relaxed">「{it.original}」</div>
-                <div class="p text-sm"><b>邓晓芒讲：</b>{it.deng}</div>
-                <div class="mt-2"><span class="tag text-[10px]">{it.tip}</span></div>
-              </div>
-            ))
-          }
-        </section>
-      ))
-    }
+        ))
+      }
+    </div>
+
+    <div class="card mt-4">
+      <div class="h3">谬误推理 · 灵魂</div>
+      {
+        pick(['dia-para-1', 'dia-para-2', 'dia-para-4']).map((it) => (
+          <div class="my-2 readable" data-key={it.key}>
+            <div class="font-mono text-[10px] text-muted">{it.ref}</div>
+            <div class="serif font-bold my-1">「{it.original}」</div>
+            <div class="p text-[13px]">{it.deng}</div>
+          </div>
+        ))
+      }
+    </div>
+
+    <div class="card mt-4">
+      <div class="h3">二律背反 · 世界</div>
+      {
+        pick(['dia-anti1-thesis', 'dia-anti1-antith', 'dia-anti1-res', 'dia-anti3-thesis', 'dia-anti3-res']).map((it) => (
+          <div class="my-2 readable" data-key={it.key}>
+            <div class="font-mono text-[10px] text-muted">{it.ref}</div>
+            <div class="serif font-bold my-1">「{it.original}」</div>
+            <div class="p text-[13px]">{it.deng}</div>
+          </div>
+        ))
+      }
+    </div>
+
+    <div class="card mt-4">
+      <div class="h3">上帝 · 三证明批判</div>
+      {
+        pick(['dia-onto-refutation', 'dia-onto-100thaler', 'dia-cosmo', 'dia-physico', 'dia-regulative']).map((it) => (
+          <div class="my-2 readable" data-key={it.key}>
+            <div class="font-mono text-[10px] text-muted">{it.ref}</div>
+            <div class="serif font-bold my-1">「{it.original}」</div>
+            <div class="p text-[13px]">{it.deng}</div>
+          </div>
+        ))
+      }
+    </div>
+
+    <!-- 疑难辨析 -->
+    <div class="card mt-6" style="background:linear-gradient(180deg,var(--color-card),var(--color-bg2));border:1px solid #8e2a2a">
+      <div class="h3" style="color:#8e2a2a">常见疑难辨析</div>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <b>① "为什么正题反题都能证明？"</b>
+          <p class="p text-[13px] mt-1">因为"世界整体"本身不是经验对象。正题从"整体已完成"推，反题从"整体未完成"推——两个证明都严谨，错在共同前提：把世界当作物自体那样的已完成总体。</p>
+        </div>
+        <div>
+          <b>② "存在不是谓词"到底什么意思？</b>
+          <p class="p text-[13px] mt-1">"存在"不增加概念的任何内容：想象中 100 塔勒与现实 100 塔勒，概念完全相同，区别只在"被设定"。所以从"上帝概念"推不出"上帝存在"。</p>
+        </div>
+        <div>
+          <b>③ "康德否定上帝存在吗？"</b>
+          <p class="p text-[13px] mt-1">不否定，只否定"认识上能证明"。认识上上帝不可知，但实践上可作为道德公设——这正是《实践理性批判》的入口。</p>
+        </div>
+        <div>
+          <b>④ "理念就完全没用吗？"</b>
+          <p class="p text-[13px] mt-1">有用。理念作为<b>调节性</b>原则指导科学研究："仿佛"自然有统一设计，促使我们追求更系统的知识——只是不能当作构成性知识。</p>
+        </div>
+      </div>
+    </div>
 
     <!-- 参考来源 -->
     <div class="card mt-6">
       <div class="h3">参考来源</div>
       <ul class="p text-[12.5px] leading-[1.9] mt-1" style="list-style:none;padding:0">
-        <li>· <a href="https://plato.stanford.edu/entries/kant-reason/" target="_blank" rel="noopener" class="underline text-accent">SEP: Kant's Account of Reason</a>（理性理念与幻相）</li>
-        <li>· <a href="https://plato.stanford.edu/entries/kant-antinomies/" target="_blank" rel="noopener" class="underline text-accent">SEP: Kant's Antinomies of Pure Reason</a>（四组二律背反）</li>
-        <li>· <a href="https://plato.stanford.edu/entries/ontological-arguments/" target="_blank" rel="noopener" class="underline text-accent">SEP: Ontological Arguments</a>（"存在不是谓词"批判传统）</li>
-        <li>· <a href="https://en.wikipedia.org/wiki/Paralogism" target="_blank" rel="noopener" class="underline text-accent">Wikipedia: Paralogism</a>（谬误推理）</li>
+        <li>· <a href="https://plato.stanford.edu/entries/kant-reason/" target="_blank" rel="noopener" class="underline text-accent">SEP: Kant's Account of Reason</a></li>
+        <li>· <a href="https://plato.stanford.edu/entries/kant-antinomies/" target="_blank" rel="noopener" class="underline text-accent">SEP: Kant's Antinomies of Pure Reason</a></li>
+        <li>· <a href="https://plato.stanford.edu/entries/ontological-arguments/" target="_blank" rel="noopener" class="underline text-accent">SEP: Ontological Arguments</a></li>
+        <li>· 邓晓芒《纯粹理性批判》句读（辩证论部分）· 李秋零《康德著作全集》注释本</li>
       </ul>
     </div>
 
-    <div class="flex flex-wrap gap-3 mt-[18px]">
+    <div class="flex flex-wrap gap-3 mt-6">
       <a href="/analytic/" class="pill">← 分析论</a>
-      <a href="/method/" class="pill">方法论 13条 →</a>
-      <a href="/deng/" class="pill">句读实验室 110条 →</a>
+      <a href="/deng/" class="pill">句读全库 全部{total}条 →</a>
+      <a href="/method/" class="pill">下一章 方法论 →</a>
     </div>
   </main>
 </Base>
