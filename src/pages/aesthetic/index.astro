@@ -1,6 +1,10 @@
 ---
 import Base from '../../layouts/Base.astro';
+import SentenceReader from '../../components/SentenceReader.astro';
 import { commentDB } from '../../lib/commentDB';
+import { parseSentences } from '../../lib/parse';
+import { DatabaseSync } from 'node:sqlite';
+import path from 'node:path';
 const title = '先验感性论 · 导读：时空与数学如何可能';
 
 interface Item { key: string; ref: string; original: string; deng: string; tip: string }
@@ -8,6 +12,12 @@ const pick = (keys: string[]): Item[] => keys
   .map((k) => (commentDB[k] ? { key: k, ...commentDB[k] } : null))
   .filter((x): x is Item => x !== null);
 const total = Object.keys(commentDB).filter((k) => k.startsWith('ae-')).length;
+
+interface ChunkRow { id: string; start_page: number; text: string }
+const db = new DatabaseSync(path.join(process.cwd(), 'data/kant.db'));
+const raw = db.prepare('SELECT id, start_page, text FROM chunks WHERE start_page >= ? AND start_page <= ? ORDER BY start_page').all(269, 499) as ChunkRow[];
+db.close();
+const sentences = raw.flatMap((r) => parseSentences(r.text, r.id, r.start_page));
 ---
 
 <Base title={title} current="/aesthetic/" badge={`导读 · 全部${total}条见句读全库`} searchPlaceholder="搜索：空间/时间/先验唯心…" readingOn>
@@ -80,6 +90,13 @@ const total = Object.keys(commentDB).filter((k) => k.startsWith('ae-')).length;
         ))
       }
     </div>
+
+    <!-- 逐句助读 · 康德原文 + 邓晓芒讲解 -->
+    <div class="section-head" style="margin:28px 0 12px">
+      <div class="h3">逐句助读 · 页 269–499 · {sentences.length}句</div>
+      <span class="font-mono text-[10px] text-muted">一句康德原文，配一段邓晓芒讲解</span>
+    </div>
+    <SentenceReader sentences={sentences} />
 
     <!-- 疑难辨析 -->
     <div class="card mt-6" style="background:linear-gradient(180deg,var(--color-card),var(--color-bg2))">

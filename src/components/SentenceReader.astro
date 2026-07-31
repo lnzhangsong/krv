@@ -1,0 +1,235 @@
+---
+interface Sentence { start: number; orig: string; exp: string; chunkId: string }
+interface Props { sentences: Sentence[]; pageSize?: number; jumpHref?: string; pagerBottom?: number; floating?: boolean }
+const { sentences, pageSize = 20, jumpHref = '/quanwen/', pagerBottom = 20, floating = true } = Astro.props;
+const pages = Math.ceil(sentences.length / pageSize);
+void pagerBottom;
+---
+
+<div class="reader">
+  <div class="flex items-center gap-2 mb-3 flex-wrap">
+    <span class="font-mono text-[11px] text-muted">逐句助读 · 共 {sentences.length} 句 · 每页 {pageSize} 句 · 键盘 ← → 翻页</span>
+  </div>
+
+  <div class="rd-body">
+    {
+      sentences.map((s, i) => (
+        <div class="rd-item" data-i={i}>
+          <a href={`${jumpHref}#c${s.start}`} class="rd-ref">页 {s.start} · #{s.chunkId}</a>
+          <div class="rd-orig">「{s.orig}」</div>
+          <div class="rd-exp">{s.exp}</div>
+          <button class="rd-ai toggle" data-orig={s.orig}>✦ AI 讲解</button>
+        </div>
+      ))
+    }
+  </div>
+
+  <div class="rd-modal" hidden>
+    <div class="rd-modal-card">
+      <div class="flex items-center justify-between gap-3 mb-2">
+        <b class="font-mono text-[12px]">AI 实时讲解</b>
+        <button class="rd-modal-close toggle">✕</button>
+      </div>
+      <div class="rd-modal-orig serif font-bold text-[15px] leading-relaxed mb-2"></div>
+      <div class="rd-modal-body p text-sm"></div>
+      <div class="mt-3 flex flex-wrap gap-2 items-center">
+        <button class="rd-ai-cfg toggle">⚙ 配置接口</button>
+        <span class="font-mono text-[10px] text-muted">未配置时点击此处填写 OpenAI 兼容接口</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="rd-pager" style={`${floating ? '' : 'position:static;transform:none;margin:10px auto 4px;box-shadow:var(--shadow-soft);'}`}>
+    <button class="rd-prev toggle">← 上一页</button>
+    <span class="font-mono text-xs text-muted">第 <b class="rd-page text-ink">1</b> / <span class="rd-total">{pages}</span> 页</span>
+    <button class="rd-next toggle">下一页 →</button>
+    <span class="w-px self-stretch bg-line"></span>
+    <a href={jumpHref} class="toggle">全文直读 →</a>
+  </div>
+</div>
+
+<script>
+  import { explainSentence, getLlmConfig, saveLlmConfig, clearLlmConfig, STORAGE_KEY } from '../lib/ai';
+
+  const pageSize = {pageSize};
+  document.querySelectorAll('.reader').forEach((root) => {
+    const items = Array.from(root.querySelectorAll('.rd-item')) as HTMLElement[];
+    const totalPages = Math.max(1, Math.ceil(items.length / pageSize));
+    const pageEl = root.querySelector('.rd-page') as HTMLElement | null;
+    const totalEl = root.querySelector('.rd-total') as HTMLElement | null;
+    let page = 1;
+
+    const sync = () => {
+      if (pageEl) pageEl.textContent = String(page);
+      if (totalEl) totalEl.textContent = String(totalPages);
+    };
+    const apply = () => {
+      items.forEach((it, i) => {
+        const show = i >= (page - 1) * pageSize && i < page * pageSize;
+        it.style.display = show ? '' : 'none';
+      });
+      sync();
+    };
+    const go = (p: number) => {
+      page = Math.min(Math.max(1, p), totalPages);
+      apply();
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    };
+    root.querySelector('.rd-prev')?.addEventListener('click', () => go(page - 1));
+    root.querySelector('.rd-next')?.addEventListener('click', () => go(page + 1));
+    apply();
+
+    // ==== AI 实时讲解 ====
+    const modal = root.querySelector('.rd-modal') as HTMLElement | null;
+    const modalOrig = root.querySelector('.rd-modal-orig') as HTMLElement | null;
+    const modalBody = root.querySelector('.rd-modal-body') as HTMLElement | null;
+    const cfgBtn = root.querySelector('.rd-ai-cfg') as HTMLElement | null;
+    let busy = false;
+
+    const openConfig = () => {
+      const cur = getLlmConfig();
+      const endpoint = prompt('OpenAI 兼容接口地址', cur?.endpoint ?? 'https://api.openai.com/v1/chat/completions');
+      if (endpoint === null) return;
+      const key = prompt('API Key', cur?.key ?? '');
+      if (key === null) return;
+      const model = prompt('模型名', cur?.model ?? 'gpt-4o-mini') ?? 'gpt-4o-mini';
+      if (!endpoint.trim() || !key.trim()) {
+        clearLlmConfig();
+        if (modalBody) modalBody.textContent = '已清除配置。';
+        return;
+      }
+      saveLlmConfig({ endpoint: endpoint.trim(), key: key.trim(), model: model.trim() || 'gpt-4o-mini' });
+      if (modalBody) modalBody.textContent = '已保存配置，重新点击 ✦ AI 讲解 即可使用。';
+    };
+
+    cfgBtn?.addEventListener('click', openConfig);
+
+    root.querySelectorAll('.rd-ai').forEach((btn) => {
+      btn.addEventListener('click', async () => {
+        if (busy || !modal || !modalBody || !modalOrig) return;
+        const orig = (btn as HTMLElement).dataset.orig ?? '';
+        if (!getLlmConfig()) {
+          if (modalOrig) modalOrig.textContent = orig;
+          modalBody.textContent = '未配置 AI 接口。请点击「⚙ 配置接口」填写 OpenAI 兼容地址与 Key（保存在本浏览器）。';
+          modal.hidden = false;
+          return;
+        }
+        busy = true;
+        (btn as HTMLButtonElement).disabled = true;
+        (btn as HTMLButtonElement).textContent = '✦ 讲解中…';
+        modalOrig.textContent = orig;
+        modalBody.textContent = '正在生成讲解…';
+        modal.hidden = false;
+        try {
+          modalBody.textContent = await explainSentence(orig);
+        } catch (e) {
+          modalBody.textContent = String(e instanceof Error ? e.message : e);
+        } finally {
+          busy = false;
+          (btn as HTMLButtonElement).disabled = false;
+          (btn as HTMLButtonElement).textContent = '✦ AI 讲解';
+        }
+      });
+    });
+    root.querySelector('.rd-modal-close')?.addEventListener('click', () => {
+      if (modal) modal.hidden = true;
+    });
+    // 配置存储标记（供调试/清空）
+    void STORAGE_KEY;
+  });
+</script>
+
+<style>
+  .reader {
+    position: relative;
+  }
+  .rd-item {
+    border: 1px solid var(--color-line);
+    border-radius: 16px;
+    padding: 18px 20px;
+    margin: 14px 0;
+    background: var(--color-card);
+  }
+  .rd-ref {
+    font-size: 10px;
+    font-family: var(--font-mono);
+    color: var(--color-accent2);
+  }
+  .rd-orig {
+    font-family: var(--font-serif);
+    font-weight: 700;
+    font-size: 17px;
+    line-height: 1.9;
+    margin: 8px 0 10px;
+    color: var(--color-ink);
+  }
+  .rd-exp {
+    font-size: 14.5px;
+    line-height: 1.95;
+    color: color-mix(in srgb, var(--color-ink) 82%, var(--color-muted));
+    border-left: 3px solid var(--color-accent2);
+    padding-left: 14px;
+  }
+  .rd-pager {
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 60;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 16px;
+    border-radius: 999px;
+    background: var(--color-card);
+    border: 1px solid var(--color-line);
+    box-shadow: 0 14px 44px rgba(16, 41, 71, 0.16);
+    max-width: calc(100vw - 24px);
+    overflow-x: auto;
+  }
+  .rd-pager.inline {
+    position: static;
+    transform: none;
+    margin: 10px auto 4px;
+    box-shadow: var(--shadow-soft);
+  }
+  .rd-body {
+    padding-bottom: 96px;
+  }
+  .rd-ai {
+    margin-top: 12px;
+    font-size: 11px;
+    color: var(--color-accent);
+    border-color: color-mix(in srgb, var(--color-accent) 35%, var(--color-line));
+  }
+  .rd-ai:hover {
+    border-color: var(--color-accent2);
+  }
+  .rd-modal {
+    position: fixed;
+    inset: 0;
+    z-index: 120;
+    display: grid;
+    place-items: center;
+    background: rgba(16, 41, 71, 0.35);
+    backdrop-filter: blur(4px);
+  }
+  .rd-modal[hidden] {
+    display: none;
+  }
+  .rd-modal-card {
+    width: min(640px, 92vw);
+    max-height: 80vh;
+    overflow: auto;
+    background: var(--color-card);
+    border: 1px solid var(--color-line);
+    border-radius: 20px;
+    padding: 22px;
+    box-shadow: 0 24px 80px rgba(0, 0, 0, 0.25);
+  }
+  .rd-modal-orig {
+    color: var(--color-ink);
+    border-left: 3px solid var(--color-accent2);
+    padding-left: 12px;
+  }
+</style>
