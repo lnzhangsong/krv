@@ -8,13 +8,19 @@ const all: Item[] = Object.entries(commentDB)
   .filter(([k]) => k.startsWith('ae-'))
   .map(([k, v]) => ({ key: k, ...v }));
 
-const groups: { title: string; items: Item[] }[] = [
-  { title: '空间 · 形而上学阐明 4 条 + 先验阐明', items: all.filter((i) => i.key.startsWith('ae-space-m') || i.key === 'ae-space-trans') },
-  { title: '时间 · 形而上学阐明 4 条 + 先验阐明', items: all.filter((i) => i.key.startsWith('ae-time-m') || i.key === 'ae-time-trans') },
-  { title: '空间时间的内外感官定位', items: all.filter((i) => i.key === 'ae-space-inner' || i.key === 'ae-time-inner') },
-  { title: '经验实在 · 先验观念性 · 反驳观念论', items: all.filter((i) => i.key === 'ae-emp-real' || i.key === 'ae-refutation-ps' || i.key === 'ae-b-refutation-proof') },
-  { title: '物自体触动说', items: all.filter((i) => i.key === 'ae-affect') },
-].filter((g) => g.items.length > 0);
+const groupDefs: { title: string; pred: (k: string) => boolean }[] = [
+  { title: '空间 · 形而上学阐明与结论', pred: (k) => k.startsWith('ae-space') },
+  { title: '时间 · 形而上学阐明与结论', pred: (k) => k.startsWith('ae-time') },
+  { title: '经验实在 · 先验观念性 · 反驳观念论', pred: (k) => k === 'ae-emp-real' || k === 'ae-refutation-ps' || k === 'ae-b-refutation-proof' || k === 'ae-emp-real-proof' },
+  { title: '感性论总论 · 划界与物自体', pred: (k) => k === 'ae-affect' || k === 'ae-phenomena-only' || k === 'ae-noumena-unknowable' || k === 'ae-revolution-early' || k === 'ae-sensibility-forms' },
+  { title: '数学基础 · 广延与强度', pred: (k) => k === 'ae-math-foundation' || k === 'ae-extent-intensity' },
+];
+const used = new Set<string>();
+const groups = groupDefs.map((gd) => {
+  const items = all.filter((i) => !used.has(i.key) && gd.pred(i.key));
+  items.forEach((i) => used.add(i.key));
+  return { title: gd.title, items };
+}).filter((g) => g.items.length > 0);
 
 const total = all.length;
 ---

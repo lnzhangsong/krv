@@ -8,14 +8,20 @@ const all: Item[] = Object.entries(commentDB)
   .filter(([k]) => k.startsWith('an-'))
   .map(([k, v]) => ({ key: k, ...v }));
 
-const groups: { title: string; items: Item[] }[] = [
-  { title: 'B1 · 一般逻辑 vs 先验逻辑与范畴表推导', items: all.filter((i) => i.key.startsWith('an-logic') || i.key === 'an-cat-ded-idea') },
-  { title: 'B1 · 12 范畴逐条详解', items: all.filter((i) => i.key.startsWith('an-cat-') && i.key !== 'an-cat-ded-idea') },
-  { title: 'B2 · 先验演绎（A 版主观 + B 版客观）', items: all.filter((i) => i.key.startsWith('an-ded-')) },
-  { title: 'B3 · 图型法（时间图型）', items: all.filter((i) => i.key.startsWith('an-schema-')) },
-  { title: 'B3续 · 原理体系（直观公理/知觉预测/经验类比/公设）', items: all.filter((i) => i.key.startsWith('an-prin-')) },
-  { title: 'B4 · 现象/物自体与先验反省', items: all.filter((i) => i.key === 'an-phen-noum' || i.key === 'an-amphib') },
-].filter((g) => g.items.length > 0);
+const groupDefs: { title: string; pred: (k: string) => boolean }[] = [
+  { title: 'B1 · 一般逻辑 vs 先验逻辑', pred: (k) => k.startsWith('an-logic') },
+  { title: 'B1 · 判断表与 12 范畴逐条', pred: (k) => k.startsWith('an-judg-') || k.startsWith('an-cat-') },
+  { title: 'B2 · 先验演绎（A 版主观 + B 版客观）', pred: (k) => k.startsWith('an-ded-') || k === 'an-apperception-synthetic' },
+  { title: 'B3 · 图型法（时间图型）', pred: (k) => k.startsWith('an-schema-') },
+  { title: 'B3续 · 原理体系（公理/预测/类比/公设）', pred: (k) => k.startsWith('an-prin-') },
+  { title: 'B4 · 现象/物自体与先验反省', pred: (k) => k.startsWith('an-phen') || k.startsWith('an-noumena') || k.startsWith('an-amphib') },
+];
+const used = new Set<string>();
+const groups = groupDefs.map((gd) => {
+  const items = all.filter((i) => !used.has(i.key) && gd.pred(i.key));
+  items.forEach((i) => used.add(i.key));
+  return { title: gd.title, items };
+}).filter((g) => g.items.length > 0);
 
 const total = all.length;
 ---

@@ -8,13 +8,19 @@ const all: Item[] = Object.entries(commentDB)
   .filter(([k]) => k.startsWith('dia-'))
   .map(([k, v]) => ({ key: k, ...v }));
 
-const groups: { title: string; items: Item[] }[] = [
-  { title: 'C0 · 理性理念与先验幻相（总论）', items: all.filter((i) => i.key === 'dia-ide-logic' || i.key === 'dia-illusion') },
-  { title: 'C1 · 谬误推理（理性心理学批判）', items: all.filter((i) => i.key.startsWith('dia-para')) },
-  { title: 'C2 · 二律背反 · 第一二律（数学的：世界有限/无限、单纯/可分）', items: all.filter((i) => i.key.startsWith('dia-anti1') || i.key.startsWith('dia-anti2') || i.key === 'dia-anti-intro') },
-  { title: 'C2 · 二律背反 · 第三四律（力学的：自由/必然）', items: all.filter((i) => i.key.startsWith('dia-anti3') || i.key.startsWith('dia-anti4')) },
-  { title: 'C3 · 理想与上帝三证明批判', items: all.filter((i) => i.key.startsWith('dia-ideal') || i.key.startsWith('dia-onto') || i.key === 'dia-cosmo' || i.key === 'dia-physico' || i.key === 'dia-regulative') },
-].filter((g) => g.items.length > 0);
+const groupDefs: { title: string; pred: (k: string) => boolean }[] = [
+  { title: 'C0 · 理性理念与先验幻相（总论）', pred: (k) => k.startsWith('dia-ide') || k.startsWith('dia-illusion') },
+  { title: 'C1 · 谬误推理（理性心理学批判）', pred: (k) => k.startsWith('dia-para') },
+  { title: 'C2 · 二律背反 · 第一二律（数学的：世界有限/无限、单纯/可分）', pred: (k) => k.startsWith('dia-anti1') || k.startsWith('dia-anti2') || k === 'dia-anti-intro' || k === 'dia-anti-key' },
+  { title: 'C2 · 二律背反 · 第三四律（力学的：自由/必然）', pred: (k) => k.startsWith('dia-anti3') || k.startsWith('dia-anti4') || k === 'dia-freedom-moral' || k === 'dia-practical-door' },
+  { title: 'C3 · 理想与上帝三证明批判', pred: (k) => k.startsWith('dia-ideal') || k.startsWith('dia-onto') || k.startsWith('dia-cosmo') || k.startsWith('dia-physico') || k.startsWith('dia-regulative') },
+];
+const used = new Set<string>();
+const groups = groupDefs.map((gd) => {
+  const items = all.filter((i) => !used.has(i.key) && gd.pred(i.key));
+  items.forEach((i) => used.add(i.key));
+  return { title: gd.title, items };
+}).filter((g) => g.items.length > 0);
 
 const total = all.length;
 ---

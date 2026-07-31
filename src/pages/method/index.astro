@@ -8,12 +8,18 @@ const all: Item[] = Object.entries(commentDB)
   .filter(([k]) => k.startsWith('meth-'))
   .map(([k, v]) => ({ key: k, ...v }));
 
-const groups: { title: string; items: Item[] }[] = [
-  { title: '1 · 纯粹理性的训练（Discipline）', items: all.filter((i) => i.key.startsWith('meth-disc')) },
-  { title: '2 · 纯粹理性的法规（Canon）与至善', items: all.filter((i) => i.key.startsWith('meth-canon') || i.key === 'meth-highest-good') },
-  { title: '3 · 建筑术（Architectonic）', items: all.filter((i) => i.key === 'meth-architectonic') },
-  { title: '4 · 纯粹理性的历史', items: all.filter((i) => i.key.startsWith('meth-history')) },
-].filter((g) => g.items.length > 0);
+const groupDefs: { title: string; pred: (k: string) => boolean }[] = [
+  { title: '1 · 纯粹理性的训练（Discipline）', pred: (k) => k.startsWith('meth-disc') },
+  { title: '2 · 纯粹理性的法规（Canon）与至善', pred: (k) => k.startsWith('meth-canon') || k.startsWith('meth-highest') },
+  { title: '3 · 建筑术（Architectonic）', pred: (k) => k.startsWith('meth-archi') },
+  { title: '4 · 纯粹理性的历史', pred: (k) => k.startsWith('meth-history') },
+];
+const used = new Set<string>();
+const groups = groupDefs.map((gd) => {
+  const items = all.filter((i) => !used.has(i.key) && gd.pred(i.key));
+  items.forEach((i) => used.add(i.key));
+  return { title: gd.title, items };
+}).filter((g) => g.items.length > 0);
 
 const total = all.length;
 ---

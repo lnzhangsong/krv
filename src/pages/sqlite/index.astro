@@ -8,17 +8,17 @@ const title = 'SQLite 数据层 · JSON 备用版 100%可用';
     <div class="card" style="background:linear-gradient(180deg,#f6fff6,var(--color-card));border-color:#b7e2b7">
       <div class="h3" style="color:#2a7d2a">已修复 DB 未加载问题</div>
       <p class="p text-[13px]">不用 <code>sql.js wasm</code> 加载数据库——浏览器里直接读离线 JSON：<br />
-        <b>1. 浏览器里</b> 直接用 <code>/data/pages.json (5.5M, 2380页全文) + chunks.json + commentDB 116条</code> 做全文检索，<b>不需要 wasm，保证 100% 能搜</b><br />
+        <b>1. 浏览器里</b> 直接用 <code>/data/pages.json (5.5M, 2380页全文) + chunks.json + commentDB 217条</code> 做全文检索，<b>不需要 wasm，保证 100% 能搜</b><br />
         <b>2. 数据本地内置</b> 全部检索数据已随站点静态打包，无外部依赖、无服务端，构建产物可离线部署。
       </p>
       <div class="flex flex-wrap gap-2 mt-2.5">
-        <span class="tag">2380页</span><span class="tag">794段</span><span class="tag">116条句读</span><span class="tag">200条目录</span><span class="tag">无需 wasm</span>
+        <span class="tag">2380页</span><span class="tag">794段</span><span class="tag">217条句读</span><span class="tag">200条目录</span><span class="tag">无需 wasm</span>
       </div>
     </div>
 
     <div class="flex flex-wrap gap-2.5 my-4">
       <input id="q" placeholder="输入：先验演绎 / 存在不是谓词 / 自由 / 因果律" class="flex-1 min-w-[260px] border border-line rounded-full px-[18px] py-2.5 bg-card font-mono outline-none" />
-      <button id="btnJudou" class="toggle">搜句读 116</button>
+      <button id="btnJudou" class="toggle">搜句读 217</button>
       <button id="btnChunks" class="toggle">搜原书 794段</button>
       <button id="btnPages" class="toggle">搜全文 2380页</button>
       <button id="btnToc" class="toggle outline">搜目录 200</button>
@@ -50,7 +50,7 @@ const title = 'SQLite 数据层 · JSON 备用版 100%可用';
 python3 - &lt;&lt; 'PY'
 import json, re
 
-# 1) 句读 116 条（来自 src/lib/commentDB，构建时内嵌）
+# 1) 句读 217 条（来自 src/lib/commentDB，构建时内嵌）
 from pathlib import Path
 # 直接读构建后的 JSON 数据文件
 chunks = json.loads(Path('public/data/chunks.json').read_text())
@@ -67,7 +67,7 @@ PY
       </div>
       <div class="panel">
         <div class="panelHead"><b>检索结果</b><span id="cnt" class="tag">0</span></div>
-        <div id="results" class="panelBody"><div class="p text-[13px] text-muted">输入关键词点按钮，结果显示在这里。已加载 116条句读 + 794段 + 200条目录，100%可用。</div></div>
+        <div id="results" class="panelBody"><div class="p text-[13px] text-muted">输入关键词点按钮，结果显示在这里。已加载 217条句读 + 794段 + 200条目录，100%可用。</div></div>
       </div>
     </div>
   </main>
@@ -154,7 +154,7 @@ PY
       fetch('/data/toc.json').then((r) => r.json()).then((d: Toc[]) => { toc = d; log(`toc.json 加载 ${d.length} 条`); return d; }),
     ]).then(() => {
       judouList = Object.entries(commentDB).map(([key, v]) => ({ key, ...v, chapter: chapterOf(v.ref) }));
-      log(`judou 116条 已就绪`);
+      log(`judou 217条 已就绪`);
       const status = document.getElementById('status');
       if (status) {
         status.textContent = `就绪：${judouList.length}句读 + ${chunks.length}段 + ${pages.length}页全文 + ${toc.length}目录`;

@@ -1,27 +1,28 @@
 ---
 import Base from '../../layouts/Base.astro';
 import { commentDB } from '../../lib/commentDB';
-const title = '邓晓芒句读全库 116条 · 纯批逐句精读实验室';
+const title = '邓晓芒句读全库 · 217条完整讲解 | 纯批逐句精读实验室';
 
-const groups = new Map<string, { key: string; ref: string; original: string; deng: string; tip: string }[]>();
-for (const [key, v] of Object.entries(commentDB)) {
-  const chap = v.ref.split(' ')[0];
-  const list = groups.get(chap) ?? [];
-  list.push({ key, ...v });
-  groups.set(chap, list);
-}
-const order = ['A版序言', 'B版序言', '导言', 'A23/', 'A30/', 'A54/', 'A66/', 'A93/', 'A99', 'A124', 'B129', 'B141', 'A137', 'A161', 'A182', 'A211', 'A235', 'A260', 'A307', 'A293', 'A348', 'A405', 'A426', 'A431', 'A444', 'A452', 'A567', 'A592', 'A603', 'A620', 'A644', 'A712', 'A795', 'A832', 'A852'];
-const sorted = [...groups.keys()].sort((a, b) => {
-  const ia = order.findIndex((o) => a.startsWith(o));
-  const ib = order.findIndex((o) => b.startsWith(o));
-  return (ia === -1 ? 999 : ia) - (ib === -1 ? 999 : ib);
-});
+const groupDefs: { key: string; title: string }[] = [
+  { key: 'pref-', title: '序言' },
+  { key: 'intro-', title: '导言' },
+  { key: 'ae-', title: '先验感性论' },
+  { key: 'an-', title: '先验分析论' },
+  { key: 'dia-', title: '先验辩证论' },
+  { key: 'meth-', title: '先验方法论' },
+];
+const groups: { title: string; items: { key: string; ref: string; original: string; deng: string; tip: string }[] }[] = groupDefs.map((gd) => ({
+  title: gd.title,
+  items: Object.entries(commentDB)
+    .filter(([k]) => k.startsWith(gd.key))
+    .map(([k, v]) => ({ key: k, ...v })),
+})).filter((g) => g.items.length > 0);
 const total = Object.keys(commentDB).length;
 ---
 
-<Base title={title} current="/deng/" badge="116条句读" searchPlaceholder="全站搜索：二律背反/统觉/存在不是谓词…" readingOn>
+<Base title={title} current="/deng/" badge={`${total}条句读`} searchPlaceholder="全站搜索：二律背反/统觉/存在不是谓词…" readingOn>
   <main class="max-w-[1320px] mx-auto px-7 py-8">
-    <div class="chip">DENG XIAOMANG 句读全库 V5 · {total}条 · 按原书14讲重排</div>
+    <div class="chip">DENG XIAOMANG 句读全库 V5 · {total}条 · 按章节分组</div>
     <h1 class="serif text-[38px] leading-tight mt-3.5 mb-2">
       邓晓芒200万字句读<br />
       <span class="text-sm text-muted font-sans tracking-[.18em]">逐句精读实验室 — 点击任意黑体句，右侧滑出详解</span>
@@ -43,26 +44,23 @@ const total = Object.keys(commentDB).length;
 
     <div class="mt-6">
       {
-        sorted.map((chap) => {
-          const items = groups.get(chap)!;
-          return (
-            <div class="mt-7">
-              <div class="h3">{chap}</div>
-              <div>
-                {
-                  items.map((it) => (
-                    <div class="entry readable" data-key={it.key}>
-                      <div class="ref mono">{it.ref} · {it.key}</div>
-                      <div class="orig">「{it.original}」</div>
-                      <div class="p text-[13px] mt-1.5"><b>邓晓芒讲：</b>{it.deng}</div>
-                      <div class="mt-1.5"><span class="tag text-[10px]">{it.tip}</span></div>
-                    </div>
-                  ))
-                }
-              </div>
+        groups.map((g) => (
+          <div class="mt-7">
+            <div class="h3">{g.title} · {g.items.length}条</div>
+            <div>
+              {
+                g.items.map((it) => (
+                  <div class="entry readable" data-key={it.key}>
+                    <div class="ref mono">{it.ref} · {it.key}</div>
+                    <div class="orig">「{it.original}」</div>
+                    <div class="p text-[13px] mt-1.5"><b>邓晓芒讲：</b>{it.deng}</div>
+                    <div class="mt-1.5"><span class="tag text-[10px]">{it.tip}</span></div>
+                  </div>
+                ))
+              }
             </div>
-          );
-        })
+          </div>
+        ))
       }
     </div>
   </main>

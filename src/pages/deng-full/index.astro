@@ -22,7 +22,7 @@ const title = '邓晓芒句读 全本私有阅览室 2381页 | KRV V5';
       </div>
       <div id="sideCol" class="border border-line rounded-2xl bg-card flex flex-col overflow-hidden max-h-[calc(100vh-68px)]">
         <div id="sideTop" class="p-3.5 border-b border-line">
-          <div class="h3">全本全文检索 + 116条句读联动</div>
+          <div class="h3">全本全文检索 + 217条句读联动</div>
           <input id="fullSearch" placeholder="搜索全书：比如 先验演绎 存在不是谓词 自由…" class="w-full border border-line rounded-full px-3.5 py-2 bg-bg font-mono mt-2 outline-none" />
           <div class="flex flex-wrap gap-1.5 mt-2.5">
             <button class="tag" data-kw="先验感性论">感性论</button>
@@ -32,7 +32,7 @@ const title = '邓晓芒句读 全本私有阅览室 2381页 | KRV V5';
             <button class="tag" data-kw="二律背反">二律背反</button>
             <button class="tag" data-kw="存在不是谓词">存在不是谓词</button>
           </div>
-          <div class="p text-[11px] text-muted mt-2">说明：左侧PDF是您上传的完整扫描版，仅在您私有workspace可用。右侧检索用离线 pages.json（2380页全文）生成，命中逐页显示摘要和页码，点击跳页。116条句读仍可用精读抽屉。</div>
+          <div class="p text-[11px] text-muted mt-2">说明：左侧PDF是您上传的完整扫描版，仅在您私有workspace可用。右侧检索用离线 pages.json（2380页全文）生成，命中逐页显示摘要和页码，点击跳页。217条句读仍可用精读抽屉。</div>
         </div>
         <div id="sideBody" class="flex-1 overflow-auto p-3.5">
           <div id="fullResults"></div>
@@ -105,12 +105,12 @@ const title = '邓晓芒句读 全本私有阅览室 2381页 | KRV V5';
       const list = document.getElementById('jubiaoList') as HTMLElement;
       const entries = Object.entries(commentDB);
       list.innerHTML =
-        '<div class="h3">116条句读快捷 nav（点击跳抽屉）</div>' +
+        '<div class="h3">217条句读快捷 nav（点击跳抽屉）</div>' +
         entries
           .slice(0, 80)
           .map(([k, v]) => `<div class="item readable" data-key="${k}" style="cursor:pointer"><div class="pg mono">${v.ref} · ${k}</div><div style="font-weight:700">${v.original.slice(0, 60)}</div><div style="font-size:11px;color:var(--color-muted)">${v.tip}</div></div>`)
           .join('') +
-        '<div class="p" style="font-size:11px;color:var(--color-muted);margin-top:8px">仅展示80条，去 /deng/ 看全部116条</div>';
+        '<div class="p" style="font-size:11px;color:var(--color-muted);margin-top:8px">仅展示80条，去 /deng/ 看全部217条</div>';
     }
 
     const esc = (s: string) => s.replace(/</g, '&lt;');

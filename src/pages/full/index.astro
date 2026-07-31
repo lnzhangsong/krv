@@ -1,7 +1,7 @@
 ---
 import Base from '../../layouts/Base.astro';
 import { commentDB } from '../../lib/commentDB';
-const title = '全量内容站 · 116条句读完全可见版';
+const title = '全量内容站 · 217条句读完全可见版';
 
 interface Item { key: string; ref: string; original: string; deng: string; tip: string }
 interface Section { title: string; items: Item[] }
@@ -42,7 +42,7 @@ const finalSections = sections.filter((s) => s.items.length > 0);
 const total = Object.keys(commentDB).length;
 ---
 
-<Base title={title} current="/full/" badge="116条完全可见版" searchPlaceholder="全站搜索：存在不是谓词/统觉…">
+<Base title={title} current="/full/" badge="217条完全可见版" searchPlaceholder="全站搜索：存在不是谓词/统觉…">
   <main class="max-w-[1320px] mx-auto px-7 py-7">
     <div class="chip">FULL CONTENT · {total}条句读不再藏在抽屉，全部写进HTML可见</div>
     <h1 class="serif text-4xl mt-3 mb-2">

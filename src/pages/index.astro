@@ -1,13 +1,13 @@
 ---
 import Base from '../layouts/Base.astro';
-const title = '纯粹理性批判 · V5 完整版 | 116条句读 + 全站搜索';
+const title = '纯粹理性批判 · V5 完整版 | 217条句读 + 全站搜索';
 ---
 
 <Base title={title} desc="KRV 1781/1787 · 文档全聚合 · 邓晓芒200万字句读提炼 · Astro + Tailwind 现代重构">
   <main class="max-w-[1320px] mx-auto px-7">
     <section class="pt-16 pb-6 grid grid-cols-1 lg:grid-cols-[1.2fr_.8fr] gap-9">
       <div>
-        <div class="chip inline-block">KRV 1781/1787 · 邓晓芒200万字句读提炼 · 116条精读</div>
+        <div class="chip inline-block">KRV 1781/1787 · 邓晓芒200万字句读提炼 · 217条精读</div>
         <h1 class="serif font-black leading-[.95] my-4" style="font-size:clamp(36px,5.5vw,62px)">
           纯粹理性批判<br />
           <span class="block text-[13px] tracking-[.28em] uppercase text-muted font-sans font-medium mt-3">
@@ -15,8 +15,9 @@ const title = '纯粹理性批判 · V5 完整版 | 116条句读 + 全站搜索'
           </span>
         </h1>
         <p class="lead">
-          康德《纯粹理性批判》导读站：116 条逐句精读覆盖序言、导言、感性论、分析论、辩证论、方法论六大部分，
+          康德《纯粹理性批判》导读站：217 条逐句精读覆盖序言、导言、感性论、分析论、辩证论、方法论六大部分，
           每条附邓晓芒式讲解与学习提示；另有 2381 页原文全文离线内置，可本地检索、对照阅读。
+          页面结构与学习路径参考 SEP、剑桥版导言与国内外主流康德课程编排。
         </p>
         <div class="flex flex-wrap gap-2.5 mt-5">
           <a href="/deng/" class="btn">开始精读 →</a>
@@ -27,14 +28,49 @@ const title = '纯粹理性批判 · V5 完整版 | 116条句读 + 全站搜索'
       <div class="card self-start" style="background:linear-gradient(180deg,var(--color-card),var(--color-bg2))">
         <span class="chip accent">内容一览</span>
         <div class="grid grid-cols-2 gap-3 mt-4">
-          <div class="p-3 bg-card rounded-xl border border-line"><b class="text-[24px]">116</b><div class="font-mono text-[11px] text-muted">句读条目</div></div>
+          <div class="p-3 bg-card rounded-xl border border-line"><b class="text-[24px]">217</b><div class="font-mono text-[11px] text-muted">句读条目</div></div>
           <div class="p-3 bg-card rounded-xl border border-line"><b class="text-[24px]">14</b><div class="font-mono text-[11px] text-muted">讲全覆盖</div></div>
           <div class="p-3 bg-card rounded-xl border border-line"><b class="text-[24px]">2381</b><div class="font-mono text-[11px] text-muted">页全文离线</div></div>
-          <div class="p-3 bg-card rounded-xl border border-line"><b class="text-[24px]">20</b><div class="font-mono text-[11px] text-muted">术语词条</div></div>
+          <div class="p-3 bg-card rounded-xl border border-line"><b class="text-[24px]">58</b><div class="font-mono text-[11px] text-muted">术语词条</div></div>
         </div>
         <div class="quote mt-4 text-xs">技术栈：Astro + Tailwind v4 · TypeScript · lunr 离线搜索 · 数据本地内置，纯静态可部署。</div>
       </div>
     </section>
+
+    <!-- 推荐学习路径 -->
+    <div class="section-head">
+      <div class="h3">推荐学习路径 · 按主流课程编排</div>
+      <span class="font-mono text-[11px] text-muted">参考 SEP / 剑桥导言 / Robinson 牛津 8 讲 / 邓晓芒 14 学期句读</span>
+    </div>
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div class="card p-5" style="background:linear-gradient(180deg,var(--color-card),var(--color-bg2))">
+        <div class="h3 accent">阶段一 · 入门：抓总问题</div>
+        <div class="font-bold">B 版序言 + 导言 + 感性论</div>
+        <p class="p text-[13px] mt-1.5">先读 B 版序言与导言，锁定全书总问题"<b>先天综合判断如何可能</b>"（数学/自然科学/形而上学的四子问题）；再进感性论——最易入手、论据最完整：时空是先天直观形式，数学因此既综合又先天。</p>
+        <div class="flex flex-wrap gap-1.5 mt-2.5">
+          <a href="/aesthetic/" class="tag hover:text-ink">→ 感性论 34 条</a>
+          <a href="/glossary/" class="tag hover:text-ink">→ 术语：先天/先验/超验</a>
+        </div>
+      </div>
+      <div class="card p-5">
+        <div class="h3">阶段二 · 精读：知识如何客观</div>
+        <div class="font-bold">分析论：范畴 → 演绎 → 图型 → 原理</div>
+        <p class="p text-[13px] mt-1.5">重点：判断表→范畴表、<b>B 版先验演绎</b>（统觉的综合统一）、图型法（时间图型）、经验的类比（实体/因果/协同）与驳斥唯心论——回应休谟、证明范畴适用于一切可能经验。</p>
+        <div class="flex flex-wrap gap-1.5 mt-2.5">
+          <a href="/analytic/" class="tag hover:text-ink">→ 分析论 84 条</a>
+          <a href="/deng/" class="tag hover:text-ink">→ 句读全库</a>
+        </div>
+      </div>
+      <div class="card p-5" style="background:linear-gradient(180deg,var(--color-card),var(--color-bg2))">
+        <div class="h3 accent">阶段三 · 进阶：理性为何越界</div>
+        <div class="font-bold">辩证论 + 方法论</div>
+        <p class="p text-[13px] mt-1.5">理性追求无条件总体必然产生幻相：谬误推理（灵魂）、二律背反（世界）、理想（上帝）。读懂"数学二律皆假、力学二律皆真分域"，再以方法论收束——为实践理性留出地盘。</p>
+        <div class="flex flex-wrap gap-1.5 mt-2.5">
+          <a href="/dialectic/" class="tag hover:text-ink">→ 辩证论 54 条</a>
+          <a href="/method/" class="tag hover:text-ink">→ 方法论 23 条</a>
+        </div>
+      </div>
+    </div>
 
     <div class="section-head">
       <div class="h3">四大板块 · 按原书结构精读</div>
@@ -44,22 +80,22 @@ const title = '纯粹理性批判 · V5 完整版 | 116条句读 + 全站搜索'
       <a href="/aesthetic/" class="card p-5">
         <div class="h3">01 感性论</div>
         <div class="font-bold">时空先验形式</div>
-        <div class="p text-xs mt-1.5">16条句读完整讲解：空间形而上学阐明 4+1、时间 4+1、内外感官定位、经验实在/先验观念、反驳观念论。</div>
+        <div class="p text-xs mt-1.5">34条句读完整讲解：空间形而上学阐明与结论、时间阐明、经验实在/先验观念、反驳观念论、数学基础。</div>
       </a>
       <a href="/analytic/" class="card p-5">
         <div class="h3">02 分析论</div>
         <div class="font-bold">12范畴 + 双版演绎</div>
-        <div class="p text-xs mt-1.5">48条完整讲解：判断表→范畴表、三重综合、统觉最高原理、图型时间翻译、第二类比回击休谟。</div>
+        <div class="p text-xs mt-1.5">84条完整讲解：判断表与12范畴、三重综合、统觉最高原理、图型时间翻译、第二类比回击休谟。</div>
       </a>
       <a href="/dialectic/" class="card p-5">
         <div class="h3">03 辩证论</div>
         <div class="font-bold">谬误 · 二律 · 三证明</div>
-        <div class="p text-xs mt-1.5">30条完整讲解：存在不是谓词、第三二律自由兼容、理性之理念的调节性使用。</div>
+        <div class="p text-xs mt-1.5">54条完整讲解：存在不是谓词、第三二律自由兼容、理性之理念的调节性使用。</div>
       </a>
       <a href="/method/" class="card p-5">
         <div class="h3">04 方法论</div>
         <div class="font-bold">训练 · 法规 · 建筑术</div>
-        <div class="p text-xs mt-1.5">13条完整讲解：数学构造 vs 哲学分析、至善德福、独断/怀疑/批判三阶段。</div>
+        <div class="p text-xs mt-1.5">23条完整讲解：数学构造 vs 哲学分析、至善德福、独断/怀疑/批判三阶段。</div>
       </a>
     </div>
 
@@ -70,13 +106,13 @@ const title = '纯粹理性批判 · V5 完整版 | 116条句读 + 全站搜索'
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
       <a href="/deng/" class="card p-5">
         <div class="h3 accent">句读全库</div>
-        <div class="font-bold">116条邓晓芒式精读</div>
+        <div class="font-bold">217条邓晓芒式精读</div>
         <div class="p text-xs mt-1.5">按 A/B 版页码排序，点击任一条滑出右侧抽屉：原文定位 + 邓氏讲法 + 学习提示。</div>
       </a>
       <a href="/quanwen/" class="card p-5">
         <div class="h3">全文直读</div>
         <div class="font-bold">2381页原文离线内置</div>
-        <div class="p text-xs mt-1.5">794段全文静态渲染，左侧目录跳页、顶部即时过滤，可打印/保存。</div>
+        <div class="p text-xs mt-1.5">794段全文静态渲染，分页浏览、目录跳页、即时过滤，可打印/保存。</div>
       </a>
       <a href="/glossary/" class="card p-5">
         <div class="h3">术语库</div>
@@ -86,13 +122,48 @@ const title = '纯粹理性批判 · V5 完整版 | 116条句读 + 全站搜索'
       <a href="/deng-full/" class="card p-5">
         <div class="h3">全本阅览</div>
         <div class="font-bold">PDF 翻页 + 检索联动</div>
-        <div class="p text-xs mt-1.5">左侧 PDF.js 翻页，右侧全文检索与 116 条句读联动，点击跳页对照。</div>
+        <div class="p text-xs mt-1.5">左侧 PDF.js 翻页，右侧全文检索与 217 条句读联动，点击跳页对照。</div>
       </a>
+    </div>
+
+    <!-- 延伸资源 -->
+    <div class="section-head">
+      <div class="h3">延伸资源 · 主流学习渠道</div>
+      <span class="font-mono text-[11px] text-muted">在线权威条目 / 讲座 / 中文译本</span>
+    </div>
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      <div class="card p-5">
+        <div class="h3">在线权威条目（英文）</div>
+        <ul class="p text-[12.5px] leading-[1.9] mt-1" style="list-style:none;padding:0">
+          <li>· <a href="https://plato.stanford.edu/entries/kant-transcendental-idealism/" target="_blank" rel="noopener" class="underline text-accent">SEP: Kant's Transcendental Idealism</a></li>
+          <li>· <a href="https://plato.stanford.edu/entries/kant-judgment/" target="_blank" rel="noopener" class="underline text-accent">SEP: Kant's Theory of Judgment</a></li>
+          <li>· <a href="https://plato.stanford.edu/entries/kant-hume-causality/" target="_blank" rel="noopener" class="underline text-accent">SEP: Kant and Hume on Causality</a></li>
+          <li>· <a href="https://plato.stanford.edu/entries/kant-reason/" target="_blank" rel="noopener" class="underline text-accent">SEP: Kant's Account of Reason</a></li>
+        </ul>
+      </div>
+      <div class="card p-5">
+        <div class="h3">视频课程</div>
+        <ul class="p text-[12.5px] leading-[1.9] mt-1" style="list-style:none;padding:0">
+          <li>· <a href="https://podcasts.ox.ac.uk/series/kants-critique-pure-reason" target="_blank" rel="noopener" class="underline text-accent">Dan Robinson · Oxford 8 讲</a>（Just What is Kant's Project? 起）</li>
+          <li>· <a href="https://www.openculture.com/2024/05/watch-philosophy-lectures-that-became-a-hit-during-covid-by-professor-michael-sugrue-rip.html" target="_blank" rel="noopener" class="underline text-accent">Michael Sugrue · 单场长讲座</a></li>
+          <li>· <a href="https://robertpaulwolff.blogspot.com/" target="_blank" rel="noopener" class="underline text-accent">Robert Paul Wolff · 康德课</a>（含"哥白尼革命"开场）</li>
+          <li>· <a href="https://www.bilibili.com/video/BV1Xr4y1i7iT/" target="_blank" rel="noopener" class="underline text-accent">邓晓芒 · 句读 60 讲（B 站）</a></li>
+        </ul>
+      </div>
+      <div class="card p-5">
+        <div class="h3">译本与导读（中文）</div>
+        <ul class="p text-[12.5px] leading-[1.9] mt-1" style="list-style:none;padding:0">
+          <li>· 邓晓芒、杨祖陶译《纯粹理性批判》（人民版，注译本）</li>
+          <li>· 李秋零译《康德著作全集·注释本》第3卷（人大版，贴科学院版原文）</li>
+          <li>· 张世英《康德的〈纯粹理性批判〉》导读（北大社，按思想理路梳理）</li>
+          <li>· 邓晓芒《康德〈纯粹理性批判〉句读》上中下（220 万字，14 学期课程）</li>
+        </ul>
+      </div>
     </div>
 
     <section class="card mt-10 mb-4">
       <div class="section-head" style="margin:0 0 14px">
-        <div class="h3">如何使用</div>
+        <div class="h3">站内使用</div>
       </div>
       <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div>
