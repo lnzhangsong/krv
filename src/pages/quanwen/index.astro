@@ -3,8 +3,8 @@ import Base from '../../layouts/Base.astro';
 import PageHead from '../../components/PageHead.astro';
 import { DatabaseSync } from 'node:sqlite';
 import path from 'node:path';
-import { SEQ_TOTAL } from '../../lib/chapters';
-const title = '邓晓芒句读 全文阅览 7593段 | SQLite 直读版';
+import { SEQ_COUNT } from '../../lib/chapters';
+const title = '邓晓芒句读 全文阅览 7594段 | SQLite 直读版';
 
 interface Chunk { id: string; seq: number; chapter: string; text: string }
 // 构建时从 SQLite 数据库读取全文（data/kant.db），运行时不依赖 JSON / wasm
@@ -19,7 +19,7 @@ function highlightKant(text: string): string {
 }
 ---
 
-<Base title={title} current="/quanwen/" badge="全文阅览 7593段" searchPlaceholder="全站搜索：存在不是谓词/统觉…">
+<Base title={title} current="/quanwen/" badge="全文阅览 7594段" searchPlaceholder="全站搜索：存在不是谓词/统觉…">
   <main class="container narrow py-7">
     <PageHead
       chip={`FULL TEXT · 全文直读 · ${chunks.length}段 · ${totalChars.toLocaleString()}字`}
@@ -52,7 +52,7 @@ function highlightKant(text: string): string {
       <span class="font-mono text-xs text-muted">第 <b id="pageNumB" class="text-ink">1</b> / <span id="pageTotalB">--</span> 段</span>
       <button id="nextB" class="toggle">下一段 →</button>
       <span class="w-px self-stretch bg-line"></span>
-      <input id="jumpInput" type="number" min="1" max={SEQ_TOTAL} placeholder="段号 如 500" class="w-[110px] border border-line rounded-full px-3 py-1.5 bg-bg2 font-mono text-sm outline-none focus:border-accent2 transition-colors" />
+      <input id="jumpInput" type="number" min="1" max={SEQ_COUNT} placeholder="段号 如 500" class="w-[110px] border border-line rounded-full px-3 py-1.5 bg-bg2 font-mono text-sm outline-none focus:border-accent2 transition-colors" />
       <button id="jumpBtn" class="toggle">跳转</button>
       <span id="jumpHint" class="font-mono text-[11px] text-muted max-w-[160px] truncate"></span>
     </div>
@@ -121,19 +121,20 @@ function highlightKant(text: string): string {
       });
     }
 
-    // 按段号跳转（直接匹配 data-pt）
+    // 按段号跳转（输入 1-based 段号 → data-pt 是 0-based seq）
     function jumpToSeq(q: number) {
       const hint = document.getElementById('jumpHint') as HTMLElement;
+      const seq = q - 1;
       const card = cards.find((c) => {
         const pt = parseInt(c.dataset.pt ?? '', 10);
-        return pt === q;
+        return pt === seq;
       });
       if (!card) {
         if (hint) hint.textContent = `未找到段 ${q}`;
         return;
       }
       if (hint) hint.textContent = `已定位到 段 ${q}（${chapterOf(card) || ''}）`;
-      gotoStart(String(q));
+      gotoStart(String(seq));
     }
 
     // 分页按钮
@@ -145,7 +146,7 @@ function highlightKant(text: string): string {
     const jumpBtn = document.getElementById('jumpBtn') as HTMLButtonElement;
     const doJump = () => {
       const p = parseInt(jumpInput.value, 10);
-      if (p >= 1 && p <= {SEQ_TOTAL}) jumpToSeq(p);
+      if (p >= 1 && p <= {SEQ_COUNT}) jumpToSeq(p);
     };
     jumpBtn?.addEventListener('click', doJump);
     jumpInput?.addEventListener('keydown', (e) => {

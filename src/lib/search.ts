@@ -78,7 +78,7 @@ const baseDocs: SearchDoc[] = [
   { id: 'method', title: '方法论 23条', url: '/method/', content: '训练 定义公理证明假设 法规 意见知识信仰 至善德福 建筑术体系 历史独断怀疑批判' },
   { id: 'deng', title: '邓晓芒句读全库 217条', url: '/deng/', content: '邓晓芒句读 217条精选 精读 同情的理解 体系性 反向论证' },
   { id: 'glossary', title: '术语库', url: '/glossary/', content: '先天先验超验 现象物自体 统觉 图型 二律背反 调节构成 先验唯心经验实在' },
-  { id: 'quanwen', title: '全文直读 2381页', url: '/quanwen/', content: '康德纯粹理性批判 句读 全文 PDF 2381页 分页浏览 目录 页码跳转' },
+  { id: 'quanwen', title: '全文直读 7594段', url: '/quanwen/', content: '康德纯粹理性批判 句读 全文 7594段 183万字 语义分段 书式排版 段号跳转' },
 ];
 
 function getDocs(): SearchDoc[] {
@@ -121,7 +121,7 @@ export async function search(query: string, limit = 15): Promise<SearchHit[]> {
     if (s > 0) hits.push({ doc, score: s });
   });
 
-  // 2) 全文 7593 段（懒加载 search-index.json）
+  // 2) 全文 7594 段（懒加载 search-index.json）
   try {
     const chunks = await loadFulltext();
     const chars = Array.from(q.replace(/\s/g, ''));

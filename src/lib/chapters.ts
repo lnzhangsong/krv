@@ -13,4 +13,4 @@ export const CHAPTERS: ChapterDef[] = [
   { key: 'method', title: '先验方法论', lo: 6188, hi: 7593 },
 ];
 
-export const SEQ_TOTAL = 7593;
+export const SEQ_COUNT = 7594;

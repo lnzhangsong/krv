@@ -3,11 +3,11 @@ import Base from '../layouts/Base.astro';
 const title = '纯粹理性批判 · V5 完整版 | 217条句读 + 全文检索';
 ---
 
-<Base title={title} desc="KRV 1781/1787 · 文档全聚合 · 邓晓芒句读217条精读 + 2381页全文检索 · Astro + Tailwind 现代重构">
+<Base title={title} desc="KRV 1781/1787 · 文档全聚合 · 邓晓芒句读217条精读 + 7594段全文检索 · Astro + Tailwind 现代重构">
   <main class="container py-7">
     <section class="pt-16 pb-6 grid grid-cols-1 lg:grid-cols-[1.2fr_.8fr] gap-10 items-start">
       <div>
-        <div class="chip inline-block">KRV 1781/1787 · 邓晓芒句读217条精读 · 2381页全文检索</div>
+        <div class="chip inline-block">KRV 1781/1787 · 邓晓芒句读217条精读 · 7594段全文检索</div>
         <h1 class="serif font-black leading-[1.02] my-5" style="font-size:clamp(38px,5.5vw,64px)">
           纯粹理性批判<br />
           <span class="block text-[13px] tracking-[.3em] uppercase text-accent2 font-sans font-semibold mt-4">
@@ -15,8 +15,8 @@ const title = '纯粹理性批判 · V5 完整版 | 217条句读 + 全文检索'
           </span>
         </h1>
         <p class="lead">
-          康德《纯粹理性批判》导读站：全书 1592 句原文逐句配邓晓芒讲解，覆盖感性论、分析论、辩证论、方法论四大部，
-          外加 217 条手工精读与学习提示；另有 2381 页全文离线内置，可本地检索、对照阅读。
+          康德《纯粹理性批判》导读站：全书 2348 句原文逐句配邓晓芒讲解，覆盖感性论、分析论、辩证论、方法论四大部，
+          外加 217 条手工精读与学习提示；另有 7594 段（183 万字）全文离线内置，可本地检索、对照阅读。
           页面结构与学习路径参考 SEP、剑桥版导言与国内外主流康德课程编排。
         </p>
         <div class="flex flex-wrap gap-3 mt-6">
@@ -29,8 +29,8 @@ const title = '纯粹理性批判 · V5 完整版 | 217条句读 + 全文检索'
         <span class="chip accent">内容一览</span>
         <div class="grid grid-cols-2 gap-3 mt-4">
           <div class="stat"><b>217</b><span>句读条目</span></div>
-          <div class="stat"><b>14</b><span>讲全覆盖</span></div>
-          <div class="stat"><b>2381</b><span>页全文离线</span></div>
+          <div class="stat"><b>2348</b><span>逐句讲解</span></div>
+          <div class="stat"><b>7594</b><span>段全文离线</span></div>
           <div class="stat"><b>58</b><span>术语词条</span></div>
         </div>
         <div class="quote mt-4 text-xs">技术栈：Astro + Tailwind v4 · TypeScript · lunr 离线搜索 · 数据本地内置，纯静态可部署。</div>
@@ -106,13 +106,13 @@ const title = '纯粹理性批判 · V5 完整版 | 217条句读 + 全文检索'
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
       <a href="/deng/" class="card p-5">
         <div class="h3 accent">句读全库</div>
-        <div class="font-bold">217条精选 + 1592句逐句讲解</div>
+        <div class="font-bold">217条精选 + 2348句逐句讲解</div>
         <div class="p text-xs mt-1.5">全书【】内康德原文逐句配邓晓芒讲解，分章分页浏览；另附 217 条手工精读点击滑出抽屉。</div>
       </a>
       <a href="/quanwen/" class="card p-5">
         <div class="h3">全文直读</div>
-        <div class="font-bold">2381页原文离线内置</div>
-        <div class="p text-xs mt-1.5">794段全文静态渲染，分页浏览、目录跳页、即时过滤，可打印/保存。</div>
+        <div class="font-bold">7594段（183万字）离线内置</div>
+        <div class="p text-xs mt-1.5">全书语义分段、章节标题分隔，书式排版连续阅读，可跳转段号、打印/保存。</div>
       </a>
       <a href="/glossary/" class="card p-5">
         <div class="h3">术语库</div>
