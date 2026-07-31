@@ -2,49 +2,56 @@
 import Base from '../../layouts/Base.astro';
 import { DatabaseSync } from 'node:sqlite';
 import path from 'node:path';
-const title = '邓晓芒句读 全文阅览 2381页 | SQLite 直读版';
+import { SEQ_TOTAL } from '../../lib/chapters';
+const title = '邓晓芒句读 全文阅览 7593段 | SQLite 直读版';
 
-interface Chunk { id: string; start: number; end: number; text: string; title: string }
+interface Chunk { id: string; seq: number; chapter: string; text: string }
 // 构建时从 SQLite 数据库读取全文（data/kant.db），运行时不依赖 JSON / wasm
 const db = new DatabaseSync(path.join(process.cwd(), 'data/kant.db'));
-const rawChunks: Chunk[] = db.prepare('SELECT id, start_page AS start, end_page AS end, text FROM chunks').all() as Chunk[];
+const chunks: Chunk[] = db.prepare('SELECT id, seq, chapter, text FROM chunks ORDER BY seq').all() as Chunk[];
 db.close();
-// PDF 提取文本每行都带硬换行：先折叠为空格，再去掉中文之间的空格，得到连续段落
-const chunks: Chunk[] = rawChunks.map((c) => ({
-  ...c,
-  text: c.text.replace(/\s*\n\s*/g, ' ').replace(/([\u4e00-\u9fff])\s+([\u4e00-\u9fff])/g, '$1$2').trim(),
-}));
-const totalPages = 2381;
 const totalChars = chunks.reduce((s, c) => s + c.text.length, 0);
+
+// 将【】内的康德原文用高亮标记包裹，与邓晓芒讲解区分
+function highlightKant(text: string): string {
+  return text.replace(/【([^】]+)】/g, '<b class="kant-q">「$1」</b>');
+}
 ---
 
-<Base title={title} current="/quanwen/" badge="全文阅览 2381页" searchPlaceholder="全站搜索：存在不是谓词/统觉…">
-  <main class="max-w-[1440px] mx-auto px-5 py-7">
-    <div class="chip">FULL TEXT · PDF 全文直读 · {chunks.length}段 · {totalPages}页 · {totalChars.toLocaleString()}字</div>
+<Base title={title} current="/quanwen/" badge="全文阅览 7593段" searchPlaceholder="全站搜索：存在不是谓词/统觉…">
+  <main class="container narrow py-7">
+    <div class="chip">FULL TEXT · 邓晓芒句读全文直读 · {chunks.length}段 · {totalChars.toLocaleString()}字</div>
     <h1 class="serif text-4xl mt-3 mb-1">
       邓晓芒《纯粹理性批判》句读 · 全文
     </h1>
 
-    <div id="body">
+    <div id="body" class="read-flow">
       {
-        chunks.map((c) => (
-          <div class="card my-3" id={`c${c.start}`} data-pt={c.start} data-text={c.text}>
-            <div class="flex items-center gap-2">
-              <span class="tag font-mono text-[10px]">页 {c.start}-{c.end}</span>
-              <span class="font-mono text-[10px] text-muted">#{c.id}</span>
+        chunks.map((c, i) => {
+          const prev = i > 0 ? chunks[i - 1] : null;
+          const newChapter = !prev || prev.chapter !== c.chapter;
+          return (
+            <div class="rf-item" id={`c${c.seq}`} data-pt={c.seq} data-text={c.text}>
+              {newChapter && (
+                <div class="rf-chapter">
+                  <span class="rf-chapter-mark"></span>
+                  {c.chapter}
+                </div>
+              )}
+              <div class="rf-text serif" set:html={highlightKant(c.text)} />
+              <span class="rf-page" title={`段 ${c.id}`}>{c.seq + 1}</span>
             </div>
-            <div class="serif text-[17px] leading-[2.05] mt-2.5 whitespace-normal">{c.text}</div>
-          </div>
-        ))
+          );
+        })
       }
     </div>
 
     <div id="pagerBottom" class="float-pager">
-      <button id="prevB" class="toggle">← 上一页</button>
-      <span class="font-mono text-xs text-muted">第 <b id="pageNumB" class="text-ink">1</b> / <span id="pageTotalB">--</span> 页</span>
-      <button id="nextB" class="toggle">下一页 →</button>
+      <button id="prevB" class="toggle">← 上一段</button>
+      <span class="font-mono text-xs text-muted">第 <b id="pageNumB" class="text-ink">1</b> / <span id="pageTotalB">--</span> 段</span>
+      <button id="nextB" class="toggle">下一段 →</button>
       <span class="w-px self-stretch bg-line"></span>
-      <input id="jumpInput" type="number" min="1" max="2381" placeholder="页码 如 500" class="w-[110px] border border-line rounded-full px-3 py-1.5 bg-bg2 font-mono text-sm outline-none focus:border-accent2 transition-colors" />
+      <input id="jumpInput" type="number" min="1" max={SEQ_TOTAL} placeholder="段号 如 500" class="w-[110px] border border-line rounded-full px-3 py-1.5 bg-bg2 font-mono text-sm outline-none focus:border-accent2 transition-colors" />
       <button id="jumpBtn" class="toggle">跳转</button>
       <span id="jumpHint" class="font-mono text-[11px] text-muted max-w-[160px] truncate"></span>
     </div>
@@ -52,9 +59,30 @@ const totalChars = chunks.reduce((s, c) => s + c.text.length, 0);
 
   <script>
     const PAGE = 15;
-    const cards = Array.from(document.querySelectorAll('#body .card')) as HTMLElement[];
+    const cards = Array.from(document.querySelectorAll('#body .rf-item')) as HTMLElement[];
     const totalPages = Math.ceil(cards.length / PAGE);
     let page = 1;
+
+    // 顶部阅读进度条 + 当前章节指示
+    const progressWrap = document.createElement('div');
+    progressWrap.className = 'rf-progress';
+    progressWrap.innerHTML = '<div class="rf-progress-bar"></div>';
+    document.body.appendChild(progressWrap);
+    const progressBar = progressWrap.querySelector('.rf-progress-bar') as HTMLElement;
+
+    const chapterOf = (el: HTMLElement) => {
+      const ch = el.querySelector('.rf-chapter');
+      return ch ? ch.textContent : '';
+    };
+    const onScroll = () => {
+      const doc = document.documentElement;
+      const max = doc.scrollHeight - window.innerHeight;
+      const pct = max > 0 ? Math.min(100, (window.scrollY / max) * 100) : 0;
+      progressBar.style.width = pct + '%';
+    };
+    window.addEventListener('scroll', onScroll, { passive: true });
+    window.addEventListener('resize', onScroll);
+    onScroll();
 
     function syncPageUI() {
       const set = (n: HTMLElement | null, t: HTMLElement | null) => {
@@ -92,33 +120,31 @@ const totalChars = chunks.reduce((s, c) => s + c.text.length, 0);
       });
     }
 
-    // 按原书页码跳转
-    function jumpToBookPage(p: number) {
-      const q = p;
-      // 找到包含该页码的段落卡片
+    // 按段号跳转（直接匹配 data-pt）
+    function jumpToSeq(q: number) {
+      const hint = document.getElementById('jumpHint') as HTMLElement;
       const card = cards.find((c) => {
         const pt = parseInt(c.dataset.pt ?? '', 10);
-        return pt <= q && q < pt + 3;
+        return pt === q;
       });
-      const hint = document.getElementById('jumpHint') as HTMLElement;
       if (!card) {
-        if (hint) hint.textContent = `未找到页 ${q}`;
+        if (hint) hint.textContent = `未找到段 ${q}`;
         return;
       }
-      if (hint) hint.textContent = `已定位到 页 ${q}（段落 #${card.id}）`;
-      gotoStart(String((card.dataset.pt ?? '')));
+      if (hint) hint.textContent = `已定位到 段 ${q}（${chapterOf(card) || ''}）`;
+      gotoStart(String(q));
     }
 
     // 分页按钮
     document.getElementById('prevB')?.addEventListener('click', () => goPage(page - 1));
     document.getElementById('nextB')?.addEventListener('click', () => goPage(page + 1));
 
-    // 书页跳转
+    // 段号跳转
     const jumpInput = document.getElementById('jumpInput') as HTMLInputElement;
     const jumpBtn = document.getElementById('jumpBtn') as HTMLButtonElement;
     const doJump = () => {
       const p = parseInt(jumpInput.value, 10);
-      if (p >= 1 && p <= 2381) jumpToBookPage(p);
+      if (p >= 1 && p <= {SEQ_TOTAL}) jumpToSeq(p);
     };
     jumpBtn?.addEventListener('click', doJump);
     jumpInput?.addEventListener('keydown', (e) => {
@@ -138,10 +164,80 @@ const totalChars = chunks.reduce((s, c) => s + c.text.length, 0);
   </script>
 
   <style>
-    .card.flash {
-      outline: 2px solid var(--color-accent2);
-      outline-offset: 4px;
-      transition: outline-color 0.2s;
+    .rf-item.flash {
+      background: color-mix(in srgb, var(--color-accent2) 18%, transparent);
+      border-radius: 6px;
+      transition: background-color 0.3s;
+    }
+    /* 中文书籍式连续排版：首行缩进、无分隔线、段号淡色 */
+    .read-flow {
+      padding: 12px 0 96px;
+    }
+    .rf-item {
+      position: relative;
+      padding: 0 0 0.9em;
+    }
+    .rf-chapter {
+      font-family: var(--font-serif);
+      font-size: 20px;
+      font-weight: 700;
+      letter-spacing: 0.05em;
+      margin: 2.4em 0 0.9em;
+      color: var(--color-accent);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      text-indent: 0;
+    }
+    .rf-chapter-mark {
+      width: 4px;
+      height: 1.1em;
+      border-radius: 2px;
+      background: var(--color-accent2);
+      flex-shrink: 0;
+    }
+    .rf-chapter + .rf-text {
+      margin-top: 0.1em;
+    }
+    .rf-text {
+      font-size: 18px;
+      line-height: 2.05;
+      letter-spacing: 0.02em;
+      color: var(--color-ink);
+      text-align: justify;
+      text-indent: 2em;
+    }
+    /* 康德原文高亮：与邓晓芒讲解区分 */
+    .rf-text .kant-q {
+      color: var(--color-accent);
+      font-weight: 700;
+      background: color-mix(in srgb, var(--color-accent) 7%, transparent);
+      border-radius: 4px;
+      padding: 1px 3px;
+      text-indent: 0;
+    }
+    .rf-text .kant-q:hover {
+      background: color-mix(in srgb, var(--color-accent) 14%, transparent);
+    }
+    .rf-page {
+      display: none;
+    }
+    /* 顶部阅读进度条 */
+    .rf-progress {
+      position: fixed;
+      top: 68px;
+      left: 0;
+      right: 0;
+      height: 3px;
+      z-index: 80;
+      pointer-events: none;
+    }
+    .rf-progress-bar {
+      height: 100%;
+      width: 0;
+      background: linear-gradient(90deg, var(--color-accent) 0%, var(--color-accent2) 100%);
+      transition: width 0.08s linear;
+      border-radius: 0 3px 3px 0;
     }
     .float-pager {
       position: fixed;
@@ -168,9 +264,6 @@ const totalChars = chunks.reduce((s, c) => s + c.text.length, 0);
       .float-pager #jumpInput {
         width: 84px;
       }
-    }
-    main {
-      padding-bottom: 96px;
     }
   </style>
 </Base>

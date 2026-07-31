@@ -5,16 +5,16 @@ import type { APIRoute } from 'astro';
 
 export const prerender = true;
 
-interface ChunkRow { id: string; start: number; end: number; text: string }
+interface ChunkRow { id: string; seq: number; chapter: string; text: string }
 
 const clean = (t: string) =>
   t.replace(/\s*\n\s*/g, ' ').replace(/([\u4e00-\u9fff])\s+([\u4e00-\u9fff])/g, '$1$2').trim();
 
 export const GET: APIRoute = () => {
   const db = new DatabaseSync(path.join(process.cwd(), 'data/kant.db'));
-  const rows = db.prepare('SELECT id, start_page AS start, end_page AS end, text FROM chunks').all() as ChunkRow[];
+  const rows = db.prepare('SELECT id, seq, chapter, text FROM chunks ORDER BY seq').all() as ChunkRow[];
   db.close();
-  const chunks = rows.map((c) => ({ ...c, text: clean(c.text) }));
+  const chunks = rows.map((c) => ({ ...c, start: c.seq, end: c.seq, text: clean(c.text) }));
   return new Response(JSON.stringify({ total: chunks.length, chunks }), {
     headers: { 'content-type': 'application/json; charset=utf-8' },
   });

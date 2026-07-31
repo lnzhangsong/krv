@@ -8,17 +8,25 @@ void pagerBottom;
 
 <div class="reader">
   <div class="flex items-center gap-2 mb-3 flex-wrap">
-    <span class="font-mono text-[11px] text-muted">逐句助读 · 共 {sentences.length} 句 · 每页 {pageSize} 句 · 键盘 ← → 翻页</span>
+    <span class="font-mono text-[11px] text-muted">共 {sentences.length} 句 · 每页 {pageSize} 句</span>
   </div>
 
   <div class="rd-body">
     {
       sentences.map((s, i) => (
         <div class="rd-item" data-i={i}>
-          <a href={`${jumpHref}#c${s.start}`} class="rd-ref">页 {s.start} · #{s.chunkId}</a>
-          <div class="rd-orig">「{s.orig}」</div>
-          <div class="rd-exp">{s.exp}</div>
-          <button class="rd-ai toggle" data-orig={s.orig}>✦ AI 讲解</button>
+          <div class="rd-item-head">
+            <a href={`${jumpHref}#c${s.start}`} class="rd-ref">段 {s.start + 1}</a>
+            <button class="rd-ai" data-orig={s.orig} title="AI 实时讲解">✦ AI</button>
+          </div>
+          <div class="rd-orig serif">
+            <span class="rd-label rd-label-orig">原文</span>
+            「{s.orig}」
+          </div>
+          <div class="rd-exp">
+            <span class="rd-label rd-label-exp">邓晓芒讲</span>
+            {s.exp}
+          </div>
         </div>
       ))
     }
@@ -143,32 +151,99 @@ void pagerBottom;
   .reader {
     position: relative;
   }
+  .rd-body {
+    padding-bottom: 96px;
+  }
   .rd-item {
     border: 1px solid var(--color-line);
     border-radius: 16px;
-    padding: 18px 20px;
+    padding: 20px 22px;
     margin: 14px 0;
     background: var(--color-card);
+    box-shadow: 0 2px 10px rgba(26, 58, 95, 0.04);
+    transition: border-color 0.18s, box-shadow 0.18s;
+  }
+  .rd-item:hover {
+    border-color: color-mix(in srgb, var(--color-accent2) 40%, var(--color-line));
+  }
+  .rd-item-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 6px;
   }
   .rd-ref {
-    font-size: 10px;
+    font-size: 11px;
     font-family: var(--font-mono);
+    color: var(--color-muted);
+    letter-spacing: 0.03em;
+  }
+  .rd-ref:hover {
     color: var(--color-accent2);
+  }
+  .rd-ai {
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    font-size: 11px;
+    color: var(--color-accent);
+    padding: 4px 8px;
+    border-radius: 999px;
+    border: 1px solid color-mix(in srgb, var(--color-accent) 30%, var(--color-line));
+    transition: border-color 0.15s, color 0.15s, background 0.15s;
+  }
+  .rd-ai:hover {
+    border-color: var(--color-accent2);
+    color: var(--color-accent2);
+    background: color-mix(in srgb, var(--color-accent2) 8%, transparent);
+  }
+  .rd-ai:disabled {
+    opacity: 0.6;
+    cursor: wait;
+  }
+  .rd-label {
+    display: inline-block;
+    font-family: var(--font-mono);
+    font-size: 10px;
+    letter-spacing: 0.12em;
+    border-radius: 999px;
+    padding: 1px 9px;
+    margin-right: 10px;
+    vertical-align: 2px;
+    font-weight: 400;
+  }
+  .rd-label-orig {
+    color: var(--color-accent);
+    border: 1px solid color-mix(in srgb, var(--color-accent) 40%, var(--color-line));
+    background: color-mix(in srgb, var(--color-accent) 8%, transparent);
+  }
+  .rd-label-exp {
+    color: color-mix(in srgb, #8a6d1f 90%, var(--color-ink));
+    border: 1px solid color-mix(in srgb, var(--color-accent2) 55%, var(--color-line));
+    background: color-mix(in srgb, var(--color-accent2) 14%, transparent);
   }
   .rd-orig {
     font-family: var(--font-serif);
-    font-weight: 700;
-    font-size: 17px;
+    font-weight: 900;
+    font-size: 20px;
     line-height: 1.9;
-    margin: 8px 0 10px;
-    color: var(--color-ink);
+    margin: 4px 0 14px;
+    color: var(--color-accent);
+    background: color-mix(in srgb, var(--color-accent) 7%, var(--color-card));
+    border-left: 4px solid var(--color-accent);
+    border-radius: 0 10px 10px 0;
+    padding: 14px 18px;
   }
   .rd-exp {
-    font-size: 14.5px;
+    position: relative;
+    font-family: var(--font-sans);
+    font-size: 15.5px;
     line-height: 1.95;
-    color: color-mix(in srgb, var(--color-ink) 82%, var(--color-muted));
-    border-left: 3px solid var(--color-accent2);
-    padding-left: 14px;
+    color: color-mix(in srgb, var(--color-ink) 78%, #6b4a12);
+    padding: 14px 18px;
+    background: linear-gradient(180deg, color-mix(in srgb, var(--color-accent2) 8%, var(--color-card)), var(--color-bg2));
+    border-radius: 10px;
+    border-left: 4px solid var(--color-accent2);
   }
   .rd-pager {
     position: fixed;
@@ -192,18 +267,6 @@ void pagerBottom;
     transform: none;
     margin: 10px auto 4px;
     box-shadow: var(--shadow-soft);
-  }
-  .rd-body {
-    padding-bottom: 96px;
-  }
-  .rd-ai {
-    margin-top: 12px;
-    font-size: 11px;
-    color: var(--color-accent);
-    border-color: color-mix(in srgb, var(--color-accent) 35%, var(--color-line));
-  }
-  .rd-ai:hover {
-    border-color: var(--color-accent2);
   }
   .rd-modal {
     position: fixed;

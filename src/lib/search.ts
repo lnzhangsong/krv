@@ -9,6 +9,8 @@ export interface SearchDoc {
 
 interface FulltextChunk {
   id: string;
+  seq: number;
+  chapter: string;
   start: number;
   end: number;
   text: string;
@@ -119,7 +121,7 @@ export async function search(query: string, limit = 15): Promise<SearchHit[]> {
     if (s > 0) hits.push({ doc, score: s });
   });
 
-  // 2) 全文 2381 页（懒加载 search-index.json）
+  // 2) 全文 7593 段（懒加载 search-index.json）
   try {
     const chunks = await loadFulltext();
     const chars = Array.from(q.replace(/\s/g, ''));
@@ -132,8 +134,8 @@ export async function search(query: string, limit = 15): Promise<SearchHit[]> {
       hits.push({
         doc: {
           id: 'full-' + c.id,
-          title: `页 ${c.start}-${c.end} · ${c.text.slice(0, 12)}…`,
-          url: `/quanwen/#c${c.start}`,
+          title: `${c.chapter || '全文'} · 段 ${c.seq + 1} · ${c.text.slice(0, 12)}…`,
+          url: `/quanwen/#c${c.seq}`,
           content: c.text,
         },
         score: 18 + hit.tier * 3 + tightBonus + Math.min(4, Math.floor((c.text.split(q).length - 1) * 2)),

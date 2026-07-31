@@ -3,9 +3,10 @@ import Base from '../../layouts/Base.astro';
 import SentenceReader from '../../components/SentenceReader.astro';
 import { commentDB } from '../../lib/commentDB';
 import { parseSentences } from '../../lib/parse';
+import { CHAPTERS } from '../../lib/chapters';
 import { DatabaseSync } from 'node:sqlite';
 import path from 'node:path';
-const title = '邓晓芒句读全库 · 217条精选 + 1592句逐句讲解 | 纯批逐句精读实验室';
+const title = '邓晓芒句读全库 · 217条精选 + 逐句讲解 | 纯批逐句精读实验室';
 
 const groupDefs: { key: string; title: string }[] = [
   { key: 'pref-', title: '序言' },
@@ -23,27 +24,21 @@ const groups: { title: string; items: { key: string; ref: string; original: stri
 })).filter((g) => g.items.length > 0);
 const total = Object.keys(commentDB).length;
 
-interface ChunkRow { id: string; start_page: number; text: string }
-const chapters: { key: string; title: string; lo: number; hi: number }[] = [
-  { key: 'aesthetic', title: '先验感性论', lo: 269, hi: 499 },
-  { key: 'analytic', title: '先验分析论', lo: 500, hi: 1345 },
-  { key: 'dialectic', title: '先验辩证论', lo: 1346, hi: 1975 },
-  { key: 'method', title: '先验方法论', lo: 1976, hi: 2381 },
-];
+interface ChunkRow { id: string; seq: number; text: string }
 const db = new DatabaseSync(path.join(process.cwd(), 'data/kant.db'));
-const allRaw = db.prepare('SELECT id, start_page, text FROM chunks').all() as ChunkRow[];
+const allRaw = db.prepare('SELECT id, seq, text FROM chunks').all() as ChunkRow[];
 db.close();
-const chapterSentences = chapters.map((ch) => ({
+const chapterSentences = CHAPTERS.map((ch) => ({
   ...ch,
   sentences: allRaw
-    .filter((r) => r.start_page >= ch.lo && r.start_page <= ch.hi)
-    .flatMap((r) => parseSentences(r.text, r.id, r.start_page)),
+    .filter((r) => r.seq >= ch.lo && r.seq <= ch.hi)
+    .flatMap((r) => parseSentences(r.text, r.id, r.seq)),
 }));
 const sentenceTotal = chapterSentences.reduce((s, c) => s + c.sentences.length, 0);
 ---
 
 <Base title={title} current="/deng/" badge={`${total}条精选 + ${sentenceTotal}句逐句`} searchPlaceholder="全站搜索：二律背反/统觉/存在不是谓词…" readingOn>
-  <main class="max-w-[1320px] mx-auto px-7 py-8">
+  <main class="container narrow py-8">
     <div class="chip">DENG XIAOMANG 句读全库 V5 · {total}条精选 · {sentenceTotal}句逐句讲解 · 按章节</div>
     <h1 class="serif text-[38px] leading-tight mt-3.5 mb-2">
       邓晓芒句读 · 精选{sentenceTotal}+ 句逐句讲解<br />
@@ -54,7 +49,7 @@ const sentenceTotal = chapterSentences.reduce((s, c) => s + c.sentences.length, 
       chapterSentences.map((ch) => (
         <div class="mt-8">
           <div class="section-head">
-            <div class="h3">{ch.title} · 逐句讲解 {ch.sentences.length}句 · 页 {ch.lo}–{ch.hi}</div>
+            <div class="h3">{ch.title} · 逐句讲解 {ch.sentences.length}句</div>
             <a href={`/${ch.key}/`} class="font-mono text-[10px] text-accent2 underline">该章导读页 →</a>
           </div>
           <SentenceReader sentences={ch.sentences} pageSize={12} floating={false} />

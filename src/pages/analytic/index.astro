@@ -3,6 +3,7 @@ import Base from '../../layouts/Base.astro';
 import SentenceReader from '../../components/SentenceReader.astro';
 import { commentDB } from '../../lib/commentDB';
 import { parseSentences } from '../../lib/parse';
+import { CHAPTERS } from '../../lib/chapters';
 import { DatabaseSync } from 'node:sqlite';
 import path from 'node:path';
 const title = '先验分析论 · 导读：范畴、演绎与知识如何客观';
@@ -13,15 +14,16 @@ const pick = (keys: string[]): Item[] => keys
   .filter((x): x is Item => x !== null);
 const total = Object.keys(commentDB).filter((k) => k.startsWith('an-')).length;
 
-interface ChunkRow { id: string; start_page: number; text: string }
+const ch = CHAPTERS.find((c) => c.key === 'analytic')!;
+interface ChunkRow { id: string; seq: number; text: string }
 const db = new DatabaseSync(path.join(process.cwd(), 'data/kant.db'));
-const raw = db.prepare('SELECT id, start_page, text FROM chunks WHERE start_page >= ? AND start_page <= ? ORDER BY start_page').all(500, 1345) as ChunkRow[];
+const raw = db.prepare('SELECT id, seq, text FROM chunks WHERE seq >= ? AND seq <= ? ORDER BY seq').all(ch.lo, ch.hi) as ChunkRow[];
 db.close();
-const sentences = raw.flatMap((r) => parseSentences(r.text, r.id, r.start_page));
+const sentences = raw.flatMap((r) => parseSentences(r.text, r.id, r.seq));
 ---
 
 <Base title={title} current="/analytic/" badge={`导读 · 全部${total}条见句读全库`} searchPlaceholder="搜索：范畴/统觉/图型/因果律…" readingOn>
-  <main class="max-w-[1320px] mx-auto px-7 py-9">
+  <main class="container narrow py-9">
     <div class="chip">Part B · 要素论第二部 · 导读</div>
     <h1 class="h1-page mt-2.5">
       先验分析论<br />
@@ -120,7 +122,7 @@ const sentences = raw.flatMap((r) => parseSentences(r.text, r.id, r.start_page))
 
     <!-- 逐句助读 · 康德原文 + 邓晓芒讲解 -->
     <div class="section-head" style="margin:28px 0 12px">
-      <div class="h3">逐句助读 · 页 500–1345 · {sentences.length}句</div>
+      <div class="h3">逐句助读 · {ch.title} · {sentences.length}句</div>
       <span class="font-mono text-[10px] text-muted">一句康德原文，配一段邓晓芒讲解</span>
     </div>
     <SentenceReader sentences={sentences} />

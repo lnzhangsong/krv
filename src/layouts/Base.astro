@@ -46,7 +46,7 @@ const navMore: { href: string; label: string; desc: string }[] = [
   </head>
   <body class={readingOn ? 'reading-on' : ''}>
     <header class="sticky top-0 z-[100] backdrop-blur-[20px] saturate-[180%] border-b border-line">
-      <div class="max-w-[1320px] mx-auto px-7 h-[68px] flex items-center justify-between gap-4">
+      <div class="container h-[68px] flex items-center justify-between gap-4">
         <div class="flex items-center gap-2.5 shrink-0">
           <a href="/" class="flex items-center gap-2 group">
             <span class="logo-dot" aria-hidden="true"></span>
@@ -100,7 +100,7 @@ const navMore: { href: string; label: string; desc: string }[] = [
 
     <slot />
 
-    <footer class="max-w-[1320px] mx-auto px-7 py-12 flex flex-wrap justify-between gap-3 text-sm text-muted border-t border-line mt-14">
+    <footer class="container py-12 flex flex-wrap justify-between gap-3 text-sm text-muted border-t border-line mt-14">
       <div>
         <div class="font-mono font-extrabold tracking-tight text-ink mb-1.5">KRV V5</div>
         <span>康德《纯粹理性批判》导读站 · 仅学习交流</span>
