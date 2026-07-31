@@ -16,8 +16,6 @@ const baseDocs: SearchDoc[] = [
   { id: 'method', title: '方法论 23条', url: '/method/', content: '训练 定义公理证明假设 法规 意见知识信仰 至善德福 建筑术体系 历史独断怀疑批判' },
   { id: 'deng', title: '邓晓芒句读全库 110+', url: '/deng/', content: '邓晓芒句读 200万字 全量实验室 精读 同情的理解 体系性 反向论证' },
   { id: 'glossary', title: '术语库', url: '/glossary/', content: '先天先验超验 现象物自体 统觉 图型 二律背反 调节构成 先验唯心经验实在' },
-  { id: 'sqlite', title: 'SQLite 全库', url: '/sqlite/', content: 'kant.db FTS5 全文检索 2380页 794段 217条 目录 SQL 控制台' },
-  { id: 'deng-full', title: '私有全本阅览室', url: '/deng-full/', content: '邓晓芒 2381页 PDF pdf.js 全文检索 跳页 句读联动' },
 ];
 
 function getDocs(): SearchDoc[] {
