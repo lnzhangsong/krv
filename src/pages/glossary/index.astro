@@ -1,0 +1,60 @@
+---
+import Base from '../../layouts/Base.astro';
+const title = '术语库 · 20词 + 116条句读可搜 | 纯批导读 V5';
+
+const terms = [
+  { k: '先天 先验 超验', b: '先天/先验/超验', d: '先天最广；先验管经验可能；超验超出经验非法。' },
+  { k: '现象 物自体', b: '现象/物自体/表象', d: '现象被时空范畴加工，物自体不可知触动源。' },
+  { k: '综合 分析', b: '分析/综合 先天综合', d: '第三类判断，数学物理根基。' },
+  { k: '感性 知性 理性', b: '感性·知性·理性', d: '三官能：接受、自发、追求无条件。' },
+  { k: '范畴', b: '范畴12', d: '量质关系模态，单一多数全体等。' },
+  { k: '统觉', b: '统觉 Apperzeption', d: '我思必须能伴随一切表象，最高原理 B129。' },
+  { k: '演绎', b: '演绎 Deduktion', d: '正当性辩护，非逻辑演绎，A主观B客观。' },
+  { k: '图型', b: '图型 Schema', d: '时间规定的范畴，实体=持久因果=有规则相继。' },
+  { k: '原理', b: '原理体系', d: '公理预测类比公设，牛顿定律先天版。' },
+  { k: '谬误', b: '谬误推理', d: '从我思推出灵魂实体的4偷换。' },
+  { k: '二律', b: '二律背反', d: '理性追问世界整体必矛盾，4组，数学皆假力学皆真分域。' },
+  { k: '理想 上帝', b: '理想三证明', d: '本体宇宙自然神学，存在不是谓词。' },
+  { k: '调节 构成', b: '构成/调节', d: '范畴构成现象，理念仅调节体系。' },
+  { k: '唯心 实在', b: '先验唯心+经验实在', d: '经验内客观实在，先验上形式主观。' },
+  { k: '批判', b: '批判 Kritik', d: '法庭审理正当性，非批评。' },
+  { k: '至善', b: '至善德福', d: '德性+配称幸福，需公设上帝不朽。' },
+  { k: '哥白尼', b: '哥白尼革命', d: '对象符合知识形式，Bxvi。' },
+  { k: '幻相', b: '幻相', d: '天然不可避免，海市蜃楼。' },
+];
+---
+
+<Base title={title} current="/glossary/" badge="20词 + 116句读可搜" searchPlaceholder="全站搜索：先验/统觉/二律…">
+  <main class="max-w-[1320px] mx-auto px-7 py-9">
+    <h1 class="serif text-[32px]">术语库 & 搜索中枢</h1>
+    <p class="p">本页支持全站 lunr.js 搜索，输入“存在不是谓词”会直接定位到句读实验室。本页20词均为可搜索文档，下方卡片也可通过顶部搜索过滤。</p>
+    <div class="my-4">
+      <input
+        id="localFilter"
+        placeholder="本地过滤术语：统觉 图型 二律…"
+        class="border border-line rounded-full px-4 py-2 w-full max-w-[400px] bg-card font-mono"
+      />
+    </div>
+    <div id="grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-[18px] mt-[18px]">
+      {
+        terms.map((t) => (
+          <div class="card gitem" data-k={t.k}>
+            <b>{t.b}</b>
+            <p class="p text-[13px]">{t.d}</p>
+          </div>
+        ))
+      }
+    </div>
+  </main>
+
+  <script>
+    const filter = document.getElementById('localFilter') as HTMLInputElement;
+    filter?.addEventListener('input', (e) => {
+      const q = (e.target as HTMLInputElement).value.toLowerCase();
+      document.querySelectorAll('.gitem').forEach((el) => {
+        const elm = el as HTMLElement;
+        elm.style.display = (elm.dataset.k + elm.textContent).toLowerCase().includes(q) ? '' : 'none';
+      });
+    });
+  </script>
+</Base>

@@ -1,0 +1,86 @@
+---
+import Base from '../../layouts/Base.astro';
+import { commentDB } from '../../lib/commentDB';
+const title = '先验辩证论 · 30条句读全量 | 谬误/二律背反/上帝证明完整讲解';
+
+interface Item { key: string; ref: string; original: string; deng: string; tip: string }
+const all: Item[] = Object.entries(commentDB)
+  .filter(([k]) => k.startsWith('dia-'))
+  .map(([k, v]) => ({ key: k, ...v }));
+
+const groups: { title: string; items: Item[] }[] = [
+  { title: 'C0 · 理性理念与先验幻相（总论）', items: all.filter((i) => i.key === 'dia-ide-logic' || i.key === 'dia-illusion') },
+  { title: 'C1 · 谬误推理（理性心理学批判）', items: all.filter((i) => i.key.startsWith('dia-para')) },
+  { title: 'C2 · 二律背反 · 第一二律（数学的：世界有限/无限、单纯/可分）', items: all.filter((i) => i.key.startsWith('dia-anti1') || i.key.startsWith('dia-anti2') || i.key === 'dia-anti-intro') },
+  { title: 'C2 · 二律背反 · 第三四律（力学的：自由/必然）', items: all.filter((i) => i.key.startsWith('dia-anti3') || i.key.startsWith('dia-anti4')) },
+  { title: 'C3 · 理想与上帝三证明批判', items: all.filter((i) => i.key.startsWith('dia-ideal') || i.key.startsWith('dia-onto') || i.key === 'dia-cosmo' || i.key === 'dia-physico' || i.key === 'dia-regulative') },
+].filter((g) => g.items.length > 0);
+
+const total = all.length;
+---
+
+<Base title={title} current="/dialectic/" badge={`${total}条句读全量`} searchPlaceholder="搜索：谬误/二律/存在不是谓词…" readingOn>
+  <main class="max-w-[1320px] mx-auto px-7 py-9">
+    <div class="chip inline-block" style="border-color:#8e2a2a;color:#8e2a2a">Part C · 辩证论 幻相逻辑 · {total}条句读完整讲解</div>
+    <h1 class="h1-page mt-2.5">
+      理性为何必然越狱？<br />
+      <span class="text-[13px] text-muted font-sans">从灵魂到世界到上帝：幻相不可避免但可被揭露 — 每条含原文定位 + 邓晓芒式讲解 + 学习提示</span>
+    </h1>
+    <p class="lead">全部句读讲解已直接展示在页面中，点击任意条目仍可打开右侧精读抽屉对照；右上角"精读"开关可高亮所有可点击句。二律背反正反题按组对照排列，附解决方案。</p>
+
+    <!-- 二律背反正反题速览 -->
+    <div class="card mt-5" style="border:1px solid #8e2a2a">
+      <div class="h3" style="color:#8e2a2a">四组二律背反速览</div>
+      <table class="table mt-2">
+        <thead>
+          <tr><th>组</th><th>正题</th><th>反题</th><th>解决</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><b>第一</b>（数学）</td><td>世界在时间空间上有限</td><td>世界无限</td><td>皆假（无总体）</td></tr>
+          <tr><td><b>第二</b>（数学）</td><td>复合物由单纯部分构成</td><td>无单纯，无限可分</td><td>皆假（无总体）</td></tr>
+          <tr><td><b>第三</b>（力学）</td><td>除自然因果外还有自由</td><td>无自由，皆自然因果</td><td>皆真（分属现象/物自体）</td></tr>
+          <tr><td><b>第四</b>（力学）</td><td>有绝对必然存在者</td><td>无必然，一切偶然</td><td>皆真（分属现象/物自体）</td></tr>
+        </tbody>
+      </table>
+      <div class="quote mt-3 text-xs">邓晓芒要点：数学二律把"世界整体"当成已完成的总体去问有限无限——预设错，故皆假；力学二律把自由/必然放在现象界与物自体两个层面——不冲突，故皆真，为道德留出地盘。</div>
+    </div>
+
+    <!-- 完整句读讲解 -->
+    {
+      groups.map((g) => (
+        <section class="mt-6">
+          <div class="section-head" style="margin:0 0 14px">
+            <div class="h3">{g.title} · {g.items.length}条</div>
+          </div>
+          {
+            g.items.map((it) => (
+              <div class="card my-3 readable" data-key={it.key}>
+                <div class="font-mono text-[11px] text-muted">{it.ref} · {it.key}</div>
+                <div class="serif font-bold my-2 leading-relaxed">「{it.original}」</div>
+                <div class="p text-sm"><b>邓晓芒讲：</b>{it.deng}</div>
+                <div class="mt-2"><span class="tag text-[10px]">{it.tip}</span></div>
+              </div>
+            ))
+          }
+        </section>
+      ))
+    }
+
+    <!-- 参考来源 -->
+    <div class="card mt-6">
+      <div class="h3">参考来源</div>
+      <ul class="p text-[12.5px] leading-[1.9] mt-1" style="list-style:none;padding:0">
+        <li>· <a href="https://plato.stanford.edu/entries/kant-reason/" target="_blank" rel="noopener" class="underline text-accent">SEP: Kant's Account of Reason</a>（理性理念与幻相）</li>
+        <li>· <a href="https://plato.stanford.edu/entries/kant-antinomies/" target="_blank" rel="noopener" class="underline text-accent">SEP: Kant's Antinomies of Pure Reason</a>（四组二律背反）</li>
+        <li>· <a href="https://plato.stanford.edu/entries/ontological-arguments/" target="_blank" rel="noopener" class="underline text-accent">SEP: Ontological Arguments</a>（"存在不是谓词"批判传统）</li>
+        <li>· <a href="https://en.wikipedia.org/wiki/Paralogism" target="_blank" rel="noopener" class="underline text-accent">Wikipedia: Paralogism</a>（谬误推理）</li>
+      </ul>
+    </div>
+
+    <div class="flex flex-wrap gap-3 mt-[18px]">
+      <a href="/analytic/" class="pill">← 分析论</a>
+      <a href="/method/" class="pill">方法论 13条 →</a>
+      <a href="/deng/" class="pill">句读实验室 110条 →</a>
+    </div>
+  </main>
+</Base>

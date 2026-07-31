@@ -1,0 +1,73 @@
+---
+import Base from '../../layouts/Base.astro';
+import { commentDB } from '../../lib/commentDB';
+const title = '全量内容站 · 116条句读完全可见版';
+
+interface Item { key: string; ref: string; original: string; deng: string; tip: string }
+interface Section { title: string; items: Item[] }
+
+const SECTIONS: { name: string; match: RegExp }[] = [
+  { name: '序言', match: /A版序言|B版序言/ },
+  { name: '导言', match: /^导言|^B14|^B17/ },
+  { name: '感性论', match: /^A23|^A24|^A25|^A26|^A30|^A31|^A32|^A33|^A35|^A36|^A19|^B275/ },
+  { name: '范畴表', match: /^A54|^A66|^A93|^A94|^A102|^A103|^A109|^B105|^B106/ },
+  { name: '演绎论', match: /^A98|^A99|^A100|^A103|^A124|^A109|^B129|^B138|^B141|^B148/ },
+  { name: '图型法', match: /^A137|^A142|^A143|^A144/ },
+  { name: '原理体系', match: /^A161|^A166|^A182|^A189|^A211|^A218|^A219|^A202|^A235|^A260/ },
+  { name: '辩证论总论', match: /^A307|^A293/ },
+  { name: '谬误推理', match: /^A348|^A351|^A361|^A366/ },
+  { name: '二律背反', match: /^A405|^A426|^A427|^A431|^A432|^A444|^A445|^A452|^A453|^A506|^A525|^A532|^A560/ },
+  { name: '理想/上帝', match: /^A567|^A592|^A603|^A620|^A644/ },
+  { name: '方法论-训练', match: /^A712|^A732|^A734|^A769|^A740/ },
+  { name: '方法论-法规', match: /^A795|^A798|^A820|^A806/ },
+  { name: '方法论-建筑术历史', match: /^A832|^A852|^A856|^A855/ },
+];
+
+const sections: Section[] = SECTIONS.map((s) => ({
+  title: s.name,
+  items: [],
+}));
+const assigned = new Set<string>();
+for (const s of SECTIONS) {
+  for (const [key, v] of Object.entries(commentDB)) {
+    if (assigned.has(key)) continue;
+    if (s.match.test(v.ref)) {
+      sections.find((x) => x.title === s.name)!.items.push({ key, ...v });
+      assigned.add(key);
+    }
+  }
+}
+const finalSections = sections.filter((s) => s.items.length > 0);
+
+const total = Object.keys(commentDB).length;
+---
+
+<Base title={title} current="/full/" badge="116条完全可见版" searchPlaceholder="全站搜索：存在不是谓词/统觉…">
+  <main class="max-w-[1320px] mx-auto px-7 py-7">
+    <div class="chip">FULL CONTENT · {total}条句读不再藏在抽屉，全部写进HTML可见</div>
+    <h1 class="serif text-4xl mt-3 mb-2">
+      纯粹理性批判 · 完全内容版<br />
+      <span class="text-[13px] text-muted font-sans">所有提炼内容已写进网站，不依赖抽屉，可直接打印/SEO — 由 commentDB 数据驱动生成</span>
+    </h1>
+
+    {
+      finalSections.map((sec) => (
+        <section>
+          <h2 class="serif text-2xl mt-9 mb-4 pb-2" style="border-bottom:2px solid var(--color-line)">
+            {sec.title}（{sec.items.length}条）
+          </h2>
+          {
+            sec.items.map((it) => (
+              <div class="card my-3">
+                <div class="font-mono text-[11px] text-muted">{it.ref} · {it.key}</div>
+                <div class="serif font-bold my-2">「{it.original}」</div>
+                <div class="p text-sm"><b>邓晓芒句读：</b>{it.deng}</div>
+                <div class="mt-2"><span class="tag">{it.tip}</span></div>
+              </div>
+            ))
+          }
+        </section>
+      ))
+    }
+  </main>
+</Base>

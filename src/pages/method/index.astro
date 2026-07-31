@@ -1,0 +1,68 @@
+---
+import Base from '../../layouts/Base.astro';
+import { commentDB } from '../../lib/commentDB';
+const title = '方法论 · 13条句读全量 | 训练/法规/建筑术/历史完整讲解';
+
+interface Item { key: string; ref: string; original: string; deng: string; tip: string }
+const all: Item[] = Object.entries(commentDB)
+  .filter(([k]) => k.startsWith('meth-'))
+  .map(([k, v]) => ({ key: k, ...v }));
+
+const groups: { title: string; items: Item[] }[] = [
+  { title: '1 · 纯粹理性的训练（Discipline）', items: all.filter((i) => i.key.startsWith('meth-disc')) },
+  { title: '2 · 纯粹理性的法规（Canon）与至善', items: all.filter((i) => i.key.startsWith('meth-canon') || i.key === 'meth-highest-good') },
+  { title: '3 · 建筑术（Architectonic）', items: all.filter((i) => i.key === 'meth-architectonic') },
+  { title: '4 · 纯粹理性的历史', items: all.filter((i) => i.key.startsWith('meth-history')) },
+].filter((g) => g.items.length > 0);
+
+const total = all.length;
+---
+
+<Base title={title} current="/method/" badge={`${total}条句读全量`} searchPlaceholder="搜索：训练/至善/建筑术…" readingOn>
+  <main class="max-w-[1320px] mx-auto px-7 py-9">
+    <div class="chip">Part II · 方法论 · {total}条句读完整讲解 · 未来形而上学说明书</div>
+    <h1 class="h1-page mt-2.5">
+      方法论<br />
+      <span class="text-[13px] text-muted font-sans">纯粹理性的训练、法规、建筑术、历史 — 每条含原文定位 + 邓晓芒式讲解 + 学习提示</span>
+    </h1>
+    <p class="lead">全部句读讲解已直接展示在页面中，点击任意条目仍可打开右侧精读抽屉对照；右上角"精读"开关可高亮所有可点击句。</p>
+
+    <!-- 完整句读讲解 -->
+    {
+      groups.map((g) => (
+        <section class="mt-6">
+          <div class="section-head" style="margin:0 0 14px">
+            <div class="h3">{g.title} · {g.items.length}条</div>
+          </div>
+          {
+            g.items.map((it) => (
+              <div class="card my-3 readable" data-key={it.key}>
+                <div class="font-mono text-[11px] text-muted">{it.ref} · {it.key}</div>
+                <div class="serif font-bold my-2 leading-relaxed">「{it.original}」</div>
+                <div class="p text-sm"><b>邓晓芒讲：</b>{it.deng}</div>
+                <div class="mt-2"><span class="tag text-[10px]">{it.tip}</span></div>
+              </div>
+            ))
+          }
+        </section>
+      ))
+    }
+
+    <!-- 参考来源 -->
+    <div class="card mt-6">
+      <div class="h3">参考来源</div>
+      <ul class="p text-[12.5px] leading-[1.9] mt-1" style="list-style:none;padding:0">
+        <li>· <a href="https://plato.stanford.edu/entries/kant-hume-causality/" target="_blank" rel="noopener" class="underline text-accent">SEP: Kant and Hume on Causality</a>（法规与实践理性边界）</li>
+        <li>· <a href="https://plato.stanford.edu/entries/kant-moral/" target="_blank" rel="noopener" class="underline text-accent">SEP: Kant's Moral Philosophy</a>（至善、德福一致）</li>
+        <li>· <a href="https://plato.stanford.edu/entries/kant-religion/" target="_blank" rel="noopener" class="underline text-accent">SEP: Kant's Philosophy of Religion</a>（上帝公设与理性信仰）</li>
+        <li>· <a href="https://en.wikipedia.org/wiki/Architectonic" target="_blank" rel="noopener" class="underline text-accent">Wikipedia: Architectonic</a>（建筑术）</li>
+      </ul>
+    </div>
+
+    <div class="flex flex-wrap gap-3 mt-[18px]">
+      <a href="/dialectic/" class="pill">← 辩证论</a>
+      <a href="/deng/" class="pill">句读实验室 110条 →</a>
+      <a href="/" class="pill">总览</a>
+    </div>
+  </main>
+</Base>

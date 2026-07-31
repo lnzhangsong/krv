@@ -1,0 +1,113 @@
+---
+import Base from '../layouts/Base.astro';
+const title = '纯粹理性批判 · V5 完整版 | 116条句读 + 全站搜索';
+---
+
+<Base title={title} desc="KRV 1781/1787 · 文档全聚合 · 邓晓芒200万字句读提炼 · Astro + Tailwind 现代重构">
+  <main class="max-w-[1320px] mx-auto px-7">
+    <section class="pt-16 pb-6 grid grid-cols-1 lg:grid-cols-[1.2fr_.8fr] gap-9">
+      <div>
+        <div class="chip inline-block">KRV 1781/1787 · 邓晓芒200万字句读提炼 · 116条精读</div>
+        <h1 class="serif font-black leading-[.95] my-4" style="font-size:clamp(36px,5.5vw,62px)">
+          纯粹理性批判<br />
+          <span class="block text-[13px] tracking-[.28em] uppercase text-muted font-sans font-medium mt-3">
+            逐句精读 · 离线全文 · 全站搜索
+          </span>
+        </h1>
+        <p class="lead">
+          康德《纯粹理性批判》导读站：116 条逐句精读覆盖序言、导言、感性论、分析论、辩证论、方法论六大部分，
+          每条附邓晓芒式讲解与学习提示；另有 2381 页原文全文离线内置，可本地检索、对照阅读。
+        </p>
+        <div class="flex flex-wrap gap-2.5 mt-5">
+          <a href="/deng/" class="btn">开始精读 →</a>
+          <a href="/quanwen/" class="btn outline">浏览全文</a>
+          <a href="/glossary/" class="btn link">术语库</a>
+        </div>
+      </div>
+      <div class="card self-start" style="background:linear-gradient(180deg,var(--color-card),var(--color-bg2))">
+        <span class="chip accent">内容一览</span>
+        <div class="grid grid-cols-2 gap-3 mt-4">
+          <div class="p-3 bg-card rounded-xl border border-line"><b class="text-[24px]">116</b><div class="font-mono text-[11px] text-muted">句读条目</div></div>
+          <div class="p-3 bg-card rounded-xl border border-line"><b class="text-[24px]">14</b><div class="font-mono text-[11px] text-muted">讲全覆盖</div></div>
+          <div class="p-3 bg-card rounded-xl border border-line"><b class="text-[24px]">2381</b><div class="font-mono text-[11px] text-muted">页全文离线</div></div>
+          <div class="p-3 bg-card rounded-xl border border-line"><b class="text-[24px]">20</b><div class="font-mono text-[11px] text-muted">术语词条</div></div>
+        </div>
+        <div class="quote mt-4 text-xs">技术栈：Astro + Tailwind v4 · TypeScript · lunr 离线搜索 · 数据本地内置，纯静态可部署。</div>
+      </div>
+    </section>
+
+    <div class="section-head">
+      <div class="h3">四大板块 · 按原书结构精读</div>
+      <span class="font-mono text-[11px] text-muted">点击卡片进入对应章节</span>
+    </div>
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <a href="/aesthetic/" class="card p-5">
+        <div class="h3">01 感性论</div>
+        <div class="font-bold">时空先验形式</div>
+        <div class="p text-xs mt-1.5">16条句读完整讲解：空间形而上学阐明 4+1、时间 4+1、内外感官定位、经验实在/先验观念、反驳观念论。</div>
+      </a>
+      <a href="/analytic/" class="card p-5">
+        <div class="h3">02 分析论</div>
+        <div class="font-bold">12范畴 + 双版演绎</div>
+        <div class="p text-xs mt-1.5">48条完整讲解：判断表→范畴表、三重综合、统觉最高原理、图型时间翻译、第二类比回击休谟。</div>
+      </a>
+      <a href="/dialectic/" class="card p-5">
+        <div class="h3">03 辩证论</div>
+        <div class="font-bold">谬误 · 二律 · 三证明</div>
+        <div class="p text-xs mt-1.5">30条完整讲解：存在不是谓词、第三二律自由兼容、理性之理念的调节性使用。</div>
+      </a>
+      <a href="/method/" class="card p-5">
+        <div class="h3">04 方法论</div>
+        <div class="font-bold">训练 · 法规 · 建筑术</div>
+        <div class="p text-xs mt-1.5">13条完整讲解：数学构造 vs 哲学分析、至善德福、独断/怀疑/批判三阶段。</div>
+      </a>
+    </div>
+
+    <div class="section-head">
+      <div class="h3">阅读工具</div>
+      <span class="font-mono text-[11px] text-muted">搜索 / 全文 / 对照 / 打印</span>
+    </div>
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <a href="/deng/" class="card p-5">
+        <div class="h3 accent">句读全库</div>
+        <div class="font-bold">116条邓晓芒式精读</div>
+        <div class="p text-xs mt-1.5">按 A/B 版页码排序，点击任一条滑出右侧抽屉：原文定位 + 邓氏讲法 + 学习提示。</div>
+      </a>
+      <a href="/quanwen/" class="card p-5">
+        <div class="h3">全文直读</div>
+        <div class="font-bold">2381页原文离线内置</div>
+        <div class="p text-xs mt-1.5">794段全文静态渲染，左侧目录跳页、顶部即时过滤，可打印/保存。</div>
+      </a>
+      <a href="/glossary/" class="card p-5">
+        <div class="h3">术语库</div>
+        <div class="font-bold">20 核心概念速查</div>
+        <div class="p text-xs mt-1.5">先天/先验/超验、统觉、图型、二律背反、调节性… 与全站搜索联动。</div>
+      </a>
+      <a href="/deng-full/" class="card p-5">
+        <div class="h3">全本阅览</div>
+        <div class="font-bold">PDF 翻页 + 检索联动</div>
+        <div class="p text-xs mt-1.5">左侧 PDF.js 翻页，右侧全文检索与 116 条句读联动，点击跳页对照。</div>
+      </a>
+    </div>
+
+    <section class="card mt-10 mb-4">
+      <div class="section-head" style="margin:0 0 14px">
+        <div class="h3">如何使用</div>
+      </div>
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div>
+          <b class="font-mono">① 搜索</b>
+          <p class="p text-[13px]">顶部输入"自由""因果""存在不是谓词"等，自动下拉结果并跳转到对应句读或章节。</p>
+        </div>
+        <div>
+          <b class="font-mono">② 精读</b>
+          <p class="p text-[13px]">点"精读"开启后，任意高亮句可点击，右侧抽屉显示原文位置、邓晓芒式解读与学习提示。</p>
+        </div>
+        <div>
+          <b class="font-mono">③ 对照</b>
+          <p class="p text-[13px]">进 <a href="/quanwen/" class="underline">全文直读</a> 或 <a href="/deng-full/" class="underline">全本阅览</a>，原文与句读并排对照，逐句消化。</p>
+        </div>
+      </div>
+    </section>
+  </main>
+</Base>

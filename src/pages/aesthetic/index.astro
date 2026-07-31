@@ -1,0 +1,79 @@
+---
+import Base from '../../layouts/Base.astro';
+import { commentDB } from '../../lib/commentDB';
+const title = '先验感性论 · 16条句读全量 | 空间时间完整讲解';
+
+interface Item { key: string; ref: string; original: string; deng: string; tip: string }
+const all: Item[] = Object.entries(commentDB)
+  .filter(([k]) => k.startsWith('ae-'))
+  .map(([k, v]) => ({ key: k, ...v }));
+
+const groups: { title: string; items: Item[] }[] = [
+  { title: '空间 · 形而上学阐明 4 条 + 先验阐明', items: all.filter((i) => i.key.startsWith('ae-space-m') || i.key === 'ae-space-trans') },
+  { title: '时间 · 形而上学阐明 4 条 + 先验阐明', items: all.filter((i) => i.key.startsWith('ae-time-m') || i.key === 'ae-time-trans') },
+  { title: '空间时间的内外感官定位', items: all.filter((i) => i.key === 'ae-space-inner' || i.key === 'ae-time-inner') },
+  { title: '经验实在 · 先验观念性 · 反驳观念论', items: all.filter((i) => i.key === 'ae-emp-real' || i.key === 'ae-refutation-ps' || i.key === 'ae-b-refutation-proof') },
+  { title: '物自体触动说', items: all.filter((i) => i.key === 'ae-affect') },
+].filter((g) => g.items.length > 0);
+
+const total = all.length;
+---
+
+<Base title={title} current="/aesthetic/" badge={`${total}条句读全量`} searchPlaceholder="搜索：空间/时间/先验唯心…" readingOn>
+  <main class="max-w-[1320px] mx-auto px-7 py-9">
+    <div class="chip">Part A · 要素论第一部 · {total}条句读完整讲解</div>
+    <h1 class="h1-page mt-2.5">
+      先验感性论<br />
+      <span class="text-[13px] text-muted font-sans">时空不是被发现的，是被戴上的 — 每条含原文定位 + 邓晓芒式讲解 + 学习提示</span>
+    </h1>
+    <p class="lead">全部句读讲解已直接展示在页面中，点击任意条目仍可打开右侧精读抽屉对照；右上角"精读"开关可高亮所有可点击句。</p>
+
+    <!-- 全书定位 -->
+    <div class="card mt-5">
+      <div class="h3">全书定位 · 感性论在《纯粹理性批判》中的位置</div>
+      <div class="grid grid-cols-1 md:grid-cols-4 gap-3">
+        <div class="p-3 bg-card rounded-xl border border-line" style="outline:2px solid var(--color-accent2);outline-offset:-1px"><b>感性论 ← 本页</b><div class="font-mono text-[11px] text-muted mt-1">时空形式 · 接受杂多</div></div>
+        <div class="p-3 bg-bg2 rounded-xl"><b>分析论</b><div class="font-mono text-[11px] text-muted mt-1">范畴与原理 · 知性立法</div></div>
+        <div class="p-3 bg-bg2 rounded-xl"><b>辩证论</b><div class="font-mono text-[11px] text-muted mt-1">理念越界 · 幻相揭露</div></div>
+        <div class="p-3 bg-bg2 rounded-xl"><b>方法论</b><div class="font-mono text-[11px] text-muted mt-1">科学建筑术 · 训练法规</div></div>
+      </div>
+      <div class="quote mt-3 text-xs">感性论回答"先天综合判断如何可能"的第一块地基：时空是纯直观形式，数学（几何=空间、算术=时间）因此既综合又先天；同时经验实在性与先验观念性兼容——这正是区分康德与贝克莱的关键。</div>
+    </div>
+
+    <!-- 完整句读讲解 -->
+    {
+      groups.map((g) => (
+        <section class="mt-6">
+          <div class="section-head" style="margin:0 0 14px">
+            <div class="h3">{g.title} · {g.items.length}条</div>
+          </div>
+          {
+            g.items.map((it) => (
+              <div class="card my-3 readable" data-key={it.key}>
+                <div class="font-mono text-[11px] text-muted">{it.ref} · {it.key}</div>
+                <div class="serif font-bold my-2 leading-relaxed">「{it.original}」</div>
+                <div class="p text-sm"><b>邓晓芒讲：</b>{it.deng}</div>
+                <div class="mt-2"><span class="tag text-[10px]">{it.tip}</span></div>
+              </div>
+            ))
+          }
+        </section>
+      ))
+    }
+
+    <!-- 参考来源 -->
+    <div class="card mt-6">
+      <div class="h3">参考来源</div>
+      <ul class="p text-[12.5px] leading-[1.9] mt-1" style="list-style:none;padding:0">
+        <li>· <a href="https://plato.stanford.edu/entries/kant-spacetime/" target="_blank" rel="noopener" class="underline text-accent">SEP: Kant's Views on Space and Time</a>（空间时间的先天直观论证）</li>
+        <li>· <a href="https://plato.stanford.edu/entries/kant-transcendental-idealism/" target="_blank" rel="noopener" class="underline text-accent">SEP: Kant's Transcendental Idealism</a>（经验实在/先验观念）</li>
+        <li>· <a href="https://en.wikipedia.org/wiki/Transcendental_aesthetic" target="_blank" rel="noopener" class="underline text-accent">Wikipedia: Transcendental Aesthetic</a>（感性论概览）</li>
+      </ul>
+    </div>
+
+    <div class="flex flex-wrap gap-3 mt-6">
+      <a href="/" class="pill">← 总览</a>
+      <a href="/analytic/" class="pill">下一章 分析论 48条句读 →</a>
+    </div>
+  </main>
+</Base>

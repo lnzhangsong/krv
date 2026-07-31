@@ -1,0 +1,179 @@
+---
+import Base from '../../layouts/Base.astro';
+import fs from 'node:fs';
+import path from 'node:path';
+const title = '邓晓芒句读 全文阅览 2381页 | PDF内容直读版';
+
+interface Chunk { id: string; start: number; end: number; text: string; title: string }
+const raw = fs.readFileSync(path.join(process.cwd(), 'public/data/chunks.json'), 'utf8');
+// PDF 提取文本每行都带硬换行：先折叠为空格，再去掉中文之间的空格，得到连续段落
+const rawChunks: Chunk[] = JSON.parse(raw);
+const chunks: Chunk[] = rawChunks.map((c) => ({
+  ...c,
+  text: c.text.replace(/\s*\n\s*/g, ' ').replace(/([\u4e00-\u9fff])\s+([\u4e00-\u9fff])/g, '$1$2').trim(),
+}));
+const totalPages = 2381;
+const totalChars = chunks.reduce((s, c) => s + c.text.length, 0);
+---
+
+<Base title={title} current="/quanwen/" badge="全文阅览 2381页" searchPlaceholder="全站搜索：存在不是谓词/统觉…">
+  <main class="max-w-[1440px] mx-auto px-5 py-7">
+    <div class="chip">FULL TEXT · PDF 全文直读 · {chunks.length}段 · {totalPages}页 · {totalChars.toLocaleString()}字</div>
+    <h1 class="serif text-4xl mt-3 mb-1">
+      邓晓芒《纯粹理性批判》句读 · 全文<br />
+      <span class="text-[13px] text-muted font-sans">与句读一样直接把 PDF 内容渲染进页面，不再依赖检索/抽屉。顶部目录横向滚动跳页，输入框过滤段落。</span>
+    </h1>
+    <p class="p text-[13px] mt-2 max-w-[80ch]">数据源：<code>pages.json</code>（2380页逐页全文）合并为 <code>chunks.json</code>（794段×3页），即你上传 PDF 的文字内容。构建时静态生成，可直接打印/保存。</p>
+
+    <div class="my-4 flex gap-2.5 flex-wrap items-center">
+      <input id="qfilter" placeholder="过滤段落：存在不是谓词 / 统觉 / 第三二律…" class="flex-1 min-w-[280px] border border-line rounded-full px-[18px] py-2.5 bg-card font-mono outline-none focus:border-accent2" />
+      <span id="cnt" class="tag self-center">{chunks.length} 段</span>
+    </div>
+
+    <nav id="toc" class="flex gap-1.5 overflow-x-auto pb-2 -mx-1 px-1 mb-3" aria-label="目录">
+      {
+        chunks.map((c) => (
+          <a href={`#c${c.start}`} class="toclink whitespace-nowrap text-[11px] font-mono px-2.5 py-1 rounded-full border border-line text-muted hover:text-ink hover:border-accent2">
+            页 {c.start}-{c.end}
+          </a>
+        ))
+      }
+    </nav>
+
+    <div id="pagerTop" class="flex items-center gap-3 mb-3 flex-wrap">
+      <button id="prev" class="toggle">← 上一页</button>
+      <span class="font-mono text-xs text-muted">第 <b id="pageNum" class="text-ink">1</b> / <span id="pageTotal">--</span> 页</span>
+      <button id="next" class="toggle">下一页 →</button>
+      <span class="font-mono text-[11px] text-muted ml-auto">每页 30 段 · 共 {chunks.length} 段 · 点击目录可跳页</span>
+    </div>
+
+    <div id="body">
+      {
+        chunks.map((c) => (
+          <div class="card my-3" id={`c${c.start}`} data-pt={c.start} data-text={c.text}>
+            <div class="flex items-center gap-2">
+              <span class="tag font-mono text-[10px]">页 {c.start}-{c.end}</span>
+              <span class="font-mono text-[10px] text-muted">#{c.id}</span>
+            </div>
+            <div class="serif text-[17px] leading-[2] mt-2 whitespace-normal">{c.text}</div>
+          </div>
+        ))
+      }
+    </div>
+
+    <div id="pagerBottom" class="flex items-center justify-center gap-4 mt-6 pt-4 border-t border-line">
+      <button id="prevB" class="toggle">← 上一页</button>
+      <span class="font-mono text-xs text-muted">第 <b id="pageNumB" class="text-ink">1</b> / <span id="pageTotalB">--</span> 页</span>
+      <button id="nextB" class="toggle">下一页 →</button>
+    </div>
+  </main>
+
+  <script>
+    const PAGE = 30;
+    const input = document.getElementById('qfilter') as HTMLInputElement;
+    const cnt = document.getElementById('cnt') as HTMLElement;
+    const cards = Array.from(document.querySelectorAll('#body .card')) as HTMLElement[];
+    const totalPages = Math.ceil(cards.length / PAGE);
+    let page = 1;
+    let filtering = false;
+    let matched: number[] = [];
+
+    function syncPageUI() {
+      const cur = filtering ? 1 : page;
+      const total = filtering ? Math.max(1, Math.ceil(matched.length / PAGE)) : totalPages;
+      const set = (n: HTMLElement | null, t: HTMLElement | null) => {
+        if (n) n.textContent = String(cur);
+        if (t) t.textContent = String(total);
+      };
+      set(document.getElementById('pageNum'), document.getElementById('pageTotal'));
+      set(document.getElementById('pageNumB'), document.getElementById('pageTotalB'));
+    }
+
+    function applyPage() {
+      cards.forEach((card, i) => {
+        const inMatch = !filtering || matched.includes(i);
+        if (!inMatch) { card.style.display = 'none'; return; }
+        if (filtering) {
+          const pos = matched.indexOf(i);
+          const show = pos >= (page - 1) * PAGE && pos < page * PAGE;
+          card.style.display = show ? '' : 'none';
+        } else {
+          const show = i >= (page - 1) * PAGE && i < page * PAGE;
+          card.style.display = show ? '' : 'none';
+        }
+      });
+      syncPageUI();
+    }
+
+    function goPage(p: number) {
+      page = Math.min(Math.max(1, p), filtering ? Math.max(1, Math.ceil(matched.length / PAGE)) : totalPages);
+      applyPage();
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function gotoStart(start: string) {
+      const card = document.getElementById(`c${start}`);
+      if (!card) return;
+      const i = cards.indexOf(card as HTMLElement);
+      if (i === -1) return;
+      if (filtering) {
+        // 过滤态：如果目标不在匹配中，先清空过滤
+        input.value = '';
+        filtering = false;
+        matched = [];
+      }
+      page = Math.floor(i / PAGE) + 1;
+      applyPage();
+      requestAnimationFrame(() => {
+        card.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        card.classList.add('flash');
+        setTimeout(() => card.classList.remove('flash'), 2000);
+      });
+    }
+
+    // 分页按钮
+    ['prev', 'prevB'].forEach((id) => document.getElementById(id)?.addEventListener('click', () => goPage(page - 1)));
+    ['next', 'nextB'].forEach((id) => document.getElementById(id)?.addEventListener('click', () => goPage(page + 1)));
+
+    // 目录跳页
+    document.querySelectorAll('#toc .toclink').forEach((el) =>
+      el.addEventListener('click', (e) => {
+        e.preventDefault();
+        const href = (el as HTMLAnchorElement).getAttribute('href') ?? '';
+        gotoStart(href.replace('#c', ''));
+      })
+    );
+
+    // 过滤
+    input.addEventListener('input', () => {
+      const q = input.value.trim().toLowerCase();
+      filtering = !!q;
+      if (filtering) {
+        matched = cards.map((card, i) => ({ card, i }))
+          .filter(({ card }) => (card.dataset.text ?? '').toLowerCase().includes(q))
+          .map(({ i }) => i);
+      }
+      page = 1;
+      applyPage();
+      cnt.textContent = filtering ? `${matched.length} / ${cards.length} 段` : `${cards.length} 段`;
+    });
+
+    // 初始
+    matched = cards.map((_, i) => i);
+    applyPage();
+    cnt.textContent = `${cards.length} 段`;
+  </script>
+
+  <style>
+    .toclink.active {
+      color: var(--color-ink);
+      background: var(--color-bg2);
+      border-color: var(--color-accent2);
+    }
+    .card.flash {
+      outline: 2px solid var(--color-accent2);
+      outline-offset: 4px;
+      transition: outline-color 0.2s;
+    }
+  </style>
+</Base>

@@ -1,0 +1,7 @@
+node_modules/
+dist/
+.astro/
+.codewhale/
+.DS_Store
+npm-debug.log*
+*.local

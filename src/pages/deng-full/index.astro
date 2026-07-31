@@ -1,0 +1,163 @@
+---
+import Base from '../../layouts/Base.astro';
+const title = '邓晓芒句读 全本私有阅览室 2381页 | KRV V5';
+---
+
+<Base title={title} current="/deng-full/" badge="私有全本 2381页" searchPlaceholder="全站搜索：存在不是谓词/统觉…">
+  <main class="max-w-[1440px] mx-auto px-5">
+    <div id="viewerWrap" class="grid grid-cols-[1.45fr_.85fr] gap-4 max-[1100px]:grid-cols-1">
+      <div id="pdfCol" class="border border-line rounded-2xl bg-card flex flex-col overflow-hidden">
+        <div id="pdfToolbar" class="flex flex-wrap items-center gap-2 px-3.5 py-2.5 border-b border-line bg-bg2">
+          <button id="prev" class="toggle">上一页</button>
+          <button id="next" class="toggle">下一页</button>
+          <span class="font-mono text-xs">
+            页 <input id="pageNum" value="1" class="w-[60px] border border-line rounded-md px-1 text-center bg-card" /> / <span id="pageCount">--</span>
+          </span>
+          <button id="zoomOut" class="toggle">-</button><span class="font-mono text-[11px]">缩放</span><button id="zoomIn" class="toggle">+</button>
+          <span class="font-mono text-[11px] text-muted ml-auto">PDF: deng-judou.pdf 9.9M 2381页</span>
+        </div>
+        <div id="pdfCanvasWrap" class="flex-1 overflow-auto grid place-items-start justify-center bg-[#525659] p-5">
+          <canvas id="pdfCanvas" class="shadow-[0_8px_30px_rgba(0,0,0,.4)] bg-white"></canvas>
+        </div>
+      </div>
+      <div id="sideCol" class="border border-line rounded-2xl bg-card flex flex-col overflow-hidden max-h-[calc(100vh-68px)]">
+        <div id="sideTop" class="p-3.5 border-b border-line">
+          <div class="h3">全本全文检索 + 116条句读联动</div>
+          <input id="fullSearch" placeholder="搜索全书：比如 先验演绎 存在不是谓词 自由…" class="w-full border border-line rounded-full px-3.5 py-2 bg-bg font-mono mt-2 outline-none" />
+          <div class="flex flex-wrap gap-1.5 mt-2.5">
+            <button class="tag" data-kw="先验感性论">感性论</button>
+            <button class="tag" data-kw="先验分析论">分析论</button>
+            <button class="tag" data-kw="先验演绎">演绎</button>
+            <button class="tag" data-kw="图型">图型</button>
+            <button class="tag" data-kw="二律背反">二律背反</button>
+            <button class="tag" data-kw="存在不是谓词">存在不是谓词</button>
+          </div>
+          <div class="p text-[11px] text-muted mt-2">说明：左侧PDF是您上传的完整扫描版，仅在您私有workspace可用。右侧检索用离线 pages.json（2380页全文）生成，命中逐页显示摘要和页码，点击跳页。116条句读仍可用精读抽屉。</div>
+        </div>
+        <div id="sideBody" class="flex-1 overflow-auto p-3.5">
+          <div id="fullResults"></div>
+          <div id="jubiaoList" class="mt-[18px]"></div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <script>
+    import * as pdfjsLib from 'pdfjs-dist';
+    import { commentDB } from '../../lib/commentDB';
+    import { showEntry } from '../../lib/reader';
+
+    pdfjsLib.GlobalWorkerOptions.workerSrc = new URL('pdfjs-dist/build/pdf.worker.mjs', import.meta.url).toString();
+
+    let pdfDoc: any = null;
+    let pageNum = 1;
+    let pageRendering = false;
+    let pageNumPending: number | null = null;
+    let scale = 1.2;
+    const canvas = document.getElementById('pdfCanvas') as HTMLCanvasElement;
+    const ctx = canvas.getContext('2d')!;
+    const pdfUrl = '/deng-judou.pdf';
+
+    function renderPage(num: number) {
+      pageRendering = true;
+      (document.getElementById('pageNum') as HTMLInputElement).value = String(num);
+      pdfDoc.getPage(num).then((page: any) => {
+        const viewport = page.getViewport({ scale });
+        canvas.height = viewport.height;
+        canvas.width = viewport.width;
+        page.render({ canvasContext: ctx, viewport } as any).promise.then(() => {
+          pageRendering = false;
+          if (pageNumPending !== null) { renderPage(pageNumPending); pageNumPending = null; }
+        });
+      });
+      (document.getElementById('pageCount') as HTMLElement).textContent = String(pdfDoc.numPages);
+    }
+    function queueRender(num: number) {
+      if (pageRendering) { pageNumPending = num; } else { renderPage(num); }
+    }
+
+    pdfjsLib.getDocument({ url: pdfUrl }).promise.then((pdf: any) => {
+      pdfDoc = pdf;
+      (document.getElementById('pageCount') as HTMLElement).textContent = String(pdf.numPages);
+      renderPage(pageNum);
+    });
+
+    document.getElementById('prev')!.addEventListener('click', () => { if (pageNum <= 1) return; pageNum--; queueRender(pageNum); });
+    document.getElementById('next')!.addEventListener('click', () => { if (!pdfDoc || pageNum >= pdfDoc.numPages) return; pageNum++; queueRender(pageNum); });
+    document.getElementById('pageNum')!.addEventListener('change', (e) => {
+      const n = parseInt((e.target as HTMLInputElement).value);
+      if (n >= 1 && n <= pdfDoc.numPages) { pageNum = n; queueRender(n); }
+    });
+    document.getElementById('zoomIn')!.addEventListener('click', () => { scale += 0.2; queueRender(pageNum); });
+    document.getElementById('zoomOut')!.addEventListener('click', () => { if (scale <= 0.6) return; scale -= 0.2; queueRender(pageNum); });
+
+    function jumpTo(page: number) { pageNum = page; queueRender(pageNum); window.scrollTo(0, 0); }
+
+    interface Chunk { id: string; start: string; end: string; text: string }
+    let chunks: Chunk[] = [];
+    let pages: { page: number; text: string }[] = [];
+    Promise.all([
+      fetch('/data/chunks.json').then((r) => r.json()).then((d: Chunk[]) => { chunks = d; renderJubiao(); }),
+      fetch('/data/pages.json').then((r) => r.json()).then((d: { page: number; text: string }[]) => { pages = d; }),
+    ]);
+
+    function renderJubiao() {
+      const list = document.getElementById('jubiaoList') as HTMLElement;
+      const entries = Object.entries(commentDB);
+      list.innerHTML =
+        '<div class="h3">116条句读快捷 nav（点击跳抽屉）</div>' +
+        entries
+          .slice(0, 80)
+          .map(([k, v]) => `<div class="item readable" data-key="${k}" style="cursor:pointer"><div class="pg mono">${v.ref} · ${k}</div><div style="font-weight:700">${v.original.slice(0, 60)}</div><div style="font-size:11px;color:var(--color-muted)">${v.tip}</div></div>`)
+          .join('') +
+        '<div class="p" style="font-size:11px;color:var(--color-muted);margin-top:8px">仅展示80条，去 /deng/ 看全部116条</div>';
+    }
+
+    const esc = (s: string) => s.replace(/</g, '&lt;');
+    const fullSearch = document.getElementById('fullSearch') as HTMLInputElement;
+    fullSearch.addEventListener('input', () => {
+      const q = fullSearch.value.trim();
+      const box = document.getElementById('fullResults') as HTMLElement;
+      if (!q) { box.innerHTML = ''; return; }
+      const lower = q.toLowerCase();
+      const pageHits = pages.filter((p) => p.text.toLowerCase().includes(lower)).slice(0, 30);
+      if (pageHits.length === 0) {
+        box.innerHTML = '<div class="p text-xs text-muted">无结果，试试 二律背反 统觉 范畴</div>';
+        return;
+      }
+      box.innerHTML =
+        '<div class="h3">全本命中 ' + pageHits.length + ' 页（逐页全文）</div>' +
+        pageHits
+          .map((h) => `<div class="item"><div class="pg">页 ${h.page}</div><div class="text-xs">${esc(h.text.slice(0, 200))}...</div><div class="mt-1.5"><button class="toggle text-xs" data-page="${h.page}">跳到 页${h.page}</button></div></div>`)
+          .join('');
+      box.querySelectorAll('[data-page]').forEach((btn) => btn.addEventListener('click', () => jumpTo(parseInt((btn as HTMLElement).dataset.page!))));
+    });
+
+    document.querySelectorAll('[data-kw]').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        fullSearch.value = (btn as HTMLElement).dataset.kw!;
+        fullSearch.dispatchEvent(new Event('input'));
+      });
+    });
+
+    document.addEventListener('click', (e) => {
+      const el = (e.target as HTMLElement).closest('.readable') as HTMLElement | null;
+      if (el && el.dataset.key) showEntry(el.dataset.key);
+    });
+    document.getElementById('closeDrawer')?.addEventListener('click', () => document.getElementById('drawer')?.classList.remove('open'));
+  </script>
+
+  <style>
+    .item {
+      border: 1px solid var(--color-line);
+      border-radius: 12px;
+      padding: 12px;
+      margin: 8px 0;
+      font-size: 13px;
+    }
+    .item .pg {
+      font-size: 10px;
+      color: var(--color-muted);
+    }
+  </style>
+</Base>

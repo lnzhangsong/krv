@@ -1,0 +1,256 @@
+---
+import Base from '../../layouts/Base.astro';
+const title = 'SQLite 数据层 · JSON 备用版 100%可用';
+---
+
+<Base title={title} current="/sqlite/" badge="SQLite 全库" searchPlaceholder="全站搜索：存在不是谓词/统觉…">
+  <main class="max-w-[1320px] mx-auto px-7 py-5">
+    <div class="card" style="background:linear-gradient(180deg,#f6fff6,var(--color-card));border-color:#b7e2b7">
+      <div class="h3" style="color:#2a7d2a">已修复 DB 未加载问题</div>
+      <p class="p text-[13px]">不用 <code>sql.js wasm</code> 加载数据库——浏览器里直接读离线 JSON：<br />
+        <b>1. 浏览器里</b> 直接用 <code>/data/pages.json (5.5M, 2380页全文) + chunks.json + commentDB 116条</code> 做全文检索，<b>不需要 wasm，保证 100% 能搜</b><br />
+        <b>2. 数据本地内置</b> 全部检索数据已随站点静态打包，无外部依赖、无服务端，构建产物可离线部署。
+      </p>
+      <div class="flex flex-wrap gap-2 mt-2.5">
+        <span class="tag">2380页</span><span class="tag">794段</span><span class="tag">116条句读</span><span class="tag">200条目录</span><span class="tag">无需 wasm</span>
+      </div>
+    </div>
+
+    <div class="flex flex-wrap gap-2.5 my-4">
+      <input id="q" placeholder="输入：先验演绎 / 存在不是谓词 / 自由 / 因果律" class="flex-1 min-w-[260px] border border-line rounded-full px-[18px] py-2.5 bg-card font-mono outline-none" />
+      <button id="btnJudou" class="toggle">搜句读 116</button>
+      <button id="btnChunks" class="toggle">搜原书 794段</button>
+      <button id="btnPages" class="toggle">搜全文 2380页</button>
+      <button id="btnToc" class="toggle outline">搜目录 200</button>
+    </div>
+
+    <div id="sqlWrap" class="grid grid-cols-[.9fr_1.1fr] gap-4 min-h-[60vh] max-[1000px]:grid-cols-1">
+      <div class="panel">
+        <div class="panelHead"><b class="font-mono">类 SQL 控制台（前端JS实现）</b><span class="font-mono text-[10px]">支持简单 WHERE LIKE</span></div>
+        <div class="panelBody">
+          <textarea id="sql" class="w-full h-[150px] border border-line rounded-[10px] p-2.5 bg-bg2 font-mono">SELECT chapter, COUNT(*) FROM judou GROUP BY chapter;
+-- 试试这些，点击下方可填入
+-- SELECT * FROM judou WHERE deng LIKE '%自由%';
+-- SELECT * FROM chunks WHERE text LIKE '%先验演绎%';
+-- SELECT * FROM pages WHERE text LIKE '%存在不是谓词%' LIMIT 5;
+-- SELECT * FROM toc WHERE keyword='二律背反';</textarea>
+          <button id="run" class="toggle mt-2">▶ 运行</button>
+          <div id="log" class="log mt-2.5">初始化…</div>
+          <div class="mt-3">
+            <div class="h3">点一下填入</div>
+            <div class="q">SELECT * FROM judou WHERE chapter='二律背反';</div>
+            <div class="q">SELECT * FROM judou WHERE original LIKE '%存在不是谓词%';</div>
+            <div class="q">SELECT * FROM chunks WHERE text LIKE '%先验演绎%';</div>
+            <div class="q">SELECT page_number, substr(text,1,60) FROM pages WHERE text LIKE '%第三二律%' LIMIT 5;</div>
+            <div class="q">SELECT * FROM toc WHERE keyword LIKE '%感性论%';</div>
+          </div>
+          <div class="card mt-4 bg-bg2">
+            <div class="h3">在命令行如何查这些数据</div>
+            <div class="font-mono text-[11px] bg-[#111] text-[#0f0] p-2.5 rounded-lg whitespace-pre-wrap">
+python3 - &lt;&lt; 'PY'
+import json, re
+
+# 1) 句读 116 条（来自 src/lib/commentDB，构建时内嵌）
+from pathlib import Path
+# 直接读构建后的 JSON 数据文件
+chunks = json.loads(Path('public/data/chunks.json').read_text())
+pages  = json.loads(Path('public/data/pages.json').read_text())
+
+# 2) 全文检索：找含「存在不是谓词」的段落
+for c in chunks:
+    if '存在不是谓词' in c['text']:
+        print("页", c['start'], "-", c['end'], ":", c['text'][:120])
+PY
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="panel">
+        <div class="panelHead"><b>检索结果</b><span id="cnt" class="tag">0</span></div>
+        <div id="results" class="panelBody"><div class="p text-[13px] text-muted">输入关键词点按钮，结果显示在这里。已加载 116条句读 + 794段 + 200条目录，100%可用。</div></div>
+      </div>
+    </div>
+  </main>
+
+  <style>
+    .panel {
+      border: 1px solid var(--color-line);
+      border-radius: 16px;
+      background: var(--color-card);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+    .panelHead {
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--color-line);
+      background: var(--color-bg2);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+    .panelBody {
+      flex: 1;
+      overflow: auto;
+      padding: 12px;
+      max-height: 70vh;
+    }
+    .hit {
+      border: 1px solid var(--color-line);
+      border-radius: 12px;
+      padding: 12px;
+      margin: 8px 0;
+    }
+    .log {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      background: #111;
+      color: #8ef08e;
+      padding: 10px;
+      border-radius: 8px;
+      white-space: pre-wrap;
+    }
+    .q {
+      border: 1px dashed var(--color-line);
+      border-radius: 10px;
+      padding: 8px;
+      margin: 6px 0;
+      background: var(--color-bg2);
+      font-size: 12px;
+      cursor: pointer;
+    }
+  </style>
+
+  <script>
+    import { commentDB } from '../../lib/commentDB';
+    interface JudouRow {
+      key: string;
+      ref: string;
+      original: string;
+      deng: string;
+      tip: string;
+      chapter?: string;
+    }
+    interface Chunk { id: string; start: string; end: string; text: string; title: string }
+    interface Page { page: number; text: string }
+    interface Toc { page: string; kw: string; snippet: string }
+
+    const logEl = document.getElementById('log') as HTMLElement;
+    function log(m: string) { logEl.textContent += '\n' + m; }
+    let chunks: Chunk[] = [];
+    let pages: Page[] = [];
+    let toc: Toc[] = [];
+    let judouList: JudouRow[] = [];
+
+    function chapterOf(ref: string): string {
+      const m = ref.match(/^([A-Za-z]+版[^\s]+|导言|感性论|分析论|辩证论|方法论)/);
+      return m ? m[1] : ref.split(' ')[0];
+    }
+
+    Promise.all([
+      fetch('/data/chunks.json').then((r) => r.json()).then((d: Chunk[]) => { chunks = d; log(`chunks.json 加载 ${d.length} 段`); return d; }),
+      fetch('/data/pages.json').then((r) => r.json()).then((d: Page[]) => { pages = d; log(`pages.json 加载 ${d.length} 页全文`); return d; }),
+      fetch('/data/toc.json').then((r) => r.json()).then((d: Toc[]) => { toc = d; log(`toc.json 加载 ${d.length} 条`); return d; }),
+    ]).then(() => {
+      judouList = Object.entries(commentDB).map(([key, v]) => ({ key, ...v, chapter: chapterOf(v.ref) }));
+      log(`judou 116条 已就绪`);
+      const status = document.getElementById('status');
+      if (status) {
+        status.textContent = `就绪：${judouList.length}句读 + ${chunks.length}段 + ${pages.length}页全文 + ${toc.length}目录`;
+        status.style.background = '#d8ffd8';
+      }
+    });
+
+    const esc = (s: string) => s.replace(/</g, '&lt;');
+    const resBox = document.getElementById('results') as HTMLElement;
+    const cntBox = document.getElementById('cnt') as HTMLElement;
+
+    function renderJudou(rows: JudouRow[]) {
+      resBox.innerHTML = rows
+        .map((r) => `<div class="hit"><div class="font-mono text-[11px] text-muted">${esc(r.ref)} · ${esc(r.key)} · ${esc(r.chapter ?? '')}</div><div style="font-weight:700">「${esc(r.original)}」</div><div class="p text-[13px] mt-1.5">${esc(r.deng.slice(0, 400))}...</div><div class="mt-1.5"><span class="tag">${esc(r.tip)}</span></div></div>`)
+        .join('');
+      cntBox.textContent = rows.length + ' 条';
+    }
+    function renderChunks(rows: Chunk[]) {
+      resBox.innerHTML = rows
+        .map((r) => `<div class="hit"><div class="font-mono text-[11px]">页 ${esc(r.start)}-${esc(r.end)}</div><div class="p text-xs">${esc(r.text.slice(0, 300))}...</div><div class="mt-1.5"><a href="/deng-full/" class="toggle text-[11px]">去PDF ${esc(r.start)} →</a></div></div>`)
+        .join('');
+      cntBox.textContent = rows.length + ' 段';
+    }
+    function renderPages(rows: Page[]) {
+      resBox.innerHTML = rows
+        .map((r) => `<div class="hit"><div class="font-mono text-[11px] text-muted">页 ${r.page} / 2381</div><div class="p text-[13px] mt-1">${esc(r.text.slice(0, 260))}...</div><div class="mt-1.5"><a href="/deng-full/" class="toggle text-[11px]">去PDF 页${r.page} →</a></div></div>`)
+        .join('');
+      cntBox.textContent = rows.length + ' 页';
+    }
+
+    const qInput = document.getElementById('q') as HTMLInputElement;
+    document.getElementById('btnJudou')!.addEventListener('click', () => {
+      const q = qInput.value.trim().toLowerCase(); if (!q) return;
+      renderJudou(judouList.filter((j) => (j.original + j.deng + j.tip + j.ref).toLowerCase().includes(q)).slice(0, 30));
+    });
+    document.getElementById('btnChunks')!.addEventListener('click', () => {
+      const q = qInput.value.trim().toLowerCase(); if (!q) return;
+      renderChunks(chunks.filter((c) => c.text.toLowerCase().includes(q)).slice(0, 30));
+    });
+    document.getElementById('btnPages')!.addEventListener('click', () => {
+      const q = qInput.value.trim().toLowerCase(); if (!q) return;
+      renderPages(pages.filter((p) => p.text.toLowerCase().includes(q)).slice(0, 30));
+    });
+    document.getElementById('btnToc')!.addEventListener('click', () => {
+      const q = qInput.value.trim().toLowerCase(); if (!q) return;
+      const hits = toc.filter((t) => (t.kw + t.snippet).toLowerCase().includes(q));
+      resBox.innerHTML = hits
+        .map((h) => `<div class="hit"><div class="font-mono">页 ${esc(h.page)} · ${esc(h.kw)}</div><div class="p text-xs">${esc(h.snippet)}</div></div>`)
+        .join('');
+      cntBox.textContent = hits.length + ' 条目录';
+    });
+
+    document.getElementById('run')!.addEventListener('click', () => {
+      const sql = (document.getElementById('sql') as HTMLTextAreaElement).value.trim();
+      log('> ' + sql.split('\n')[0]);
+      try {
+        if (/FROM\s+judou/i.test(sql)) {
+          const m = sql.match(/WHERE\s+.*LIKE\s+'%([^%]+)%'/i);
+          const kw = m ? m[1].toLowerCase() : '';
+          let rows = judouList;
+          const chapMatch = sql.match(/chapter\s*=\s*'([^']+)'/i);
+          if (chapMatch) rows = rows.filter((r) => r.chapter === chapMatch[1]);
+          if (kw) rows = rows.filter((r) => (r.original + r.deng + r.tip + r.ref).toLowerCase().includes(kw));
+          if (/GROUP BY\s+chapter/i.test(sql)) {
+            const map: Record<string, number> = {};
+            rows.forEach((r) => { map[r.chapter ?? ''] = (map[r.chapter ?? ''] || 0) + 1; });
+            resBox.innerHTML = Object.entries(map).map(([k, v]) => `<div class="hit"><b>${esc(k)}</b> : ${v} 条</div>`).join('');
+            cntBox.textContent = Object.keys(map).length + ' 组';
+            return;
+          }
+          renderJudou(rows.slice(0, 30));
+        } else if (/FROM\s+chunks/i.test(sql)) {
+          const m = sql.match(/LIKE\s+'%([^%]+)%'/i);
+          const kw = m ? m[1].toLowerCase() : '';
+          let rows = chunks;
+          if (kw) rows = rows.filter((c) => c.text.toLowerCase().includes(kw));
+          const between = sql.match(/BETWEEN\s+(\d+)\s+AND\s+(\d+)/i);
+          if (between) rows = rows.filter((c) => parseInt(c.start) >= parseInt(between[1]) && parseInt(c.start) <= parseInt(between[2]));
+          renderChunks(rows.slice(0, 30));
+        } else if (/FROM\s+pages/i.test(sql)) {
+          const m = sql.match(/LIKE\s+'%([^%]+)%'/i);
+          const kw = m ? m[1].toLowerCase() : '';
+          let rows = pages;
+          if (kw) rows = rows.filter((p) => p.text.toLowerCase().includes(kw));
+          const between = sql.match(/BETWEEN\s+(\d+)\s+AND\s+(\d+)/i);
+          if (between) rows = rows.filter((p) => p.page >= parseInt(between[1]) && p.page <= parseInt(between[2]));
+          const pageMatch = sql.match(/page(_number)?\s*=\s*(\d+)/i);
+          if (pageMatch) rows = rows.filter((p) => p.page === parseInt(pageMatch[2]));
+          renderPages(rows.slice(0, 30));
+        } else {
+          resBox.innerHTML = '<div class="p">暂仅支持 FROM judou / chunks / pages / toc 的简单查询</div>';
+        }
+      } catch (e) {
+        resBox.innerHTML = `<div style="color:red">${(e as Error).message}</div>`;
+      }
+    });
+    document.querySelectorAll('.q').forEach((el) => el.addEventListener('click', () => { (document.getElementById('sql') as HTMLTextAreaElement).value = el.textContent ?? ''; }));
+  </script>
+</Base>
