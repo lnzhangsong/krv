@@ -1,0 +1,81 @@
+---
+import { SELF_TESTS, type SelfTestItem } from '../lib/selftest';
+interface Props { current: string }
+const { current } = Astro.props;
+const test = SELF_TESTS.find((t) => t.key === current);
+---
+
+{test && (
+  <div class="card mt-6 self-test">
+    <div class="flex items-center justify-between gap-2 flex-wrap">
+      <div class="h3 accent">读完自检 · {test.title}</div>
+      <span class="font-mono text-[10px] text-muted">先自己回答，再展开对照</span>
+    </div>
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-3 mt-2">
+      {test.items.map((it: SelfTestItem, i) => (
+        <div class="st-item">
+          <div class="st-q">
+            <span class="st-num">{i + 1}</span>
+            {it.q}
+          </div>
+          <details class="st-answer">
+            <summary>参考答案</summary>
+            <p>{it.a}</p>
+          </details>
+        </div>
+      ))}
+    </div>
+  </div>
+)}
+
+<style>
+  .st-item {
+    border: 1px solid var(--color-line);
+    border-radius: 14px;
+    padding: 16px 18px;
+    background: var(--color-card);
+    display: flex;
+    flex-direction: column;
+  }
+  .st-q {
+    font-size: 14px;
+    font-weight: 600;
+    line-height: 1.75;
+    display: flex;
+    gap: 10px;
+    align-items: baseline;
+  }
+  .st-num {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--color-accent2);
+    border: 1px solid color-mix(in srgb, var(--color-accent2) 45%, var(--color-line));
+    border-radius: 999px;
+    padding: 0 8px;
+    flex-shrink: 0;
+  }
+  .st-answer {
+    margin-top: 10px;
+  }
+  .st-answer summary {
+    cursor: pointer;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--color-accent);
+    user-select: none;
+    padding: 4px 0;
+  }
+  .st-answer summary:hover {
+    color: var(--color-accent2);
+  }
+  .st-answer p {
+    font-size: 13.5px;
+    line-height: 1.9;
+    color: color-mix(in srgb, var(--color-ink) 82%, var(--color-muted));
+    background: var(--color-bg2);
+    border-left: 3px solid var(--color-accent2);
+    border-radius: 0 8px 8px 0;
+    padding: 10px 14px;
+    margin: 6px 0 0;
+  }
+</style>

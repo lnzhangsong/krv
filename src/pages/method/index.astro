@@ -2,6 +2,7 @@
 import Base from '../../layouts/Base.astro';
 import PageHead from '../../components/PageHead.astro';
 import ArgumentMap from '../../components/ArgumentMap.astro';
+import SelfTest from '../../components/SelfTest.astro';
 import SentenceReader from '../../components/SentenceReader.astro';
 import { commentDB } from '../../lib/commentDB';
 import { parseSentences } from '../../lib/parse';
@@ -123,8 +124,18 @@ const sentences = raw.flatMap((r) => parseSentences(r.text, r.id, r.seq));
           <b>④ "方法论对今天有什么用？"</b>
           <p class="p text-[13px] mt-1">建筑术提醒：做研究先有体系框架，不是材料堆砌；训练提醒：区分可证与不可证（哪些能科学假设、哪些不能）。这是跨越两百多年的方法论遗产。</p>
         </div>
+        <div>
+          <b>⑤ "为什么哲学证明只能间接、不能像数学那样构造？"</b>
+          <p class="p text-[13px] mt-1">数学证明靠构造直观（画出对象即存在），哲学没有直观可依，只能靠概念推演。康德说哲学证明更像"法律辩护"——论证合法性与界限，而不是构造对象。</p>
+        </div>
+        <div>
+          <b>⑥ "至善为什么需要上帝与不朽作公设？"</b>
+          <p class="p text-[13px] mt-1">德性与幸福在经验界常常不一致，要设想"德福一致"的至善可能，必须公设上帝（保证公正）与灵魂不朽（保证无限时间），否则道德命令缺乏现实可完成性。</p>
+        </div>
       </div>
     </div>
+
+    <SelfTest current="method" />
 
     <!-- 参考来源 -->
     <div class="card mt-6">

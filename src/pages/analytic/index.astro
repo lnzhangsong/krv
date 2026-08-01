@@ -2,6 +2,7 @@
 import Base from '../../layouts/Base.astro';
 import PageHead from '../../components/PageHead.astro';
 import ArgumentMap from '../../components/ArgumentMap.astro';
+import SelfTest from '../../components/SelfTest.astro';
 import SentenceReader from '../../components/SentenceReader.astro';
 import { commentDB } from '../../lib/commentDB';
 import { parseSentences } from '../../lib/parse';
@@ -150,8 +151,18 @@ const sentences = raw.flatMap((r) => parseSentences(r.text, r.id, r.seq));
           <b>④ "图型法是不是多此一举？"</b>
           <p class="p text-[13px] mt-1">范畴是逻辑概念、直观是感性内容，二者异质——就像"圆"的概念与画出的圆。时间图型（数=相继、因果=有规则相继）是必需的"翻译官"。</p>
         </div>
+        <div>
+          <b>⑤ "范畴表为什么是三分法而不是两分？"</b>
+          <p class="p text-[13px] mt-1">每类第三个范畴是前两个的综合：全体=单一+多数，限制=实在+否定，协同=实体+因果，必然=可能+存在。这是康德模仿判断表的结构，也为后来黑格尔辩证法埋下伏笔。</p>
+        </div>
+        <div>
+          <b>⑥ "先验演绎到底证明了什么？它的边界在哪？"</b>
+          <p class="p text-[13px] mt-1">证明范畴适用于一切可能经验（客观有效性），但只限于经验对象。范畴不能用于物自体——超验使用无意义，这正是演绎划下的界限，堵住神学滥用。</p>
+        </div>
       </div>
     </div>
+
+    <SelfTest current="analytic" />
 
     <!-- 参考来源 -->
     <div class="card mt-6">

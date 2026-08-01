@@ -2,6 +2,7 @@
 import Base from '../../layouts/Base.astro';
 import PageHead from '../../components/PageHead.astro';
 import ArgumentMap from '../../components/ArgumentMap.astro';
+import SelfTest from '../../components/SelfTest.astro';
 import SentenceReader from '../../components/SentenceReader.astro';
 import { commentDB } from '../../lib/commentDB';
 import { parseSentences } from '../../lib/parse';
@@ -123,8 +124,18 @@ const sentences = raw.flatMap((r) => parseSentences(r.text, r.id, r.seq));
           <b>④ "时间为什么比空间更根本？"</b>
           <p class="p text-[13px] mt-1">空间只管外感官，时间是一切现象（含内省）的直接条件——空间中的对象最终也要通过内感官被意识到，因而也在时间中。</p>
         </div>
+        <div>
+          <b>⑤ "形而上学阐明和先验阐明有什么区别？"</b>
+          <p class="p text-[13px] mt-1">形而上学阐明回答"空间/时间是什么"——证明它们是先天直观形式而非经验概念或概念；先验阐明回答"这个形式有什么用"——解释几何/算术何以成为先天综合科学。一个定性、一个定用。</p>
+        </div>
+        <div>
+          <b>⑥ "如果时空是主观形式，两个人都看到同一个物体吗？"</b>
+          <p class="p text-[13px] mt-1">看到的是同一个物体的现象。时空是"普遍的"主观形式（人人都一样），不是"个人的"主观心理。所以经验上我们共享同一个时空世界——这正是它能保证科学普遍性的原因。</p>
+        </div>
       </div>
     </div>
+
+    <SelfTest current="aesthetic" />
 
     <!-- 参考来源 -->
     <div class="card mt-6">

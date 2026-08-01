@@ -2,6 +2,7 @@
 import Base from '../../layouts/Base.astro';
 import PageHead from '../../components/PageHead.astro';
 import ArgumentMap from '../../components/ArgumentMap.astro';
+import SelfTest from '../../components/SelfTest.astro';
 import SentenceReader from '../../components/SentenceReader.astro';
 import { commentDB } from '../../lib/commentDB';
 import { parseSentences } from '../../lib/parse';
@@ -152,8 +153,18 @@ const sentences = raw.flatMap((r) => parseSentences(r.text, r.id, r.seq));
           <b>④ "理念就完全没用吗？"</b>
           <p class="p text-[13px] mt-1">有用。理念作为<b>调节性</b>原则指导科学研究："仿佛"自然有统一设计，促使我们追求更系统的知识——只是不能当作构成性知识。</p>
         </div>
+        <div>
+          <b>⑤ "谬误推理的根源是什么？"</b>
+          <p class="p text-[13px] mt-1">把"我思"这个逻辑上的主词当成了本体上的实体。从"我能作主词"（逻辑）推到"我是实体"（本体）——中项被偷换，四重谬误（实体/单纯/人格/观念性）同源。</p>
+        </div>
+        <div>
+          <b>⑥ "数学二律和力学二律为什么解法不同？"</b>
+          <p class="p text-[13px] mt-1">数学二律（有限/无限、单纯/可分）把世界当成已完成总体去问——皆假，因为现象无总体；力学二律（自由/必然）讨论的是关系性概念，可放在现象界与物自体两个层面——皆真，各得其所。</p>
+        </div>
       </div>
     </div>
+
+    <SelfTest current="dialectic" />
 
     <!-- 参考来源 -->
     <div class="card mt-6">
