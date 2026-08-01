@@ -1,6 +1,7 @@
 ---
 import Base from '../../layouts/Base.astro';
 import PageHead from '../../components/PageHead.astro';
+import ArgumentMap from '../../components/ArgumentMap.astro';
 import SentenceReader from '../../components/SentenceReader.astro';
 import { commentDB } from '../../lib/commentDB';
 import { parseSentences } from '../../lib/parse';
@@ -30,6 +31,7 @@ const sentences = raw.flatMap((r) => parseSentences(r.text, r.id, r.seq));
       title="先验辩证论"
       subtitle="从灵魂到世界到上帝 — 理性为何必然越界，幻相如何被揭露"
     />
+    <ArgumentMap current="dialectic" />
 
     <!-- 本章任务 -->
     <div class="card mt-5">

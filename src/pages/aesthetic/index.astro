@@ -1,6 +1,7 @@
 ---
 import Base from '../../layouts/Base.astro';
 import PageHead from '../../components/PageHead.astro';
+import ArgumentMap from '../../components/ArgumentMap.astro';
 import SentenceReader from '../../components/SentenceReader.astro';
 import { commentDB } from '../../lib/commentDB';
 import { parseSentences } from '../../lib/parse';
@@ -30,6 +31,7 @@ const sentences = raw.flatMap((r) => parseSentences(r.text, r.id, r.seq));
       title="先验感性论"
       subtitle="时空不是被发现的，是被戴上的 — 这一章回答「数学如何可能」"
     />
+    <ArgumentMap current="aesthetic" />
 
     <!-- 本章任务 -->
     <div class="card mt-5">

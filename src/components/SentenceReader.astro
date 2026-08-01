@@ -1,5 +1,5 @@
 ---
-interface Sentence { start: number; orig: string; exp: string; chunkId: string }
+interface Sentence { start: number; orig: string; exp: string; chunkId: string; role?: string }
 interface Props { sentences: Sentence[]; pageSize?: number; jumpHref?: string; pagerBottom?: number; floating?: boolean }
 const { sentences, pageSize = 20, jumpHref = '/quanwen/', pagerBottom = 20, floating = true } = Astro.props;
 const pages = Math.ceil(sentences.length / pageSize);
@@ -16,7 +16,10 @@ void pagerBottom;
       sentences.map((s, i) => (
         <div class="rd-item" data-i={i}>
           <div class="rd-item-head">
-            <a href={`${jumpHref}#c${s.start}`} class="rd-ref">段 {s.start + 1}</a>
+            <div class="flex items-center gap-2">
+              <a href={`${jumpHref}#c${s.start}`} class="rd-ref">段 {s.start + 1}</a>
+              {s.role && <span class={`rd-role rd-role-${s.role}`}>{s.role}</span>}
+            </div>
             <button class="rd-ai" data-orig={s.orig} title="AI 实时讲解">✦ AI</button>
           </div>
           <div class="rd-orig serif">
@@ -180,6 +183,45 @@ void pagerBottom;
   }
   .rd-ref:hover {
     color: var(--color-accent2);
+  }
+  /* 句子功能标签：定义/论证/反驳/结论/过渡/例子/引用 */
+  .rd-role {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    letter-spacing: 0.08em;
+    border-radius: 999px;
+    padding: 1px 8px;
+    border: 1px solid var(--color-line);
+    color: var(--color-muted);
+    background: var(--color-bg2);
+    white-space: nowrap;
+  }
+  .rd-role-定义 {
+    color: var(--color-accent);
+    border-color: color-mix(in srgb, var(--color-accent) 35%, var(--color-line));
+    background: color-mix(in srgb, var(--color-accent) 8%, transparent);
+  }
+  .rd-role-论证 {
+    color: color-mix(in srgb, #6b4a12 90%, var(--color-ink));
+    border-color: color-mix(in srgb, var(--color-accent2) 50%, var(--color-line));
+    background: color-mix(in srgb, var(--color-accent2) 12%, transparent);
+  }
+  .rd-role-反驳 {
+    color: var(--color-red);
+    border-color: color-mix(in srgb, var(--color-red) 40%, var(--color-line));
+    background: color-mix(in srgb, var(--color-red) 8%, transparent);
+  }
+  .rd-role-结论 {
+    color: #1a6b3a;
+    border-color: color-mix(in srgb, #1a6b3a 40%, var(--color-line));
+    background: color-mix(in srgb, #1a6b3a 8%, transparent);
+  }
+  .rd-role-过渡 {
+    color: var(--color-muted);
+  }
+  .rd-role-例子 {
+    color: #8a5a1f;
+    border-color: color-mix(in srgb, #b08d3e 45%, var(--color-line));
   }
   .rd-ai {
     border: none;
