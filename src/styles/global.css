@@ -577,6 +577,10 @@
 .term-tip.show {
   display: block;
 }
+.term-tip.pinned {
+  border-color: color-mix(in srgb, var(--color-accent2) 60%, var(--color-line));
+  box-shadow: 0 22px 70px rgba(26, 58, 95, 0.2);
+}
 .term-tip-head {
   display: flex;
   align-items: baseline;
@@ -643,6 +647,10 @@
 }
 .term-tip-link:hover {
   color: var(--color-accent2);
+}
+.term-tip-more {
+  font-size: 10px;
+  color: var(--color-muted);
 }
 
 /* ===== 暗色模式微调 ===== */

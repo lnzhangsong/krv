@@ -160,8 +160,9 @@ const refsJson = JSON.stringify(refsData).replace(/</g, '\\u003c');
     tpDef.textContent = def;
     if (term) {
       const same = terms.filter((t) => t.g === term.g && t.k !== term.k);
-      tpSame.innerHTML = same.length
-        ? `<div class="h3 mt-3">同类对照</div><div class="flex flex-wrap gap-2 mt-1">${same
+      const sameShown = same.slice(0, 12);
+      tpSame.innerHTML = sameShown.length
+        ? `<div class="h3 mt-3">同类对照</div><div class="flex flex-wrap gap-2 mt-1">${sameShown
             .map((s) => `<button class="term-chip" data-k="${s.k}">${esc(s.b)}</button>`)
             .join('')}</div>`
         : '';

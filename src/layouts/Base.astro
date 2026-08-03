@@ -16,6 +16,7 @@ const {
 } = Astro.props;
 
 const navMain: { href: string; label: string }[] = [
+  { href: '/quanwen/', label: '全文直读' },
   { href: '/aesthetic/', label: '感性论' },
   { href: '/analytic/', label: '分析论' },
   { href: '/dialectic/', label: '辩证论' },
@@ -25,7 +26,6 @@ const navMain: { href: string; label: string }[] = [
 ];
 const navMore: { href: string; label: string; desc: string }[] = [
   { href: '/map/', label: '知识结构网', desc: '全书论证树' },
-  { href: '/quanwen/', label: '全文直读', desc: '7594段全文' },
 ];
 ---
 
@@ -162,14 +162,15 @@ const navMore: { href: string; label: string; desc: string }[] = [
         const show = (term: { k: string; b: string; d: string; x?: string; g: string }, x: number, y: number) => {
           lastX = x; lastY = y;
           const same = terms.filter((t) => t.g === term.g && t.k !== term.k);
+          const sameShown = same.slice(0, 12);
+          const sameMore = same.length > sameShown.length ? `<span class="term-tip-more">…等 ${same.length} 个</span>` : '';
           tip.innerHTML = `
             <div class="term-tip-head"><b>${esc(term.b)}</b>${term.x ? `<span class="term-tip-x">${esc(term.x)}</span>` : ''}</div>
             <div class="term-tip-g">${esc(term.g)}</div>
             <div class="term-tip-d">${esc(term.d)}</div>
-            ${same.length ? `<div class="term-tip-same">同类对照：${same.map((s) => `<button class="term-chip" data-k="${s.k}">${esc(s.b)}</button>`).join('')}</div>` : ''}
-            <a class="term-tip-link" href="/glossary/">术语库 →</a>`;
+            ${same.length ? `<div class="term-tip-same">同类对照：${sameShown.map((s) => `<button class="term-chip" data-k="${s.k}">${esc(s.b)}</button>`).join('')}${sameMore}</div>` : ''}
+            <a class="term-tip-link" href="/glossary/">术语库（${terms.length}词）→</a>`;
           tip.classList.add('show');
-          tip.classList.remove('pinned');
           const r = tip.getBoundingClientRect();
           let left = x + 14, top = y + 14;
           if (left + r.width > window.innerWidth - 8) left = x - r.width - 14;
@@ -184,35 +185,57 @@ const navMore: { href: string; label: string; desc: string }[] = [
           );
         };
         const hide = () => tip.classList.remove('show');
+        // 宽限期：离开术语后短暂延迟再隐藏，保证光标能从术语移进卡片（点击同类对照等）
+        let pinned = false;
+        let hideTimer: number | undefined;
+        const armHide = () => {
+          if (pinned) return;
+          window.clearTimeout(hideTimer);
+          hideTimer = window.setTimeout(hide, 260);
+        };
+        const cancelHide = () => window.clearTimeout(hideTimer);
         let current: HTMLElement | null = null;
         document.addEventListener('mouseover', (e) => {
           const t = (e.target as HTMLElement).closest('.term') as HTMLElement | null;
           if (t) {
+            cancelHide();
             current = t;
             const term = byKey.get(t.dataset.k ?? '');
             if (term) show(term, e.clientX, e.clientY);
           }
         });
+        // 光标进入卡片本身：不隐藏
+        tip.addEventListener('mouseover', () => cancelHide());
         document.addEventListener('mouseout', (e) => {
           const t = (e.target as HTMLElement).closest('.term') as HTMLElement | null;
           const rt = e.relatedTarget as HTMLElement | null;
           if (t === current && !(rt && rt.closest && rt.closest('#termTip'))) {
             current = null;
-            hide();
+            armHide();
           }
+        });
+        // 光标离开卡片：延迟隐藏，留出回到术语的路径
+        tip.addEventListener('mouseout', (e) => {
+          const rt = e.relatedTarget as HTMLElement | null;
+          if (!(rt && rt.closest && (rt.closest('#termTip') || rt.closest('.term')))) armHide();
         });
         document.addEventListener('click', (e) => {
           const t = (e.target as HTMLElement).closest('.term') as HTMLElement | null;
           if (t) {
             e.stopPropagation();
+            cancelHide();
+            pinned = true;
+            tip.classList.add('pinned');
             const term = byKey.get(t.dataset.k ?? '');
             if (term) show(term, e.clientX, e.clientY);
           } else if (!(e.target as HTMLElement).closest('#termTip')) {
+            pinned = false;
+            tip.classList.remove('pinned');
             hide();
           }
         });
-        window.addEventListener('scroll', () => hide(), { passive: true });
-        window.addEventListener('resize', () => hide());
+        window.addEventListener('scroll', () => { pinned = false; tip.classList.remove('pinned'); hide(); }, { passive: true });
+        window.addEventListener('resize', () => { pinned = false; tip.classList.remove('pinned'); hide(); });
       }
     </script>
   </body>
