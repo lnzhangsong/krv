@@ -1,13 +1,8 @@
 ---
 import Base from '../../layouts/Base.astro';
 import PageHead from '../../components/PageHead.astro';
-import SentenceReader from '../../components/SentenceReader.astro';
 import { commentDB } from '../../lib/commentDB';
-import { parseSentences } from '../../lib/parse';
-import { CHAPTERS } from '../../lib/chapters';
-import { DatabaseSync } from 'node:sqlite';
-import path from 'node:path';
-const title = '邓晓芒句读全库 · 217条精选 + 逐句讲解 | 纯批逐句精读实验室';
+const title = '邓晓芒句读全库 · 217条精选 | 纯批精读库';
 
 const groupDefs: { key: string; title: string }[] = [
   { key: 'pref-', title: '序言' },
@@ -24,44 +19,19 @@ const groups: { title: string; items: { key: string; ref: string; original: stri
     .map(([k, v]) => ({ key: k, ...v })),
 })).filter((g) => g.items.length > 0);
 const total = Object.keys(commentDB).length;
-
-interface ChunkRow { id: string; seq: number; chapter: string; text: string }
-const clean = (s: string) => s.replace(/^[&$＄§#*\s]+/, '');
-const db = new DatabaseSync(path.join(process.cwd(), 'data/kant.db'));
-const allRaw = db.prepare('SELECT id, seq, chapter, text FROM chunks').all() as ChunkRow[];
-db.close();
-const chapterSentences = CHAPTERS.map((ch) => ({
-  ...ch,
-  sentences: allRaw
-    .filter((r) => r.seq >= ch.lo && r.seq <= ch.hi)
-    .flatMap((r) => parseSentences(r.text, r.id, r.seq, { section: clean(r.chapter) })),
-}));
-const sentenceTotal = chapterSentences.reduce((s, c) => s + c.sentences.length, 0);
 ---
 
-<Base title={title} current="/deng/" badge={`${total}条精选 + ${sentenceTotal}句逐句`} searchPlaceholder="全站搜索：二律背反/统觉/存在不是谓词…">
+<Base title={title} current="/deng/" badge={`${total}条精选`} searchPlaceholder="全站搜索：二律背反/统觉/存在不是谓词…">
   <main class="container narrow py-8">
     <PageHead
-      chip={`DENG XIAOMANG · 句读全库 · ${total}条精选 + ${sentenceTotal}句逐句讲解`}
-      title="邓晓芒句读 · 逐句讲解"
-      subtitle="一句康德原文，配一段邓晓芒讲解；完整原文见「全文直读」。"
+      chip={`DENG XIAOMANG · 句读全库 · ${total}条精选`}
+      title="邓晓芒句读 · 精选"
+      subtitle="按序言、导言与四大部归档的精选句读：原文位置、邓晓芒讲解与学习提示；完整原文见「全文直读」。"
     />
-
-    {
-      chapterSentences.map((ch) => (
-        <div class="mt-8">
-          <div class="section-head">
-            <div class="h3">{ch.title} · 逐句讲解 {ch.sentences.length}句</div>
-            <a href={`/${ch.key}/`} class="font-mono text-[10px] text-accent2 underline">该章导读页 →</a>
-          </div>
-          <SentenceReader sentences={ch.sentences} pageSize={30} floating={false} />
-        </div>
-      ))
-    }
 
     <div class="mt-8">
       <div class="section-head">
-        <div class="h3">手工精选 · {total}条 · 点击右侧滑出详解</div>
+        <div class="h3">手工精选 · {total}条</div>
       </div>
       <div>
         {

@@ -13,10 +13,16 @@ const chunks: Chunk[] = db.prepare('SELECT id, seq, chapter, text FROM chunks OR
 db.close();
 const totalChars = chunks.reduce((s, c) => s + c.text.length, 0);
 
+const PAGE = 15;
+const firstPage = chunks.slice(0, PAGE);
+
 // 将【】内的康德原文用高亮标记包裹，与邓晓芒讲解区分
 function highlightKant(text: string): string {
   return text.replace(/【([^】]+)】/g, '<b class="kant-q">「$1」</b>');
 }
+
+// 全文以 JSON 嵌入，客户端按页渲染，避免一次性渲染 7594 段造成 DOM 过大
+const chunksJson = JSON.stringify(chunks.map((c) => ({ id: c.id, seq: c.seq, chapter: c.chapter, text: c.text }))).replace(/</g, '\\u003c');
 ---
 
 <Base title={title} current="/quanwen/" badge="全文阅览 7594段" searchPlaceholder="全站搜索：存在不是谓词/统觉…">
@@ -28,8 +34,8 @@ function highlightKant(text: string): string {
 
     <div id="body" class="read-flow">
       {
-        chunks.map((c, i) => {
-          const prev = i > 0 ? chunks[i - 1] : null;
+        firstPage.map((c, i) => {
+          const prev = i > 0 ? firstPage[i - 1] : null;
           const newChapter = !prev || prev.chapter !== c.chapter;
           return (
             <div class="rf-item" id={`c${c.seq}`} data-pt={c.seq} data-text={c.text}>
@@ -58,32 +64,43 @@ function highlightKant(text: string): string {
     </div>
   </main>
 
+  <script is:inline type="application/json" id="qdata" set:html={chunksJson}></script>
+
   <script>
     const PAGE = 15;
-    const cards = Array.from(document.querySelectorAll('#body .rf-item')) as HTMLElement[];
-    const totalPages = Math.ceil(cards.length / PAGE);
+    const dataEl = document.getElementById('qdata') as HTMLScriptElement | null;
+    const chunks: { id: string; seq: number; chapter: string; text: string }[] = dataEl ? JSON.parse(dataEl.textContent || '[]') : [];
+    const totalPages = Math.max(1, Math.ceil(chunks.length / PAGE));
     let page = 1;
 
-    // 顶部阅读进度条 + 当前章节指示
-    const progressWrap = document.createElement('div');
-    progressWrap.className = 'rf-progress';
-    progressWrap.innerHTML = '<div class="rf-progress-bar"></div>';
-    document.body.appendChild(progressWrap);
-    const progressBar = progressWrap.querySelector('.rf-progress-bar') as HTMLElement;
+    const esc = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    const highlightKant = (text: string) => text.replace(/【([^】]+)】/g, '<b class="kant-q">「$1」</b>');
 
+    const itemHTML = (c: { id: string; seq: number; chapter: string; text: string }, newChapter: boolean) => {
+      const chapter = newChapter ? `<div class="rf-chapter"><span class="rf-chapter-mark"></span>${esc(c.chapter)}</div>` : '';
+      return `<div class="rf-item" id="c${c.seq}" data-pt="${c.seq}" data-text="${esc(c.text)}">${chapter}<div class="rf-text serif">${highlightKant(c.text)}</div><span class="rf-page" title="段 ${c.id}">${c.seq + 1}</span></div>`;
+    };
+
+    const body = document.getElementById('body') as HTMLElement | null;
     const chapterOf = (el: HTMLElement) => {
       const ch = el.querySelector('.rf-chapter');
       return ch ? ch.textContent : '';
     };
-    const onScroll = () => {
-      const doc = document.documentElement;
-      const max = doc.scrollHeight - window.innerHeight;
-      const pct = max > 0 ? Math.min(100, (window.scrollY / max) * 100) : 0;
-      progressBar.style.width = pct + '%';
-    };
-    window.addEventListener('scroll', onScroll, { passive: true });
-    window.addEventListener('resize', onScroll);
-    onScroll();
+
+    function renderPage(p: number) {
+      if (!body) return;
+      const lo = (p - 1) * PAGE;
+      const html = chunks
+        .slice(lo, lo + PAGE)
+        .map((c, i) => {
+          const gi = lo + i;
+          const prev = gi > 0 ? chunks[gi - 1] : null;
+          return itemHTML(c, !prev || prev.chapter !== c.chapter);
+        })
+        .join('');
+      body.innerHTML = html;
+      syncPageUI();
+    }
 
     function syncPageUI() {
       const set = (n: HTMLElement | null, t: HTMLElement | null) => {
@@ -93,60 +110,74 @@ function highlightKant(text: string): string {
       set(document.getElementById('pageNumB'), document.getElementById('pageTotalB'));
     }
 
-    function applyPage() {
-      cards.forEach((card, i) => {
-        const show = i >= (page - 1) * PAGE && i < page * PAGE;
-        card.style.display = show ? '' : 'none';
-      });
-      syncPageUI();
-    }
-
     function goPage(p: number) {
       page = Math.min(Math.max(1, p), totalPages);
-      applyPage();
+      renderPage(page);
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
 
-    function gotoStart(start: string) {
-      const card = document.getElementById(`c${start}`);
-      if (!card) return;
-      const i = cards.indexOf(card as HTMLElement);
-      if (i === -1) return;
-      page = Math.floor(i / PAGE) + 1;
-      applyPage();
-      requestAnimationFrame(() => {
-        card.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        card.classList.add('flash');
-        setTimeout(() => card.classList.remove('flash'), 2000);
-      });
+    function gotoStart(seq: number) {
+      const idx = chunks.findIndex((c) => c.seq === seq);
+      if (idx === -1) return;
+      page = Math.floor(idx / PAGE) + 1;
+      renderPage(page);
+      const card = document.getElementById(`c${seq}`);
+      if (card) {
+        requestAnimationFrame(() => {
+          card.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          card.classList.add('flash');
+          setTimeout(() => card.classList.remove('flash'), 2000);
+        });
+      }
     }
 
     // 按段号跳转（输入 1-based 段号 → data-pt 是 0-based seq）
     function jumpToSeq(q: number) {
-      const hint = document.getElementById('jumpHint') as HTMLElement;
+      const hint = document.getElementById('jumpHint') as HTMLElement | null;
       const seq = q - 1;
-      const card = cards.find((c) => {
-        const pt = parseInt(c.dataset.pt ?? '', 10);
-        return pt === seq;
-      });
-      if (!card) {
+      const c = chunks.find((x) => x.seq === seq);
+      if (!c) {
         if (hint) hint.textContent = `未找到段 ${q}`;
         return;
       }
-      if (hint) hint.textContent = `已定位到 段 ${q}（${chapterOf(card) || ''}）`;
-      gotoStart(String(seq));
+      if (hint) hint.textContent = `已定位到 段 ${q}（${c.chapter || ''}）`;
+      gotoStart(seq);
     }
+
+    // 顶部阅读进度条 + 当前章节指示
+    const progressWrap = document.createElement('div');
+    progressWrap.className = 'rf-progress';
+    progressWrap.innerHTML = '<div class="rf-progress-bar"></div>';
+    document.body.appendChild(progressWrap);
+    const progressBar = progressWrap.querySelector('.rf-progress-bar') as HTMLElement;
+
+    // 用 rAF 节流，避免滚动时每帧触发布局写入
+    let ticking = false;
+    const onScroll = () => {
+      if (ticking) return;
+      ticking = true;
+      requestAnimationFrame(() => {
+        const doc = document.documentElement;
+        const max = doc.scrollHeight - window.innerHeight;
+        const pct = max > 0 ? Math.min(100, (window.scrollY / max) * 100) : 0;
+        progressBar.style.width = pct + '%';
+        ticking = false;
+      });
+    };
+    window.addEventListener('scroll', onScroll, { passive: true });
+    window.addEventListener('resize', onScroll);
+    onScroll();
 
     // 分页按钮
     document.getElementById('prevB')?.addEventListener('click', () => goPage(page - 1));
     document.getElementById('nextB')?.addEventListener('click', () => goPage(page + 1));
 
     // 段号跳转
-    const jumpInput = document.getElementById('jumpInput') as HTMLInputElement;
-    const jumpBtn = document.getElementById('jumpBtn') as HTMLButtonElement;
+    const jumpInput = document.getElementById('jumpInput') as HTMLInputElement | null;
+    const jumpBtn = document.getElementById('jumpBtn') as HTMLButtonElement | null;
     const doJump = () => {
-      const p = parseInt(jumpInput.value, 10);
-      if (p >= 1 && p <= {SEQ_COUNT}) jumpToSeq(p);
+      const p = parseInt(jumpInput?.value || '', 10);
+      if (p >= 1 && p <= chunks.length) jumpToSeq(p);
     };
     jumpBtn?.addEventListener('click', doJump);
     jumpInput?.addEventListener('keydown', (e) => {
@@ -161,8 +192,17 @@ function highlightKant(text: string): string {
       if (e.key === 'ArrowRight') goPage(page + 1);
     });
 
-    // 初始
-    applyPage();
+    // 初始：由客户端按页渲染（SSR 首屏仅第一页）
+    renderPage(1);
+
+    // 定位：reader「定位全文 →」链接形如 /quanwen/#c{seq}（seq 为 0 基）
+    const initHash = location.hash.match(/^#c(\d+)/);
+    if (initHash) {
+      const seq = parseInt(initHash[1], 10);
+      if (!Number.isNaN(seq)) {
+        requestAnimationFrame(() => jumpToSeq(seq + 1));
+      }
+    }
   </script>
 
   <style>
@@ -209,7 +249,7 @@ function highlightKant(text: string): string {
       text-align: justify;
       text-indent: 2em;
     }
-    /* 康德原文高亮：与逐句助读的「原文」视觉语言一致（蓝色系） */
+    /* 康德原文高亮：与句读原文的视觉语言一致（蓝色系） */
     .rf-text .kant-q {
       color: var(--color-accent);
       font-weight: 700;
