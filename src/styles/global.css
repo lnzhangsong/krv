@@ -561,6 +561,19 @@
   line-height: 1.7;
   pointer-events: auto;
 }
+.term-tip::before {
+  content: '';
+  position: absolute;
+  top: -6px;
+  left: 20px;
+  width: 11px;
+  height: 11px;
+  background: var(--color-card);
+  border-left: 1px solid var(--color-line);
+  border-top: 1px solid var(--color-line);
+  transform: rotate(45deg);
+  border-top-left-radius: 3px;
+}
 .term-tip.show {
   display: block;
 }

@@ -42,7 +42,7 @@ const total = Object.keys(commentDB).length;
               <div>
                 {
                   g.items.map((it) => (
-                    <div class="entry">
+                    <div class="entry" id={it.key}>
                       <div class="ref mono">{it.ref} · {it.key}</div>
                       <div class="orig" set:html={`「${wrapTerms(it.original)}」`}></div>
                       <div class="p text-[13px] mt-1.5"><b>邓晓芒讲：</b><span set:html={wrapTerms(it.deng)}></span></div>
@@ -66,6 +66,7 @@ const total = Object.keys(commentDB).length;
       margin: 12px 0;
       background: var(--color-card);
       transition: border-color 0.18s, box-shadow 0.18s, transform 0.18s;
+      scroll-margin-top: 84px;
     }
     .entry:hover {
       border-color: color-mix(in srgb, var(--color-accent2) 40%, var(--color-line));

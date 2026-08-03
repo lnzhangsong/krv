@@ -33,6 +33,18 @@ const chunksJson = JSON.stringify(chunks.map((c) => ({ id: c.id, seq: c.seq, cha
       title="邓晓芒《纯粹理性批判》句读 · 全文"
     />
 
+    <div class="rf-toolbar">
+      <div class="flex items-center gap-2 flex-wrap">
+        <span class="rf-toolbar-label">字号</span>
+        <button id="fsMinus" class="toggle" title="缩小字号">A−</button>
+        <button id="fsReset" class="toggle on" title="默认字号">A</button>
+        <button id="fsPlus" class="toggle" title="放大字号">A+</button>
+        <span class="w-px self-stretch bg-line"></span>
+        <select id="chapterJump" class="rf-select" aria-label="跳转章节"></select>
+        <span id="nowChapter" class="rf-now"></span>
+      </div>
+    </div>
+
     <div id="body" class="read-flow">
       {
         firstPage.map((c, i) => {
@@ -102,6 +114,12 @@ const chunksJson = JSON.stringify(chunks.map((c) => ({ id: c.id, seq: c.seq, cha
         .join('');
       body.innerHTML = html;
       syncPageUI();
+      // 更新当前章节指示
+      const cur = chunks[lo];
+      if (nowChapter && cur) {
+        nowChapter.textContent = cleanChapter(cur.chapter);
+        if (chapterSelect) chapterSelect.value = String(chapterSeqMap.get(cur.chapter) ?? '');
+      }
     }
 
     function syncPageUI() {
@@ -170,6 +188,43 @@ const chunksJson = JSON.stringify(chunks.map((c) => ({ id: c.id, seq: c.seq, cha
     window.addEventListener('resize', onScroll);
     onScroll();
 
+    // 字号调节（记忆到 localStorage）
+    const FS_KEY = 'krv-fulltext-fs';
+    const FS_SIZES = [16, 18, 20];
+    let fs = parseInt(localStorage.getItem(FS_KEY) || '18', 10);
+    if (!FS_SIZES.includes(fs)) fs = 18;
+    const applyFs = () => {
+      document.documentElement.style.setProperty('--rf-size', fs + 'px');
+      (document.getElementById('fsMinus') as HTMLElement | null)?.classList.toggle('on', fs === 16);
+      (document.getElementById('fsReset') as HTMLElement | null)?.classList.toggle('on', fs === 18);
+      (document.getElementById('fsPlus') as HTMLElement | null)?.classList.toggle('on', fs === 20);
+      localStorage.setItem(FS_KEY, String(fs));
+    };
+    document.getElementById('fsMinus')?.addEventListener('click', () => { fs = Math.max(16, fs - 2); applyFs(); });
+    document.getElementById('fsPlus')?.addEventListener('click', () => { fs = Math.min(20, fs + 2); applyFs(); });
+    document.getElementById('fsReset')?.addEventListener('click', () => { fs = 18; applyFs(); });
+    applyFs();
+
+    // 章节跳转
+    const cleanChapter = (ch: string) => ch.replace(/^[&$＄§#*\s]+/, '');
+    const chapterList: { name: string; seq: number }[] = [];
+    {
+      const seen = new Set<string>();
+      for (const c of chunks) {
+        if (!seen.has(c.chapter)) { seen.add(c.chapter); chapterList.push({ name: c.chapter, seq: c.seq }); }
+      }
+    }
+    const chapterSeqMap = new Map(chapterList.map((c) => [c.name, c.seq]));
+    const chapterSelect = document.getElementById('chapterJump') as HTMLSelectElement | null;
+    if (chapterSelect) {
+      chapterSelect.innerHTML = '<option value="">跳转章节…</option>' + chapterList.map((c) => `<option value="${c.seq}">${esc(cleanChapter(c.name))}</option>`).join('');
+      chapterSelect.addEventListener('change', () => {
+        const seq = parseInt(chapterSelect.value, 10);
+        if (!Number.isNaN(seq)) gotoStart(seq);
+      });
+    }
+    const nowChapter = document.getElementById('nowChapter') as HTMLElement | null;
+
     // 分页按钮
     document.getElementById('prevB')?.addEventListener('click', () => goPage(page - 1));
     document.getElementById('nextB')?.addEventListener('click', () => goPage(page + 1));
@@ -207,7 +262,7 @@ const chunksJson = JSON.stringify(chunks.map((c) => ({ id: c.id, seq: c.seq, cha
     }
   </script>
 
-  <style>
+  <style is:global>
     .rf-item.flash {
       background: color-mix(in srgb, var(--color-accent2) 18%, transparent);
       border-radius: 6px;
@@ -223,15 +278,18 @@ const chunksJson = JSON.stringify(chunks.map((c) => ({ id: c.id, seq: c.seq, cha
     }
     .rf-chapter {
       font-family: var(--font-serif);
-      font-size: 20px;
-      font-weight: 700;
-      letter-spacing: 0.05em;
+      font-size: 21px;
+      font-weight: 800;
+      letter-spacing: 0.04em;
       margin: 2.4em 0 0.9em;
       color: var(--color-accent);
       display: flex;
       align-items: center;
       gap: 10px;
       text-indent: 0;
+      background: color-mix(in srgb, var(--color-accent) 5%, transparent);
+      border-radius: 12px;
+      padding: 8px 16px;
     }
     .rf-chapter-mark {
       width: 4px;
@@ -244,8 +302,8 @@ const chunksJson = JSON.stringify(chunks.map((c) => ({ id: c.id, seq: c.seq, cha
       margin-top: 0.1em;
     }
     .rf-text {
-      font-size: 18px;
-      line-height: 2.05;
+      font-size: var(--rf-size, 18px);
+      line-height: calc(var(--rf-size, 18px) * 1.95);
       letter-spacing: 0.02em;
       color: var(--color-ink);
       text-align: justify;
@@ -255,8 +313,8 @@ const chunksJson = JSON.stringify(chunks.map((c) => ({ id: c.id, seq: c.seq, cha
     .rf-text .kant-q {
       color: var(--color-accent);
       font-weight: 700;
-      background: color-mix(in srgb, var(--color-accent) 7%, transparent);
-      border-bottom: 2px solid color-mix(in srgb, var(--color-accent) 30%, transparent);
+      background: color-mix(in srgb, var(--color-accent) 6%, transparent);
+      border-bottom: 1.5px solid color-mix(in srgb, var(--color-accent) 32%, transparent);
       border-radius: 3px;
       padding: 0 2px;
       text-indent: 0;
@@ -266,6 +324,60 @@ const chunksJson = JSON.stringify(chunks.map((c) => ({ id: c.id, seq: c.seq, cha
     }
     .rf-page {
       display: none;
+    }
+    /* 阅读工具栏 */
+    .rf-toolbar {
+      position: sticky;
+      top: 76px;
+      z-index: 40;
+      background: var(--color-bg);
+      border: 1px solid var(--color-line);
+      border-radius: 14px;
+      padding: 8px 12px;
+      margin-bottom: 12px;
+    }
+    .rf-toolbar-label {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      letter-spacing: 0.1em;
+      color: var(--color-muted);
+      text-transform: uppercase;
+    }
+    .rf-select {
+      border: 1px solid var(--color-line);
+      background: var(--color-card);
+      border-radius: 10px;
+      padding: 6px 10px;
+      font-family: var(--font-mono);
+      font-size: 12px;
+      color: var(--color-ink);
+      outline: none;
+      max-width: 240px;
+      cursor: pointer;
+    }
+    .rf-select:focus {
+      border-color: var(--color-accent2);
+    }
+    .rf-now {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      color: var(--color-accent2);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 220px;
+    }
+    @media (max-width: 640px) {
+      .rf-toolbar {
+        top: 68px;
+        padding: 7px 10px;
+      }
+      .rf-now {
+        max-width: 120px;
+      }
+      .rf-select {
+        max-width: 150px;
+      }
     }
     /* 顶部阅读进度条 */
     .rf-progress {
