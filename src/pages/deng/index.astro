@@ -25,20 +25,21 @@ const groups: { title: string; items: { key: string; ref: string; original: stri
 })).filter((g) => g.items.length > 0);
 const total = Object.keys(commentDB).length;
 
-interface ChunkRow { id: string; seq: number; text: string }
+interface ChunkRow { id: string; seq: number; chapter: string; text: string }
+const clean = (s: string) => s.replace(/^[&$＄§#*\s]+/, '');
 const db = new DatabaseSync(path.join(process.cwd(), 'data/kant.db'));
-const allRaw = db.prepare('SELECT id, seq, text FROM chunks').all() as ChunkRow[];
+const allRaw = db.prepare('SELECT id, seq, chapter, text FROM chunks').all() as ChunkRow[];
 db.close();
 const chapterSentences = CHAPTERS.map((ch) => ({
   ...ch,
   sentences: allRaw
     .filter((r) => r.seq >= ch.lo && r.seq <= ch.hi)
-    .flatMap((r) => parseSentences(r.text, r.id, r.seq)),
+    .flatMap((r) => parseSentences(r.text, r.id, r.seq, { section: clean(r.chapter) })),
 }));
 const sentenceTotal = chapterSentences.reduce((s, c) => s + c.sentences.length, 0);
 ---
 
-<Base title={title} current="/deng/" badge={`${total}条精选 + ${sentenceTotal}句逐句`} searchPlaceholder="全站搜索：二律背反/统觉/存在不是谓词…" readingOn>
+<Base title={title} current="/deng/" badge={`${total}条精选 + ${sentenceTotal}句逐句`} searchPlaceholder="全站搜索：二律背反/统觉/存在不是谓词…">
   <main class="container narrow py-8">
     <PageHead
       chip={`DENG XIAOMANG · 句读全库 · ${total}条精选 + ${sentenceTotal}句逐句讲解`}
@@ -53,7 +54,7 @@ const sentenceTotal = chapterSentences.reduce((s, c) => s + c.sentences.length, 
             <div class="h3">{ch.title} · 逐句讲解 {ch.sentences.length}句</div>
             <a href={`/${ch.key}/`} class="font-mono text-[10px] text-accent2 underline">该章导读页 →</a>
           </div>
-          <SentenceReader sentences={ch.sentences} pageSize={12} floating={false} />
+          <SentenceReader sentences={ch.sentences} pageSize={30} floating={false} />
         </div>
       ))
     }
@@ -70,7 +71,7 @@ const sentenceTotal = chapterSentences.reduce((s, c) => s + c.sentences.length, 
               <div>
                 {
                   g.items.map((it) => (
-                    <div class="entry readable" data-key={it.key}>
+                    <div class="entry">
                       <div class="ref mono">{it.ref} · {it.key}</div>
                       <div class="orig">「{it.original}」</div>
                       <div class="p text-[13px] mt-1.5"><b>邓晓芒讲：</b>{it.deng}</div>

@@ -45,13 +45,9 @@ function matchChunk(c: FulltextChunk, q: string, bg: string[], chars: string[]):
   return null;
 }
 
-let indexUrl = '/search-index.json';
+const indexUrl = '/search-index.json';
 let fulltext: FulltextChunk[] | null = null;
 let fulltextLoading: Promise<FulltextChunk[]> | null = null;
-
-export function setSearchIndexUrl(url: string): void {
-  indexUrl = url;
-}
 
 function loadFulltext(): Promise<FulltextChunk[]> {
   if (fulltext) return Promise.resolve(fulltext);
@@ -156,8 +152,4 @@ export async function search(query: string, limit = 15): Promise<SearchHit[]> {
       uniq.push(h);
     });
   return uniq.slice(0, limit);
-}
-
-export async function buildIndex(): Promise<void> {
-  await loadFulltext();
 }

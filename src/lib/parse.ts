@@ -7,11 +7,13 @@ export interface Sentence {
   exp: string;
   chunkId: string;
   role: SentenceRole;
+  section?: string;
 }
 
 export interface ParseOptions {
   origMax?: number;
   expMax?: number;
+  section?: string;
 }
 
 // 依据讲解文本（邓晓芒的话）中的信号词推断该句在论证中的功能
@@ -52,6 +54,7 @@ export function parseSentences(text: string, chunkId: string, start: number, opt
       exp: exp.length > expMax ? exp.slice(0, expMax) + '…' : exp,
       chunkId,
       role: guessRole(exp),
+      section: opts.section,
     });
   }
   return out;

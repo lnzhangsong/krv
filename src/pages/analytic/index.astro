@@ -1,8 +1,6 @@
 ---
 import Base from '../../layouts/Base.astro';
 import PageHead from '../../components/PageHead.astro';
-import ArgumentMap from '../../components/ArgumentMap.astro';
-import SelfTest from '../../components/SelfTest.astro';
 import SentenceReader from '../../components/SentenceReader.astro';
 import { commentDB } from '../../lib/commentDB';
 import { parseSentences } from '../../lib/parse';
@@ -18,21 +16,21 @@ const pick = (keys: string[]): Item[] => keys
 const total = Object.keys(commentDB).filter((k) => k.startsWith('an-')).length;
 
 const ch = CHAPTERS.find((c) => c.key === 'analytic')!;
-interface ChunkRow { id: string; seq: number; text: string }
+interface ChunkRow { id: string; seq: number; chapter: string; text: string }
+const clean = (s: string) => s.replace(/^[&$＄§#*\s]+/, '');
 const db = new DatabaseSync(path.join(process.cwd(), 'data/kant.db'));
-const raw = db.prepare('SELECT id, seq, text FROM chunks WHERE seq >= ? AND seq <= ? ORDER BY seq').all(ch.lo, ch.hi) as ChunkRow[];
+const raw = db.prepare('SELECT id, seq, chapter, text FROM chunks WHERE seq >= ? AND seq <= ? ORDER BY seq').all(ch.lo, ch.hi) as ChunkRow[];
 db.close();
-const sentences = raw.flatMap((r) => parseSentences(r.text, r.id, r.seq));
+const sentences = raw.flatMap((r) => parseSentences(r.text, r.id, r.seq, { section: clean(r.chapter) }));
 ---
 
-<Base title={title} current="/analytic/" badge={`导读 · 全部${total}条见句读全库`} searchPlaceholder="搜索：范畴/统觉/图型/因果律…" readingOn>
+<Base title={title} current="/analytic/" badge={`导读 · 全部${total}条见句读全库`} searchPlaceholder="搜索：范畴/统觉/图型/因果律…">
   <main class="container narrow py-9">
     <PageHead
       chip="Part B · 要素论第二部 · 导读"
       title="先验分析论"
       subtitle="从 12 范畴到牛顿定律先天化 — 这一章回答「知识如何客观有效」"
     />
-    <ArgumentMap current="analytic" />
 
     <!-- 本章任务 -->
     <div class="card mt-5">
@@ -63,7 +61,7 @@ const sentences = raw.flatMap((r) => parseSentences(r.text, r.id, r.seq));
       <div class="h3">范畴表 · 判断表→范畴表</div>
       {
         pick(['an-cat-ded-idea', 'an-judg-quantity', 'an-cat-relation-cause', 'an-cat-modality', 'an-cat-table-full']).map((it) => (
-          <div class="my-2 readable" data-key={it.key}>
+          <div class="my-2">
             <div class="font-mono text-[10px] text-muted">{it.ref}</div>
             <div class="serif font-bold my-1">「{it.original}」</div>
             <div class="p text-[13px]">{it.deng}</div>
@@ -76,7 +74,7 @@ const sentences = raw.flatMap((r) => parseSentences(r.text, r.id, r.seq));
       <div class="h3">先验演绎 · 统觉的最高原理</div>
       {
         pick(['an-ded-b-apper', 'an-ded-b-131', 'an-ded-b-objectivity', 'an-ded-b-limit', 'an-ded-necessity']).map((it) => (
-          <div class="my-2 readable" data-key={it.key}>
+          <div class="my-2">
             <div class="font-mono text-[10px] text-muted">{it.ref}</div>
             <div class="serif font-bold my-1">「{it.original}」</div>
             <div class="p text-[13px]">{it.deng}</div>
@@ -89,7 +87,7 @@ const sentences = raw.flatMap((r) => parseSentences(r.text, r.id, r.seq));
       <div class="h3">图型法 · 时间图型</div>
       {
         pick(['an-schema-def', 'an-schema-cause', 'an-schema-sub', 'an-schema-time-all']).map((it) => (
-          <div class="my-2 readable" data-key={it.key}>
+          <div class="my-2">
             <div class="font-mono text-[10px] text-muted">{it.ref}</div>
             <div class="serif font-bold my-1">「{it.original}」</div>
             <div class="p text-[13px]">{it.deng}</div>
@@ -102,7 +100,7 @@ const sentences = raw.flatMap((r) => parseSentences(r.text, r.id, r.seq));
       <div class="h3">原理体系 · 回击休谟的因果律</div>
       {
         pick(['an-prin-anal2', 'an-prin-anal2-proof', 'an-prin-anal2-objective', 'an-prin-anal1', 'an-prin-anal3']).map((it) => (
-          <div class="my-2 readable" data-key={it.key}>
+          <div class="my-2">
             <div class="font-mono text-[10px] text-muted">{it.ref}</div>
             <div class="serif font-bold my-1">「{it.original}」</div>
             <div class="p text-[13px]">{it.deng}</div>
@@ -115,7 +113,7 @@ const sentences = raw.flatMap((r) => parseSentences(r.text, r.id, r.seq));
       <div class="h3">现象/物自体 · 划界</div>
       {
         pick(['an-phen-noum', 'an-phen-noum-limits', 'an-amphib']).map((it) => (
-          <div class="my-2 readable" data-key={it.key}>
+          <div class="my-2">
             <div class="font-mono text-[10px] text-muted">{it.ref}</div>
             <div class="serif font-bold my-1">「{it.original}」</div>
             <div class="p text-[13px]">{it.deng}</div>
@@ -161,8 +159,6 @@ const sentences = raw.flatMap((r) => parseSentences(r.text, r.id, r.seq));
         </div>
       </div>
     </div>
-
-    <SelfTest current="analytic" />
 
     <!-- 参考来源 -->
     <div class="card mt-6">

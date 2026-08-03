@@ -248,5 +248,3 @@ export const commentDB: CommentDB = {
   "meth-highest-good-link": {ref:"A810/B838 - 至善连接第二批判", original:"至善需要上帝与不朽作公设，这是通向道德形而上学的桥。", deng:"德福一致在经验界不可证，只能作为实践公设。邓晓芒：这是'三大批判'体系的枢纽，纯批在此交棒给实践理性批判。", tip:"至善=两批判的枢纽。"},
   "meth-archi-organism": {ref:"A833/B861 - 体系如有机体", original:"知识体系像有机体，各部分互为目的与手段。", deng:"不是零件堆砌，而是有机结构：感性提供材料，知性立法，理性统一。邓晓芒：读康德就要体会这种建筑术。", tip:"体系=有机体。"}
 };
-
-export const commentList = Object.entries(commentDB).map(([key, v]) => ({ key, ...v }));

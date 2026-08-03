@@ -1,8 +1,6 @@
 ---
 import Base from '../../layouts/Base.astro';
 import PageHead from '../../components/PageHead.astro';
-import ArgumentMap from '../../components/ArgumentMap.astro';
-import SelfTest from '../../components/SelfTest.astro';
 import SentenceReader from '../../components/SentenceReader.astro';
 import { commentDB } from '../../lib/commentDB';
 import { parseSentences } from '../../lib/parse';
@@ -18,21 +16,21 @@ const pick = (keys: string[]): Item[] => keys
 const total = Object.keys(commentDB).filter((k) => k.startsWith('dia-')).length;
 
 const ch = CHAPTERS.find((c) => c.key === 'dialectic')!;
-interface ChunkRow { id: string; seq: number; text: string }
+interface ChunkRow { id: string; seq: number; chapter: string; text: string }
+const clean = (s: string) => s.replace(/^[&$＄§#*\s]+/, '');
 const db = new DatabaseSync(path.join(process.cwd(), 'data/kant.db'));
-const raw = db.prepare('SELECT id, seq, text FROM chunks WHERE seq >= ? AND seq <= ? ORDER BY seq').all(ch.lo, ch.hi) as ChunkRow[];
+const raw = db.prepare('SELECT id, seq, chapter, text FROM chunks WHERE seq >= ? AND seq <= ? ORDER BY seq').all(ch.lo, ch.hi) as ChunkRow[];
 db.close();
-const sentences = raw.flatMap((r) => parseSentences(r.text, r.id, r.seq));
+const sentences = raw.flatMap((r) => parseSentences(r.text, r.id, r.seq, { section: clean(r.chapter) }));
 ---
 
-<Base title={title} current="/dialectic/" badge={`导读 · 全部${total}条见句读全库`} searchPlaceholder="搜索：谬误/二律/存在不是谓词…" readingOn>
+<Base title={title} current="/dialectic/" badge={`导读 · 全部${total}条见句读全库`} searchPlaceholder="搜索：谬误/二律/存在不是谓词…">
   <main class="container narrow py-9">
     <PageHead
       chip="Part C · 要素论第三部 · 导读"
       title="先验辩证论"
       subtitle="从灵魂到世界到上帝 — 理性为何必然越界，幻相如何被揭露"
     />
-    <ArgumentMap current="dialectic" />
 
     <!-- 本章任务 -->
     <div class="card mt-5">
@@ -78,7 +76,7 @@ const sentences = raw.flatMap((r) => parseSentences(r.text, r.id, r.seq));
       <div class="h3">理念与幻相 · 总论</div>
       {
         pick(['dia-ide-logic', 'dia-illusion', 'dia-idea-soul', 'dia-idea-world', 'dia-idea-god']).map((it) => (
-          <div class="my-2 readable" data-key={it.key}>
+          <div class="my-2">
             <div class="font-mono text-[10px] text-muted">{it.ref}</div>
             <div class="serif font-bold my-1">「{it.original}」</div>
             <div class="p text-[13px]">{it.deng}</div>
@@ -91,7 +89,7 @@ const sentences = raw.flatMap((r) => parseSentences(r.text, r.id, r.seq));
       <div class="h3">谬误推理 · 灵魂</div>
       {
         pick(['dia-para-1', 'dia-para-2', 'dia-para-4']).map((it) => (
-          <div class="my-2 readable" data-key={it.key}>
+          <div class="my-2">
             <div class="font-mono text-[10px] text-muted">{it.ref}</div>
             <div class="serif font-bold my-1">「{it.original}」</div>
             <div class="p text-[13px]">{it.deng}</div>
@@ -104,7 +102,7 @@ const sentences = raw.flatMap((r) => parseSentences(r.text, r.id, r.seq));
       <div class="h3">二律背反 · 世界</div>
       {
         pick(['dia-anti1-thesis', 'dia-anti1-antith', 'dia-anti1-res', 'dia-anti3-thesis', 'dia-anti3-res']).map((it) => (
-          <div class="my-2 readable" data-key={it.key}>
+          <div class="my-2">
             <div class="font-mono text-[10px] text-muted">{it.ref}</div>
             <div class="serif font-bold my-1">「{it.original}」</div>
             <div class="p text-[13px]">{it.deng}</div>
@@ -117,7 +115,7 @@ const sentences = raw.flatMap((r) => parseSentences(r.text, r.id, r.seq));
       <div class="h3">上帝 · 三证明批判</div>
       {
         pick(['dia-onto-refutation', 'dia-onto-100thaler', 'dia-cosmo', 'dia-physico', 'dia-regulative']).map((it) => (
-          <div class="my-2 readable" data-key={it.key}>
+          <div class="my-2">
             <div class="font-mono text-[10px] text-muted">{it.ref}</div>
             <div class="serif font-bold my-1">「{it.original}」</div>
             <div class="p text-[13px]">{it.deng}</div>
@@ -163,8 +161,6 @@ const sentences = raw.flatMap((r) => parseSentences(r.text, r.id, r.seq));
         </div>
       </div>
     </div>
-
-    <SelfTest current="dialectic" />
 
     <!-- 参考来源 -->
     <div class="card mt-6">
