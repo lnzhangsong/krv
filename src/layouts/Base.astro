@@ -46,7 +46,7 @@ const navMore: { href: string; label: string; desc: string }[] = [
   </head>
   <body>
     <script is:inline type="application/json" id="term-data" set:html={TERMS_JSON}></script>
-    <header class="sticky top-0 z-[100] backdrop-blur-[12px] border-b border-line">
+    <header class="sticky top-0 z-[100] bg-card border-b border-line">
       <div class="container h-[68px] flex items-center justify-between gap-4">
         <div class="flex items-center gap-2.5 shrink-0">
           <a href="/" class="flex items-center gap-2 group">
@@ -158,18 +158,27 @@ const navMore: { href: string; label: string; desc: string }[] = [
         tip.className = 'term-tip';
         document.body.appendChild(tip);
         const esc = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
-        let lastX = 0, lastY = 0;
+        let lastX = 0, lastY = 0, lastKey = '';
         const show = (term: { k: string; b: string; d: string; x?: string; g: string }, x: number, y: number) => {
           lastX = x; lastY = y;
-          const same = terms.filter((t) => t.g === term.g && t.k !== term.k);
-          const sameShown = same.slice(0, 12);
-          const sameMore = same.length > sameShown.length ? `<span class="term-tip-more">…等 ${same.length} 个</span>` : '';
-          tip.innerHTML = `
-            <div class="term-tip-head"><b>${esc(term.b)}</b>${term.x ? `<span class="term-tip-x">${esc(term.x)}</span>` : ''}</div>
-            <div class="term-tip-g">${esc(term.g)}</div>
-            <div class="term-tip-d">${esc(term.d)}</div>
-            ${same.length ? `<div class="term-tip-same">同类对照：${sameShown.map((s) => `<button class="term-chip" data-k="${s.k}">${esc(s.b)}</button>`).join('')}${sameMore}</div>` : ''}
-            <a class="term-tip-link" href="/glossary/">术语库（${terms.length}词）→</a>`;
+          if (term.k !== lastKey) {
+            lastKey = term.k;
+            const same = terms.filter((t) => t.g === term.g && t.k !== term.k);
+            const sameShown = same.slice(0, 12);
+            const sameMore = same.length > sameShown.length ? `<span class="term-tip-more">…等 ${same.length} 个</span>` : '';
+            tip.innerHTML = `
+              <div class="term-tip-head"><b>${esc(term.b)}</b>${term.x ? `<span class="term-tip-x">${esc(term.x)}</span>` : ''}</div>
+              <div class="term-tip-g">${esc(term.g)}</div>
+              <div class="term-tip-d">${esc(term.d)}</div>
+              ${same.length ? `<div class="term-tip-same">同类对照：${sameShown.map((s) => `<button class="term-chip" data-k="${s.k}">${esc(s.b)}</button>`).join('')}${sameMore}</div>` : ''}
+              <a class="term-tip-link" href="/glossary/">术语库（${terms.length}词）→</a>`;
+            tip.querySelectorAll('.term-chip').forEach((ch) =>
+              ch.addEventListener('click', () => {
+                const t = byKey.get((ch as HTMLElement).dataset.k ?? '');
+                if (t) show(t, lastX, lastY);
+              })
+            );
+          }
           tip.classList.add('show');
           const r = tip.getBoundingClientRect();
           let left = x + 14, top = y + 14;
@@ -177,12 +186,6 @@ const navMore: { href: string; label: string; desc: string }[] = [
           if (top + r.height > window.innerHeight - 8) top = y - r.height - 14;
           tip.style.left = left + 'px';
           tip.style.top = top + 'px';
-          tip.querySelectorAll('.term-chip').forEach((ch) =>
-            ch.addEventListener('click', () => {
-              const t = byKey.get((ch as HTMLElement).dataset.k ?? '');
-              if (t) show(t, lastX, lastY);
-            })
-          );
         };
         const hide = () => tip.classList.remove('show');
         // 宽限期：离开术语后短暂延迟再隐藏，保证光标能从术语移进卡片（点击同类对照等）

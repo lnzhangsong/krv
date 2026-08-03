@@ -81,6 +81,8 @@ const chunksJson = JSON.stringify(chunks.map((c) => ({ id: c.id, seq: c.seq, cha
 
   <script>
     import { wrapTerms } from '../../lib/glossary';
+    // 延迟初始化：让 SSR 首屏先绘制，再解析全文数据并按页渲染
+    const init = () => {
     const PAGE = 15;
     const dataEl = document.getElementById('qdata') as HTMLScriptElement | null;
     const chunks: { id: string; seq: number; chapter: string; text: string }[] = dataEl ? JSON.parse(dataEl.textContent || '[]') : [];
@@ -260,6 +262,9 @@ const chunksJson = JSON.stringify(chunks.map((c) => ({ id: c.id, seq: c.seq, cha
         requestAnimationFrame(() => jumpToSeq(seq + 1));
       }
     }
+    };
+    if ('requestIdleCallback' in window) window.requestIdleCallback(init, { timeout: 1200 });
+    else setTimeout(init, 0);
   </script>
 
   <style is:global>

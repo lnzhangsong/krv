@@ -535,6 +535,23 @@
   }
 }
 
+/* ===== 长列表滚动优化：离屏内容跳过布局/绘制 ===== */
+.entry,
+.gitem,
+.branch,
+.rf-item {
+  content-visibility: auto;
+  contain-intrinsic-size: auto 180px;
+}
+@media print {
+  .entry,
+  .gitem,
+  .branch,
+  .rf-item {
+    content-visibility: visible;
+  }
+}
+
 /* ===== 术语悬浮释义 ===== */
 .term {
   cursor: help;
