@@ -2,6 +2,7 @@
 import Base from '../../layouts/Base.astro';
 import PageHead from '../../components/PageHead.astro';
 import { commentDB } from '../../lib/commentDB';
+import { wrapTerms } from '../../lib/glossary';
 const title = '先验分析论 · 导读：范畴、演绎与知识如何客观';
 
 interface Item { key: string; ref: string; original: string; deng: string; tip: string }
@@ -50,8 +51,8 @@ const total = Object.keys(commentDB).filter((k) => k.startsWith('an-')).length;
         pick(['an-cat-ded-idea', 'an-judg-quantity', 'an-cat-relation-cause', 'an-cat-modality', 'an-cat-table-full']).map((it) => (
           <div class="my-2">
             <div class="font-mono text-[10px] text-muted">{it.ref}</div>
-            <div class="serif font-bold my-1">「{it.original}」</div>
-            <div class="p text-[13px]">{it.deng}</div>
+            <div class="serif font-bold my-1" set:html={`「${wrapTerms(it.original)}」`}></div>
+            <div class="p text-[13px]" set:html={wrapTerms(it.deng)}></div>
           </div>
         ))
       }
@@ -63,8 +64,8 @@ const total = Object.keys(commentDB).filter((k) => k.startsWith('an-')).length;
         pick(['an-ded-b-apper', 'an-ded-b-131', 'an-ded-b-objectivity', 'an-ded-b-limit', 'an-ded-necessity']).map((it) => (
           <div class="my-2">
             <div class="font-mono text-[10px] text-muted">{it.ref}</div>
-            <div class="serif font-bold my-1">「{it.original}」</div>
-            <div class="p text-[13px]">{it.deng}</div>
+            <div class="serif font-bold my-1" set:html={`「${wrapTerms(it.original)}」`}></div>
+            <div class="p text-[13px]" set:html={wrapTerms(it.deng)}></div>
           </div>
         ))
       }
@@ -76,8 +77,8 @@ const total = Object.keys(commentDB).filter((k) => k.startsWith('an-')).length;
         pick(['an-schema-def', 'an-schema-cause', 'an-schema-sub', 'an-schema-time-all']).map((it) => (
           <div class="my-2">
             <div class="font-mono text-[10px] text-muted">{it.ref}</div>
-            <div class="serif font-bold my-1">「{it.original}」</div>
-            <div class="p text-[13px]">{it.deng}</div>
+            <div class="serif font-bold my-1" set:html={`「${wrapTerms(it.original)}」`}></div>
+            <div class="p text-[13px]" set:html={wrapTerms(it.deng)}></div>
           </div>
         ))
       }
@@ -89,8 +90,8 @@ const total = Object.keys(commentDB).filter((k) => k.startsWith('an-')).length;
         pick(['an-prin-anal2', 'an-prin-anal2-proof', 'an-prin-anal2-objective', 'an-prin-anal1', 'an-prin-anal3']).map((it) => (
           <div class="my-2">
             <div class="font-mono text-[10px] text-muted">{it.ref}</div>
-            <div class="serif font-bold my-1">「{it.original}」</div>
-            <div class="p text-[13px]">{it.deng}</div>
+            <div class="serif font-bold my-1" set:html={`「${wrapTerms(it.original)}」`}></div>
+            <div class="p text-[13px]" set:html={wrapTerms(it.deng)}></div>
           </div>
         ))
       }
@@ -102,8 +103,8 @@ const total = Object.keys(commentDB).filter((k) => k.startsWith('an-')).length;
         pick(['an-phen-noum', 'an-phen-noum-limits', 'an-amphib']).map((it) => (
           <div class="my-2">
             <div class="font-mono text-[10px] text-muted">{it.ref}</div>
-            <div class="serif font-bold my-1">「{it.original}」</div>
-            <div class="p text-[13px]">{it.deng}</div>
+            <div class="serif font-bold my-1" set:html={`「${wrapTerms(it.original)}」`}></div>
+            <div class="p text-[13px]" set:html={wrapTerms(it.deng)}></div>
           </div>
         ))
       }

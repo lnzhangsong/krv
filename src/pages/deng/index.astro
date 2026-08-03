@@ -2,6 +2,7 @@
 import Base from '../../layouts/Base.astro';
 import PageHead from '../../components/PageHead.astro';
 import { commentDB } from '../../lib/commentDB';
+import { wrapTerms } from '../../lib/glossary';
 const title = '邓晓芒句读全库 · 217条精选 | 纯批精读库';
 
 const groupDefs: { key: string; title: string }[] = [
@@ -43,8 +44,8 @@ const total = Object.keys(commentDB).length;
                   g.items.map((it) => (
                     <div class="entry">
                       <div class="ref mono">{it.ref} · {it.key}</div>
-                      <div class="orig">「{it.original}」</div>
-                      <div class="p text-[13px] mt-1.5"><b>邓晓芒讲：</b>{it.deng}</div>
+                      <div class="orig" set:html={`「${wrapTerms(it.original)}」`}></div>
+                      <div class="p text-[13px] mt-1.5"><b>邓晓芒讲：</b><span set:html={wrapTerms(it.deng)}></span></div>
                       <div class="mt-1.5"><span class="tag text-[10px]">{it.tip}</span></div>
                     </div>
                   ))

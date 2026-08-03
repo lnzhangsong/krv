@@ -17,6 +17,7 @@ const title = '纯粹理性批判 · V5 完整版 | 217条句读 + 全文检索'
         <p class="lead">
           康德《纯粹理性批判》导读站：217 条手工句读精选（原文 + 邓晓芒讲解 + 学习提示）覆盖感性论、分析论、辩证论、方法论四大部，
           另有 7594 段（183 万字）全文离线内置，可本地检索、对照阅读。
+          读原文或句读时，点按任意术语即可悬浮查看定义与同类对照；「知识结构网」用论证树把全书的论证流程可视化。
           页面结构与学习路径参考 SEP、剑桥版导言与国内外主流康德课程编排。
         </p>
         <div class="flex flex-wrap gap-3 mt-6">
@@ -100,7 +101,7 @@ const title = '纯粹理性批判 · V5 完整版 | 217条句读 + 全文检索'
 
     <div class="section-head">
       <div class="h3">阅读工具</div>
-      <span class="font-mono text-[11px] text-muted">搜索 / 全文 / 对照 / 打印</span>
+      <span class="font-mono text-[11px] text-muted">句读 / 全文 / 结构网 / 术语 / 检索</span>
     </div>
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
       <a href="/deng/" class="card p-5">
@@ -113,9 +114,14 @@ const title = '纯粹理性批判 · V5 完整版 | 217条句读 + 全文检索'
         <div class="font-bold">7594段（183万字）离线内置</div>
         <div class="p text-xs mt-1.5">全书语义分段、章节标题分隔，书式排版连续阅读，可跳转段号、打印/保存。</div>
       </a>
+      <a href="/map/" class="card p-5">
+        <div class="h3 accent">知识结构网</div>
+        <div class="font-bold">全书论证树</div>
+        <div class="p text-xs mt-1.5">总问题 → 四大部 → 各步论证 → 概念，箭头标注论证关系；点按概念查看定义与同类对照。</div>
+      </a>
       <a href="/glossary/" class="card p-5">
         <div class="h3">术语库</div>
-        <div class="font-bold">20 核心概念速查</div>
+        <div class="font-bold">67 词分类速查</div>
         <div class="p text-xs mt-1.5">先天/先验/超验、统觉、图型、二律背反、调节性… 与全站搜索联动。</div>
       </a>
     </div>
@@ -161,16 +167,16 @@ const title = '纯粹理性批判 · V5 完整版 | 217条句读 + 全文检索'
       </div>
       <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div>
-          <b class="font-mono">① 搜索</b>
-          <p class="p text-[13px]">顶部输入"自由""因果""存在不是谓词"等，自动下拉结果并跳转到对应句读或章节。</p>
+          <b class="font-mono">① 术语悬浮</b>
+          <p class="p text-[13px]">读原文或句读时，点按文中的概念术语（带点状下划线），即可悬浮查看定义、出处与同类对照，随时区分易混词。</p>
         </div>
         <div>
           <b class="font-mono">② 句读精选</b>
           <p class="p text-[13px]">进 <a href="/deng/" class="underline">句读全库</a>，按序言/导言/四大部浏览 217 条精选句读：原文位置、邓晓芒讲解与学习提示齐备。</p>
         </div>
         <div>
-          <b class="font-mono">③ 对照</b>
-          <p class="p text-[13px]">进 <a href="/quanwen/" class="underline">全文直读</a>，原文与句读并排对照，逐句消化。</p>
+          <b class="font-mono">③ 知识结构网</b>
+          <p class="p text-[13px]">进 <a href="/map/" class="underline">知识结构网</a>，沿论证树逐部看「要解决的问题 → 各步论证 → 概念」，点按概念看定义；或进 <a href="/quanwen/" class="underline">全文直读</a> 对照原文。</p>
         </div>
       </div>
     </section>

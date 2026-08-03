@@ -1,4 +1,5 @@
 ---
+import { TERMS_JSON } from '../lib/glossary';
 interface Props {
   title: string;
   desc?: string;
@@ -23,6 +24,7 @@ const navMain: { href: string; label: string }[] = [
   { href: '/glossary/', label: '术语库' },
 ];
 const navMore: { href: string; label: string; desc: string }[] = [
+  { href: '/map/', label: '知识结构网', desc: '全书论证树' },
   { href: '/quanwen/', label: '全文直读', desc: '7594段全文' },
 ];
 ---
@@ -43,6 +45,7 @@ const navMore: { href: string; label: string; desc: string }[] = [
     </style>
   </head>
   <body>
+    <script is:inline type="application/json" id="term-data" set:html={TERMS_JSON}></script>
     <header class="sticky top-0 z-[100] backdrop-blur-[12px] border-b border-line">
       <div class="container h-[68px] flex items-center justify-between gap-4">
         <div class="flex items-center gap-2.5 shrink-0">
@@ -142,6 +145,75 @@ const navMore: { href: string; label: string; desc: string }[] = [
           moreBtn?.setAttribute('aria-expanded', 'false');
         }
       });
+    </script>
+
+    <script>
+      // 原文术语悬浮释义：全文/句读中的 .term 悬停或点击显示定义
+      const termDataEl = document.getElementById('term-data') as HTMLScriptElement | null;
+      if (termDataEl) {
+        const terms = JSON.parse(termDataEl.textContent || '[]') as { k: string; b: string; d: string; x?: string; g: string }[];
+        const byKey = new Map(terms.map((t) => [t.k, t]));
+        const tip = document.createElement('div');
+        tip.id = 'termTip';
+        tip.className = 'term-tip';
+        document.body.appendChild(tip);
+        const esc = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+        let lastX = 0, lastY = 0;
+        const show = (term: { k: string; b: string; d: string; x?: string; g: string }, x: number, y: number) => {
+          lastX = x; lastY = y;
+          const same = terms.filter((t) => t.g === term.g && t.k !== term.k);
+          tip.innerHTML = `
+            <div class="term-tip-head"><b>${esc(term.b)}</b>${term.x ? `<span class="term-tip-x">${esc(term.x)}</span>` : ''}</div>
+            <div class="term-tip-g">${esc(term.g)}</div>
+            <div class="term-tip-d">${esc(term.d)}</div>
+            ${same.length ? `<div class="term-tip-same">同类对照：${same.map((s) => `<button class="term-chip" data-k="${s.k}">${esc(s.b)}</button>`).join('')}</div>` : ''}
+            <a class="term-tip-link" href="/glossary/">术语库 →</a>`;
+          tip.classList.add('show');
+          tip.classList.remove('pinned');
+          const r = tip.getBoundingClientRect();
+          let left = x + 14, top = y + 14;
+          if (left + r.width > window.innerWidth - 8) left = x - r.width - 14;
+          if (top + r.height > window.innerHeight - 8) top = y - r.height - 14;
+          tip.style.left = left + 'px';
+          tip.style.top = top + 'px';
+          tip.querySelectorAll('.term-chip').forEach((ch) =>
+            ch.addEventListener('click', () => {
+              const t = byKey.get((ch as HTMLElement).dataset.k ?? '');
+              if (t) show(t, lastX, lastY);
+            })
+          );
+        };
+        const hide = () => tip.classList.remove('show');
+        let current: HTMLElement | null = null;
+        document.addEventListener('mouseover', (e) => {
+          const t = (e.target as HTMLElement).closest('.term') as HTMLElement | null;
+          if (t) {
+            current = t;
+            const term = byKey.get(t.dataset.k ?? '');
+            if (term) show(term, e.clientX, e.clientY);
+          }
+        });
+        document.addEventListener('mouseout', (e) => {
+          const t = (e.target as HTMLElement).closest('.term') as HTMLElement | null;
+          const rt = e.relatedTarget as HTMLElement | null;
+          if (t === current && !(rt && rt.closest && rt.closest('#termTip'))) {
+            current = null;
+            hide();
+          }
+        });
+        document.addEventListener('click', (e) => {
+          const t = (e.target as HTMLElement).closest('.term') as HTMLElement | null;
+          if (t) {
+            e.stopPropagation();
+            const term = byKey.get(t.dataset.k ?? '');
+            if (term) show(term, e.clientX, e.clientY);
+          } else if (!(e.target as HTMLElement).closest('#termTip')) {
+            hide();
+          }
+        });
+        window.addEventListener('scroll', () => hide(), { passive: true });
+        window.addEventListener('resize', () => hide());
+      }
     </script>
   </body>
 </html>

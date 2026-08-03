@@ -2,6 +2,7 @@
 import Base from '../../layouts/Base.astro';
 import PageHead from '../../components/PageHead.astro';
 import { commentDB } from '../../lib/commentDB';
+import { wrapTerms } from '../../lib/glossary';
 const title = '先验辩证论 · 导读：理性为何必然越界';
 
 interface Item { key: string; ref: string; original: string; deng: string; tip: string }
@@ -65,8 +66,8 @@ const total = Object.keys(commentDB).filter((k) => k.startsWith('dia-')).length;
         pick(['dia-ide-logic', 'dia-illusion', 'dia-idea-soul', 'dia-idea-world', 'dia-idea-god']).map((it) => (
           <div class="my-2">
             <div class="font-mono text-[10px] text-muted">{it.ref}</div>
-            <div class="serif font-bold my-1">「{it.original}」</div>
-            <div class="p text-[13px]">{it.deng}</div>
+            <div class="serif font-bold my-1" set:html={`「${wrapTerms(it.original)}」`}></div>
+            <div class="p text-[13px]" set:html={wrapTerms(it.deng)}></div>
           </div>
         ))
       }
@@ -78,8 +79,8 @@ const total = Object.keys(commentDB).filter((k) => k.startsWith('dia-')).length;
         pick(['dia-para-1', 'dia-para-2', 'dia-para-4']).map((it) => (
           <div class="my-2">
             <div class="font-mono text-[10px] text-muted">{it.ref}</div>
-            <div class="serif font-bold my-1">「{it.original}」</div>
-            <div class="p text-[13px]">{it.deng}</div>
+            <div class="serif font-bold my-1" set:html={`「${wrapTerms(it.original)}」`}></div>
+            <div class="p text-[13px]" set:html={wrapTerms(it.deng)}></div>
           </div>
         ))
       }
@@ -91,8 +92,8 @@ const total = Object.keys(commentDB).filter((k) => k.startsWith('dia-')).length;
         pick(['dia-anti1-thesis', 'dia-anti1-antith', 'dia-anti1-res', 'dia-anti3-thesis', 'dia-anti3-res']).map((it) => (
           <div class="my-2">
             <div class="font-mono text-[10px] text-muted">{it.ref}</div>
-            <div class="serif font-bold my-1">「{it.original}」</div>
-            <div class="p text-[13px]">{it.deng}</div>
+            <div class="serif font-bold my-1" set:html={`「${wrapTerms(it.original)}」`}></div>
+            <div class="p text-[13px]" set:html={wrapTerms(it.deng)}></div>
           </div>
         ))
       }
@@ -104,8 +105,8 @@ const total = Object.keys(commentDB).filter((k) => k.startsWith('dia-')).length;
         pick(['dia-onto-refutation', 'dia-onto-100thaler', 'dia-cosmo', 'dia-physico', 'dia-regulative']).map((it) => (
           <div class="my-2">
             <div class="font-mono text-[10px] text-muted">{it.ref}</div>
-            <div class="serif font-bold my-1">「{it.original}」</div>
-            <div class="p text-[13px]">{it.deng}</div>
+            <div class="serif font-bold my-1" set:html={`「${wrapTerms(it.original)}」`}></div>
+            <div class="p text-[13px]" set:html={wrapTerms(it.deng)}></div>
           </div>
         ))
       }

@@ -535,6 +535,103 @@
   }
 }
 
+/* ===== 术语悬浮释义 ===== */
+.term {
+  cursor: help;
+  border-bottom: 1px dotted color-mix(in srgb, var(--color-accent2) 65%, transparent);
+  padding: 0 1px;
+  border-radius: 3px;
+  transition: background 0.12s, color 0.12s;
+  white-space: normal;
+}
+.term:hover {
+  background: color-mix(in srgb, var(--color-accent2) 22%, transparent);
+}
+.term-tip {
+  position: fixed;
+  z-index: 300;
+  width: min(340px, 86vw);
+  background: var(--color-card);
+  border: 1px solid var(--color-line);
+  border-radius: 14px;
+  box-shadow: var(--shadow-pop);
+  padding: 14px 16px;
+  display: none;
+  font-size: 13px;
+  line-height: 1.7;
+  pointer-events: auto;
+}
+.term-tip.show {
+  display: block;
+}
+.term-tip-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+}
+.term-tip-head b {
+  font-family: var(--font-serif);
+  font-size: 17px;
+  color: var(--color-accent);
+}
+.term-tip-x {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--color-muted);
+}
+.term-tip-g {
+  display: inline-block;
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  letter-spacing: 0.1em;
+  color: var(--color-accent2);
+  border: 1px solid color-mix(in srgb, var(--color-accent2) 40%, var(--color-line));
+  border-radius: 999px;
+  padding: 1px 8px;
+  margin-top: 4px;
+}
+.term-tip-d {
+  margin-top: 9px;
+  color: color-mix(in srgb, var(--color-ink) 85%, var(--color-muted));
+}
+.term-tip-same {
+  margin-top: 10px;
+  padding-top: 9px;
+  border-top: 1px dashed var(--color-line);
+  font-size: 11px;
+  color: var(--color-muted);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  align-items: center;
+}
+.term-chip {
+  border: 1px solid var(--color-line);
+  background: var(--color-bg2);
+  border-radius: 999px;
+  padding: 2px 9px;
+  font-size: 11px;
+  font-family: var(--font-sans);
+  color: var(--color-accent);
+  cursor: pointer;
+  transition: border-color 0.12s, background 0.12s;
+}
+.term-chip:hover {
+  border-color: color-mix(in srgb, var(--color-accent2) 55%, var(--color-line));
+  background: color-mix(in srgb, var(--color-accent2) 10%, transparent);
+}
+.term-tip-link {
+  display: inline-block;
+  margin-top: 10px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--color-muted);
+}
+.term-tip-link:hover {
+  color: var(--color-accent2);
+}
+
 /* ===== 暗色模式微调 ===== */
 @media (prefers-color-scheme: dark) {
   ::selection {

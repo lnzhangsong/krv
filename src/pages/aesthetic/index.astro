@@ -2,6 +2,7 @@
 import Base from '../../layouts/Base.astro';
 import PageHead from '../../components/PageHead.astro';
 import { commentDB } from '../../lib/commentDB';
+import { wrapTerms } from '../../lib/glossary';
 const title = '先验感性论 · 导读：时空与数学如何可能';
 
 interface Item { key: string; ref: string; original: string; deng: string; tip: string }
@@ -49,8 +50,8 @@ const total = Object.keys(commentDB).filter((k) => k.startsWith('ae-')).length;
         pick(['ae-space-m1', 'ae-space-m2', 'ae-space-m3', 'ae-space-m4', 'ae-space-trans']).map((it) => (
           <div class="my-2">
             <div class="font-mono text-[10px] text-muted">{it.ref}</div>
-            <div class="serif font-bold my-1">「{it.original}」</div>
-            <div class="p text-[13px]">{it.deng}</div>
+            <div class="serif font-bold my-1" set:html={`「${wrapTerms(it.original)}」`}></div>
+            <div class="p text-[13px]" set:html={wrapTerms(it.deng)}></div>
           </div>
         ))
       }
@@ -62,8 +63,8 @@ const total = Object.keys(commentDB).filter((k) => k.startsWith('ae-')).length;
         pick(['ae-time-m1', 'ae-time-m2', 'ae-time-m3', 'ae-time-trans', 'ae-time-basis']).map((it) => (
           <div class="my-2">
             <div class="font-mono text-[10px] text-muted">{it.ref}</div>
-            <div class="serif font-bold my-1">「{it.original}」</div>
-            <div class="p text-[13px]">{it.deng}</div>
+            <div class="serif font-bold my-1" set:html={`「${wrapTerms(it.original)}」`}></div>
+            <div class="p text-[13px]" set:html={wrapTerms(it.deng)}></div>
           </div>
         ))
       }
@@ -75,8 +76,8 @@ const total = Object.keys(commentDB).filter((k) => k.startsWith('ae-')).length;
         pick(['ae-space-concl1', 'ae-time-concl1', 'ae-emp-real', 'ae-emp-real-proof', 'ae-b-refutation-proof', 'ae-noumena-unknowable']).map((it) => (
           <div class="my-2">
             <div class="font-mono text-[10px] text-muted">{it.ref}</div>
-            <div class="serif font-bold my-1">「{it.original}」</div>
-            <div class="p text-[13px]">{it.deng}</div>
+            <div class="serif font-bold my-1" set:html={`「${wrapTerms(it.original)}」`}></div>
+            <div class="p text-[13px]" set:html={wrapTerms(it.deng)}></div>
           </div>
         ))
       }

@@ -4,6 +4,7 @@ import PageHead from '../../components/PageHead.astro';
 import { DatabaseSync } from 'node:sqlite';
 import path from 'node:path';
 import { SEQ_COUNT } from '../../lib/chapters';
+import { wrapTerms } from '../../lib/glossary';
 const title = '邓晓芒句读 全文阅览 7594段 | SQLite 直读版';
 
 interface Chunk { id: string; seq: number; chapter: string; text: string }
@@ -45,7 +46,7 @@ const chunksJson = JSON.stringify(chunks.map((c) => ({ id: c.id, seq: c.seq, cha
                   {c.chapter}
                 </div>
               )}
-              <div class="rf-text serif" set:html={highlightKant(c.text)} />
+              <div class="rf-text serif" set:html={highlightKant(wrapTerms(c.text))} />
               <span class="rf-page" title={`段 ${c.id}`}>{c.seq + 1}</span>
             </div>
           );
@@ -67,6 +68,7 @@ const chunksJson = JSON.stringify(chunks.map((c) => ({ id: c.id, seq: c.seq, cha
   <script is:inline type="application/json" id="qdata" set:html={chunksJson}></script>
 
   <script>
+    import { wrapTerms } from '../../lib/glossary';
     const PAGE = 15;
     const dataEl = document.getElementById('qdata') as HTMLScriptElement | null;
     const chunks: { id: string; seq: number; chapter: string; text: string }[] = dataEl ? JSON.parse(dataEl.textContent || '[]') : [];
@@ -78,7 +80,7 @@ const chunksJson = JSON.stringify(chunks.map((c) => ({ id: c.id, seq: c.seq, cha
 
     const itemHTML = (c: { id: string; seq: number; chapter: string; text: string }, newChapter: boolean) => {
       const chapter = newChapter ? `<div class="rf-chapter"><span class="rf-chapter-mark"></span>${esc(c.chapter)}</div>` : '';
-      return `<div class="rf-item" id="c${c.seq}" data-pt="${c.seq}" data-text="${esc(c.text)}">${chapter}<div class="rf-text serif">${highlightKant(c.text)}</div><span class="rf-page" title="段 ${c.id}">${c.seq + 1}</span></div>`;
+      return `<div class="rf-item" id="c${c.seq}" data-pt="${c.seq}" data-text="${esc(c.text)}">${chapter}<div class="rf-text serif">${highlightKant(wrapTerms(c.text))}</div><span class="rf-page" title="段 ${c.id}">${c.seq + 1}</span></div>`;
     };
 
     const body = document.getElementById('body') as HTMLElement | null;
