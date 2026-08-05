@@ -74,18 +74,20 @@ astro.config.mjs          Astro + Tailwind v4 配置
 
 - 全文数据来自 `data/kant.db`（单表 `chunks`：`id, seq, chapter, text`），构建期由各页面通过 `node:sqlite` 读取；如需从 epub 重新生成，运行 `node scripts/build-db-from-epub.mjs <epub路径>`。
 - 句读精选（217 条）与术语库以 TypeScript 模块内置于 `src/lib/`，构建期内嵌进页面。
-- 全局搜索索引 `/search-index.json` 在构建时生成（约 6MB，gzip 后 ~1.7MB），客户端懒加载。
+- 全文分片：构建期生成 `/fulltext/index.json`（索引）+ `/fulltext/page-N.json`（507 页数据），全文页按需加载。
+- 全局搜索索引 `/search-index.json` 在构建时生成（约 6MB，gzip 后 ~1.7MB），仅全站搜索时懒加载。
 
 ## 部署
 
 产物为纯静态文件（`dist/`），可部署到 GitHub Pages、Netlify、Vercel、nginx 等任意静态托管。
 
-- 建议开启 gzip/brotli 压缩：`quanwen` 页运行时会 `fetch('/search-index.json')`（未压缩约 6MB）。
+- 全文页按需加载 `/fulltext/page-N.json`（每页约 20KB），开启 gzip/brotli 后更小。
+- `/search-index.json`（约 6MB）仅在全站搜索时懒加载。
 - 页面切换为 MPA（多页应用），导航即整页刷新。
 
 ## 性能与实现要点
 
-- **全文页轻量化**：`/quanwen/` 的 HTML 仅约 80KB——7594 段全文**不内嵌**，改为客户端懒加载 `/search-index.json` 再分页渲染（SSR 首屏 15 段先行显示）。
+- **全文页轻量化**：`/quanwen/` 的 HTML 仅约 80KB——7594 段全文**不内嵌**，构建期按页生成 `/fulltext/page-N.json`（每页约 20KB），客户端懒加载索引 + 按页取数并预取相邻页（SSR 首屏 15 段先行显示）。
 - **暗色模式无闪烁**：主题恢复脚本放在 `<head>` 最前，首帧渲染前同步设置 `data-theme`。
 - **文字立即显示**：不隐藏文字等待 webfont（`font-display: swap` 自动切换），全文页翻页不等字体。
 - **翻页防卡顿**：全文页数据未就绪时操作会提示"全文加载中"，就绪后恢复位置静默定位（不高亮闪烁）。

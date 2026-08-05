@@ -10,6 +10,9 @@
     "check": "astro check",
     "typecheck": "tsc --noEmit"
   },
+  "engines": {
+    "node": ">=22.5.0"
+  },
   "dependencies": {},
   "devDependencies": {
     "@astrojs/check": "^0.9.10",

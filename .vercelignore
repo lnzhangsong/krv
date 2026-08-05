@@ -1,0 +1,5 @@
+# 不参与 Vercel 上传（git 集成部署时本文件通常无需，CLI 部署时避免上传构建产物）
+dist/
+.astro/
+.codewhale/
+.DS_Store

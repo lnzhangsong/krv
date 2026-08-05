@@ -22,7 +22,7 @@ function highlightKant(text: string): string {
   return text.replace(/【([^】]+)】/g, '<b class="kant-q">「$1」</b>');
 }
 
-// 全文数据不再内嵌 HTML（6MB 会让页面加载/解析卡顿），客户端懒加载 /search-index.json 按页渲染
+// 全文数据不内嵌 HTML：构建期按页生成 /fulltext/page-N.json，客户端懒加载索引 + 按页取数
 ---
 
 <Base title={title} current="/quanwen/" badge="全文阅览 7594段" searchPlaceholder="全站搜索：存在不是谓词/统觉…">
@@ -85,14 +85,15 @@ function highlightKant(text: string): string {
   <script>
     import { wrapTerms } from '../../lib/glossary';
     import { loadHls, saveHls, loadNotes, saveNotes, loadBms, saveBms, findRange, loadPos, savePos, FS_KEY, LH_KEY } from '../../lib/reading';
-    // 延迟初始化：让 SSR 首屏先绘制，再解析全文数据并按页渲染
+    // 延迟初始化：让 SSR 首屏先绘制，再按页加载全文数据
     const init = () => {
     const PAGE = 15;
-    // 全文数据懒加载：复用全站搜索索引 /search-index.json，HTML 不再内嵌 6MB
-    let chunks: { id: string; seq: number; chapter: string; text: string }[] = [];
+    // 全文分片：/fulltext/index.json 轻量索引 + /fulltext/page-N.json 按页数据（不再下载 6MB 全量）
     let totalPages = 1;
+    let total = 0;
     let page = 1;
-    let dataReadyFlag = false;
+    let dataReadyFlag = false; // 索引就绪
+    let curData: { page: number; prevChapter: string; chunks: { id: string; seq: number; chapter: string; text: string }[] } | null = null;
     const hintEl = document.getElementById('jumpHint') as HTMLElement | null;
     const needData = (fn: (...a: any[]) => void) => (...a: any[]) => {
       if (!dataReadyFlag) { if (hintEl) hintEl.textContent = '全文加载中…'; return; }
@@ -126,19 +127,15 @@ function highlightKant(text: string): string {
     };
 
     const body = document.getElementById('body') as HTMLElement | null;
-    const chapterOf = (el: HTMLElement) => {
-      const ch = el.querySelector('.rf-chapter');
-      return ch ? ch.textContent : '';
-    };
 
-    // 高亮：CSS Custom Highlight API
+    // 高亮：CSS Custom Highlight API（基于当前页 DOM）
     const hlHighlight = new Highlight();
     try { (CSS as unknown as { highlights: { set: (n: string, h: Highlight) => void } }).highlights.set('krv-hl', hlHighlight); } catch { /* 不支持时静默 */ }
     const applyHl = () => {
       try {
         hlHighlight.clear();
-        const lo = (page - 1) * PAGE;
-        const seqs = new Set(chunks.slice(lo, lo + PAGE).map((c) => c.seq));
+        if (!curData) return;
+        const seqs = new Set(curData.chunks.map((c) => c.seq));
         for (const h of hls) {
           if (!seqs.has(h.seq)) continue;
           const el = document.getElementById('c' + h.seq);
@@ -149,28 +146,69 @@ function highlightKant(text: string): string {
       } catch { /* ignore */ }
     };
 
-    function renderPage(p: number) {
-      if (!body) return;
-      const lo = (p - 1) * PAGE;
+    // ---- 分片加载：页数据缓存 + 相邻页预取 ----
+    const pageOfSeq = (seq: number) => Math.min(totalPages, Math.max(1, Math.floor(seq / PAGE) + 1));
+    const pageCache = new Map<number, Promise<{ page: number; prevChapter: string; chunks: { id: string; seq: number; chapter: string; text: string }[] }>>();
+    const fetchPage = (p: number) => {
+      const target = Math.min(Math.max(1, p), totalPages);
+      let pr = pageCache.get(target);
+      if (!pr) {
+        pr = fetch(`/fulltext/page-${target}.json`).then((r) => { if (!r.ok) throw new Error('bad status'); return r.json(); });
+        pageCache.set(target, pr);
+      }
+      return pr;
+    };
+    const prefetchPage = (p: number) => {
+      if (p < 1 || p > totalPages || pageCache.has(p)) return;
+      fetchPage(p).catch(() => { pageCache.delete(p); });
+    };
+    let loadSeq = 0;
+    const loadPage = async (p: number): Promise<boolean> => {
+      const target = Math.min(Math.max(1, p), totalPages);
+      const my = ++loadSeq;
+      try {
+        const data = await fetchPage(target);
+        if (my !== loadSeq) return false; // 已有更新的加载请求，忽略本次
+        curData = data;
+        page = target;
+        return true;
+      } catch {
+        if (my === loadSeq && hintEl) hintEl.textContent = '页面加载失败';
+        return false;
+      }
+    };
+
+    function renderCurPage() {
+      if (!body || !curData) return;
+      const chunks = curData.chunks;
       const html = chunks
-        .slice(lo, lo + PAGE)
         .map((c, i) => {
-          const gi = lo + i;
-          const prev = gi > 0 ? chunks[gi - 1] : null;
-          return itemHTML(c, !prev || prev.chapter !== c.chapter);
+          const prev = i > 0 ? chunks[i - 1] : null;
+          const newChapter = i === 0 ? (curData.prevChapter ? c.chapter !== curData.prevChapter : true) : prev!.chapter !== c.chapter;
+          return itemHTML(c, newChapter);
         })
         .join('');
       body.innerHTML = html;
       applyHl();
       syncPageUI();
       renderBmList();
-      const cur = chunks[lo];
+      const cur = chunks[0];
       if (cur) savePos(cur.seq);
       if (nowChapter && cur) {
         nowChapter.textContent = cleanChapter(cur.chapter);
         if (chapterSelect) chapterSelect.value = String(chapterSeqMap.get(cur.chapter) ?? '');
       }
-      // 翻页立即显示：不隐藏文字、不等字体（font-display: swap 自动切换，无需人工等待）
+      // 后台预载本页文楷字形（不阻塞显示）
+      try {
+        if (document.fonts && document.fonts.load) {
+          const pt = chunks.map((c) => c.text).join('');
+          document.fonts.load('16px "LXGW WenKai"', pt);
+          document.fonts.load('700 16px "LXGW WenKai"', pt);
+        }
+      } catch { /* ignore */ }
+      // 预取相邻页
+      prefetchPage(page + 1);
+      prefetchPage(page - 1);
     }
 
     function syncPageUI() {
@@ -181,42 +219,49 @@ function highlightKant(text: string): string {
       set(document.getElementById('pageNumB'), document.getElementById('pageTotalB'));
     }
 
-    function goPage(p: number) {
-      page = Math.min(Math.max(1, p), totalPages);
-      renderPage(page);
+    async function goPage(p: number) {
+      const target = Math.min(Math.max(1, p), totalPages);
+      if (target === page && curData) { window.scrollTo({ top: 0, behavior: 'smooth' }); return; }
+      const ok = await loadPage(target);
+      if (!ok) return;
+      renderCurPage();
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
 
     function gotoStart(seq: number, flash = true) {
-      const idx = chunks.findIndex((c) => c.seq === seq);
-      if (idx === -1) return;
-      page = Math.floor(idx / PAGE) + 1;
-      renderPage(page);
-      const card = document.getElementById(`c${seq}`);
-      if (card) {
-        requestAnimationFrame(() => {
-          card.scrollIntoView({ behavior: 'smooth', block: 'start' });
-          // 高亮定位仅用于用户主动跳转；恢复上次阅读位置时不闪
-          if (flash) {
-            card.classList.remove('flash');
-            void card.offsetWidth; // 强制重排，确保连续跳转时动画重新触发
-            card.classList.add('flash');
-            setTimeout(() => card.classList.remove('flash'), 1700);
-          }
-        });
-      }
+      if (seq < 0 || seq >= total) return;
+      void loadPage(pageOfSeq(seq)).then((ok) => {
+        if (!ok) return;
+        renderCurPage();
+        const card = document.getElementById(`c${seq}`);
+        if (card) {
+          requestAnimationFrame(() => {
+            card.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            // 高亮定位仅用于用户主动跳转；恢复上次阅读位置时不闪
+            if (flash) {
+              card.classList.remove('flash');
+              void card.offsetWidth; // 强制重排，确保连续跳转时动画重新触发
+              card.classList.add('flash');
+              setTimeout(() => card.classList.remove('flash'), 1700);
+            }
+          });
+        }
+      });
     }
 
     // 按段号跳转（输入 1-based 段号 → data-pt 是 0-based seq）
+    const chapterNameOf = (seq: number) => {
+      let name = '';
+      for (const [n, s] of chapterSeqMap) { if (s <= seq) name = n; else break; }
+      return name;
+    };
     function jumpToSeq(q: number) {
-      const hint = document.getElementById('jumpHint') as HTMLElement | null;
       const seq = q - 1;
-      const c = chunks.find((x) => x.seq === seq);
-      if (!c) {
-        if (hint) hint.textContent = `未找到段 ${q}`;
+      if (seq < 0 || seq >= total) {
+        if (hintEl) hintEl.textContent = `未找到段 ${q}`;
         return;
       }
-      if (hint) hint.textContent = `已定位到 段 ${q}（${c.chapter || ''}）`;
+      if (hintEl) hintEl.textContent = `已定位到 段 ${q}${chapterNameOf(seq) ? `（${chapterNameOf(seq)}）` : ''}`;
       gotoStart(seq);
     }
 
@@ -311,20 +356,20 @@ function highlightKant(text: string): string {
       if (bmList && !bmList.hidden && !t.closest('#bmBtn') && !t.closest('#bmList')) bmList.hidden = true;
     });
 
-    // 收藏 / 批注（事件委托）
+    // 收藏 / 批注（事件委托；守卫：当前页数据就绪）
     body?.addEventListener('click', (e) => {
-      if (!dataReadyFlag) return;
+      if (!curData) return;
       const t = e.target as HTMLElement;
       const act = t.closest('.rf-act') as HTMLElement | null;
       if (act) {
         const seq = parseInt(act.dataset.seq ?? '', 10);
         if (act.dataset.act === 'bm') {
-          const c = chunks.find((x) => x.seq === seq);
+          const c = curData.chunks.find((x) => x.seq === seq);
           if (!c) return;
           if (bmSet.has(seq)) { bmSet.delete(seq); bms = bms.filter((b) => b.seq !== seq); }
           else { bms.push({ seq, chapter: c.chapter, text: c.text.slice(0, 40), ts: Date.now() }); bmSet.add(seq); }
           saveBms(bms);
-          renderPage(page);
+          renderCurPage();
         } else if (act.dataset.act === 'note') {
           const cur = noteMap.get(seq)?.note ?? '';
           const val = prompt(cur ? '编辑批注' : '添加批注', cur);
@@ -334,7 +379,7 @@ function highlightKant(text: string): string {
           noteMap.clear();
           notes.forEach((n) => noteMap.set(n.seq, n));
           saveNotes(notes);
-          renderPage(page);
+          renderCurPage();
         }
         return;
       }
@@ -349,7 +394,7 @@ function highlightKant(text: string): string {
         noteMap.clear();
         notes.forEach((n) => noteMap.set(n.seq, n));
         saveNotes(notes);
-        renderPage(page);
+        renderCurPage();
       }
     });
 
@@ -406,7 +451,7 @@ function highlightKant(text: string): string {
           noteMap.clear();
           notes.forEach((n) => noteMap.set(n.seq, n));
           saveNotes(notes);
-          renderPage(page);
+          renderCurPage();
         }
       }
       selbar.hidden = true;
@@ -422,7 +467,7 @@ function highlightKant(text: string): string {
     const jumpBtn = document.getElementById('jumpBtn') as HTMLButtonElement | null;
     const doJump = () => {
       const p = parseInt(jumpInput?.value || '', 10);
-      if (p >= 1 && p <= chunks.length) jumpToSeq(p);
+      if (p >= 1 && p <= total) jumpToSeq(p);
     };
     jumpBtn?.addEventListener('click', needData(doJump));
     jumpInput?.addEventListener('keydown', (e) => {
@@ -437,25 +482,17 @@ function highlightKant(text: string): string {
       if (e.key === 'ArrowRight') goPage(page + 1);
     }));
 
-    // 全文数据懒加载：复用全站搜索索引 /search-index.json（HTML 不再内嵌 6MB）
-    fetch('/search-index.json')
+    // 全文分片索引加载：就绪后填充章节下拉、恢复阅读位置
+    fetch('/fulltext/index.json')
       .then((r) => { if (!r.ok) throw new Error('加载失败'); return r.json(); })
       .then((data) => {
-        chunks = (data && data.chunks) || [];
-        totalPages = Math.max(1, Math.ceil(chunks.length / PAGE));
+        totalPages = Math.max(1, data.pages || 1);
+        total = data.total || 0;
+        chapterSeqMap = new Map((data.chapters || []).map((c: { name: string; seq: number }) => [c.name, c.seq]));
         dataReadyFlag = true;
 
-        // 章节下拉（数据就绪后填充）
-        const chapterList: { name: string; seq: number }[] = [];
-        {
-          const seen = new Set<string>();
-          for (const c of chunks) {
-            if (!seen.has(c.chapter)) { seen.add(c.chapter); chapterList.push({ name: c.chapter, seq: c.seq }); }
-          }
-        }
-        chapterSeqMap = new Map(chapterList.map((c) => [c.name, c.seq]));
         if (chapterSelect) {
-          chapterSelect.innerHTML = '<option value="">跳转章节…</option>' + chapterList.map((c) => `<option value="${c.seq}">${esc(cleanChapter(c.name))}</option>`).join('');
+          chapterSelect.innerHTML = '<option value="">跳转章节…</option>' + (data.chapters || []).map((c: { name: string; seq: number }) => `<option value="${c.seq}">${esc(cleanChapter(c.name))}</option>`).join('');
           chapterSelect.addEventListener('change', () => {
             const seq = parseInt(chapterSelect.value, 10);
             if (!Number.isNaN(seq)) gotoStart(seq);
@@ -463,8 +500,7 @@ function highlightKant(text: string): string {
         }
         renderBmList();
 
-        // 初始：优先回到上次阅读位置；其次处理 #c 定位；否则从第 1 页开始
-        // 恢复位置时静默定位、不高亮闪烁（避免"第一段闪一下"的突兀感）
+        // 初始：优先恢复上次阅读位置（静默）；其次 #c 锚点（主动跳转，保留高亮）；否则第 1 页
         const savedPos = loadPos();
         const initHash = location.hash.match(/^#c(\d+)/);
         if (initHash) {
@@ -472,35 +508,13 @@ function highlightKant(text: string): string {
           if (!Number.isNaN(seq)) {
             gotoStart(seq, true);
           } else {
-            renderPage(1);
+            void loadPage(1).then(() => renderCurPage());
           }
         } else if (savedPos >= 0) {
           gotoStart(savedPos, false);
         } else {
-          renderPage(1);
+          void loadPage(1).then(() => renderCurPage());
         }
-
-        // 空闲时分批预载文楷字形，降低一次性全量匹配/下载的压力；翻页不依赖它
-        try {
-          if (document.fonts && document.fonts.load) {
-            const BATCH = 1200;
-            let i = 0;
-            const pump = () => {
-              const slice = chunks.slice(i, i + BATCH).map((c) => c.text).join('');
-              if (slice) {
-                document.fonts.load('16px "LXGW WenKai"', slice);
-                document.fonts.load('700 16px "LXGW WenKai"', slice);
-              }
-              i += BATCH;
-              if (i < chunks.length) {
-                if ('requestIdleCallback' in window) window.requestIdleCallback(pump, { timeout: 2000 });
-                else setTimeout(pump, 300);
-              }
-            };
-            if ('requestIdleCallback' in window) window.requestIdleCallback(pump, { timeout: 2000 });
-            else setTimeout(pump, 300);
-          }
-        } catch { /* ignore */ }
       })
       .catch(() => { if (hintEl) hintEl.textContent = '全文数据加载失败'; });
     };
