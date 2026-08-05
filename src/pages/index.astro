@@ -26,8 +26,8 @@ const dailyJson = JSON.stringify(entries.map((e) => ({ key: e.key, ref: e.ref, o
           页面结构与学习路径参考 SEP、剑桥版导言与国内外主流康德课程编排。
         </p>
         <div class="flex flex-wrap gap-3 mt-6">
-          <a href="/quanwen/" class="btn">浏览全文 →</a>
-          <a href="/deng/" class="btn outline">开始精读</a>
+          <a href="/reading/" class="btn">浏览全文 →</a>
+          <a href="/quotes/" class="btn outline">开始精读</a>
           <a href="/glossary/" class="btn link">术语库</a>
         </div>
       </div>
@@ -57,7 +57,7 @@ const dailyJson = JSON.stringify(entries.map((e) => ({ key: e.key, ref: e.ref, o
         <p class="p text-[13.5px]"><b>邓晓芒讲：</b><span set:html={wrapTerms(daily.deng)}></span></p>
         <div class="mt-2 flex flex-wrap gap-1.5 items-center">
           <span class="tag text-[10px]" set:html={wrapTerms(daily.tip)}></span>
-          <a class="tag hover:text-ink" href={`/deng/#${daily.key}`}>在句读全库看 →</a>
+          <a class="tag hover:text-ink" href={`/quotes/#${daily.key}`}>在句读全库看 →</a>
         </div>
       </div>
     </section>
@@ -83,7 +83,7 @@ const dailyJson = JSON.stringify(entries.map((e) => ({ key: e.key, ref: e.ref, o
         <p class="p text-[13px] mt-1.5">重点：判断表→范畴表、<b>B 版先验演绎</b>（统觉的综合统一）、图型法（时间图型）、经验的类比（实体/因果/协同）与驳斥唯心论——回应休谟、证明范畴适用于一切可能经验。</p>
         <div class="flex flex-wrap gap-1.5 mt-2.5">
           <a href="/analytic/" class="tag hover:text-ink">→ 分析论 84 条</a>
-          <a href="/deng/" class="tag hover:text-ink">→ 句读全库</a>
+          <a href="/quotes/" class="tag hover:text-ink">→ 句读全库</a>
         </div>
       </div>
       <div class="card p-5" style="background:linear-gradient(180deg,var(--color-card),var(--color-bg2))">
@@ -129,12 +129,12 @@ const dailyJson = JSON.stringify(entries.map((e) => ({ key: e.key, ref: e.ref, o
       <span class="font-mono text-[11px] text-muted">句读 / 全文 / 结构网 / 术语 / 检索</span>
     </div>
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-      <a href="/quanwen/" class="card p-5">
+      <a href="/reading/" class="card p-5">
         <div class="h3 accent">全文直读</div>
         <div class="font-bold">7594段（183万字）离线内置</div>
         <div class="p text-xs mt-1.5">书式排版连续阅读：可调字号、跳章节/段号、键盘翻页；点按原文术语即出定义。</div>
       </a>
-      <a href="/deng/" class="card p-5">
+      <a href="/quotes/" class="card p-5">
         <div class="h3">句读全库</div>
         <div class="font-bold">217条手工精选</div>
         <div class="p text-xs mt-1.5">按序言、导言与四大部归档：每条约原文位置 + 邓晓芒讲解 + 学习提示。</div>
@@ -197,11 +197,11 @@ const dailyJson = JSON.stringify(entries.map((e) => ({ key: e.key, ref: e.ref, o
         </div>
         <div>
           <b class="font-mono">② 句读精选</b>
-          <p class="p text-[13px]">进 <a href="/deng/" class="underline">句读全库</a>，按序言/导言/四大部浏览 217 条精选句读：原文位置、邓晓芒讲解与学习提示齐备。</p>
+          <p class="p text-[13px]">进 <a href="/quotes/" class="underline">句读全库</a>，按序言/导言/四大部浏览 217 条精选句读：原文位置、邓晓芒讲解与学习提示齐备。</p>
         </div>
         <div>
           <b class="font-mono">③ 知识结构网</b>
-          <p class="p text-[13px]">进 <a href="/map/" class="underline">知识结构网</a>，沿论证树逐部看「要解决的问题 → 各步论证 → 概念」，点按概念看定义；或进 <a href="/quanwen/" class="underline">全文直读</a> 对照原文。</p>
+          <p class="p text-[13px]">进 <a href="/map/" class="underline">知识结构网</a>，沿论证树逐部看「要解决的问题 → 各步论证 → 概念」，点按概念看定义；或进 <a href="/reading/" class="underline">全文直读</a> 对照原文。</p>
         </div>
       </div>
     </section>
@@ -225,7 +225,7 @@ const dailyJson = JSON.stringify(entries.map((e) => ({ key: e.key, ref: e.ref, o
       <p class="p text-[13.5px]"><b>邓晓芒讲：</b>${wrapTerms(e.deng)}</p>
       <div class="mt-2 flex flex-wrap gap-1.5 items-center">
         <span class="tag text-[10px]">${wrapTerms(e.tip)}</span>
-        <a class="tag hover:text-ink" href="/deng/#${esc(e.key)}">在句读全库看 →</a>
+        <a class="tag hover:text-ink" href="/quotes/#${esc(e.key)}">在句读全库看 →</a>
       </div>`;
   };
   document.getElementById('dailyNext')?.addEventListener('click', () => {

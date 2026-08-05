@@ -72,16 +72,16 @@ const baseDocs: SearchDoc[] = [
   { id: 'analytic', title: '先验分析论 84条', url: '/analytic/', content: '范畴表 判断表 量质关系模态 12范畴 三重综合 领会再生认定 想象力 统觉 我思 判断 图型 时间规定 原理体系 公理类比公设 因果律' },
   { id: 'dialectic', title: '先验辩证论 54条', url: '/dialectic/', content: '谬误推理 实体单纯人格观念 二律背反 世界有限无限 单纯可分 自由自然因果 必然存在 数学皆假力学皆真 本体论存在不是谓词 宇宙论自然神学 调节性' },
   { id: 'method', title: '方法论 23条', url: '/method/', content: '训练 定义公理证明假设 法规 意见知识信仰 至善德福 建筑术体系 历史独断怀疑批判' },
-  { id: 'deng', title: '邓晓芒句读全库 217条', url: '/deng/', content: '邓晓芒句读 217条精选 精读 同情的理解 体系性 反向论证' },
+  { id: 'quotes', title: '邓晓芒句读全库 217条', url: '/quotes/', content: '邓晓芒句读 217条精选 精读 同情的理解 体系性 反向论证' },
   { id: 'glossary', title: '术语库', url: '/glossary/', content: '先天先验超验 现象物自体 统觉 图型 二律背反 调节构成 先验唯心经验实在' },
-  { id: 'quanwen', title: '全文直读 7594段', url: '/quanwen/', content: '康德纯粹理性批判 句读 全文 7594段 183万字 语义分段 书式排版 段号跳转' },
+  { id: 'reading', title: '全文直读 7594段', url: '/reading/', content: '康德纯粹理性批判 句读 全文 7594段 183万字 语义分段 书式排版 段号跳转' },
 ];
 
 function getDocs(): SearchDoc[] {
   const dengDocs: SearchDoc[] = Object.entries(commentDB).map(([k, v]) => ({
     id: 'deng-' + k,
     title: '句读 ' + v.ref,
-    url: '/deng/#' + k,
+    url: '/quotes/#' + k,
     content: v.original + ' ' + v.deng + ' ' + v.tip,
   }));
   return baseDocs.concat(dengDocs);
@@ -129,9 +129,9 @@ export async function search(query: string, limit = 15): Promise<SearchHit[]> {
       const tightBonus = hit.tier >= 2 && hit.tight <= 60 ? 6 : hit.tier >= 2 ? 3 : 0;
       hits.push({
         doc: {
-          id: 'full-' + c.id,
+          id: 'full-' + c.seq,
           title: `${c.chapter || '全文'} · 段 ${c.seq + 1} · ${c.text.slice(0, 12)}…`,
-          url: `/quanwen/#c${c.seq}`,
+          url: `/reading/#c${c.seq}`,
           content: c.text,
         },
         score: 18 + hit.tier * 3 + tightBonus + Math.min(4, Math.floor((c.text.split(q).length - 1) * 2)),

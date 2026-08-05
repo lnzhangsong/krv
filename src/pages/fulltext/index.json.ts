@@ -7,7 +7,7 @@ export const prerender = true;
 
 const PAGE = 15;
 
-// 全文分片索引：页码 + 章节列表（quanwen 页客户端先加载这个轻量索引，再按页取数据）
+// 全文分片索引：页码 + 章节列表（全文阅读页客户端先加载这个轻量索引，再按页取数据）
 export const GET: APIRoute = () => {
   const db = new DatabaseSync(path.join(process.cwd(), 'data/kant.db'));
   const rows = db.prepare('SELECT seq, chapter FROM chunks ORDER BY seq').all() as { seq: number; chapter: string }[];

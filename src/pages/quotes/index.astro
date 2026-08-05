@@ -62,7 +62,7 @@ const chapterRoute: Record<string, string> = {
 const chapOf = (key: string) => chapterRoute[key.split('-')[0]];
 ---
 
-<Base title={title} current="/deng/" badge={`${total}条精选`} searchPlaceholder="全站搜索：二律背反/统觉/存在不是谓词…">
+<Base title={title} current="/quotes/" badge={`${total}条精选`} searchPlaceholder="全站搜索：二律背反/统觉/存在不是谓词…">
   <main class="container narrow py-8">
     <PageHead
       chip={`DENG XIAOMANG · 句读全库 · ${total}条精选`}
@@ -89,7 +89,7 @@ const chapOf = (key: string) => chapterRoute[key.split('-')[0]];
                       <div class="mt-1.5"><span class="tag text-[10px]">{it.tip}</span></div>
                       <div class="mt-2 flex flex-wrap gap-1.5 items-center">
                         {seqByKey[it.key] !== undefined && (
-                          <a class="tag hover:text-ink" href={`/quanwen/#c${seqByKey[it.key]}`}>定位原文 →</a>
+                          <a class="tag hover:text-ink" href={`/reading/#c${seqByKey[it.key]}`}>定位原文 →</a>
                         )}
                         {chapOf(it.key) && (
                           <a class="tag hover:text-ink" href={chapOf(it.key)}>章节导读 →</a>

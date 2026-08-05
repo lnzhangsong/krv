@@ -9,9 +9,9 @@
 
 ## 功能
 
-- **全文直读**（`/quanwen/`）：分页浏览（每页 15 段）、字号/行距调节、章节跳转、段号跳转、阅读位置记忆
+- **全文直读**（`/reading/`）：分页浏览（每页 15 段）、字号/行距调节、章节跳转、段号跳转、阅读位置记忆
 - **学习闭环**：段落收藏（书签 ★）、批注、选中文字高亮（CSS Custom Highlight API），全部保存在本地 `localStorage`
-- **句读全库**（`/deng/`）：217 条精选句读，按序言/导言/四大部浏览
+- **句读全库**（`/quotes/`）：217 条精选句读，按序言/导言/四大部浏览
 - **术语库**（`/glossary/`）：全文术语分类速查；阅读原文时悬停/点按 `.term` 即显示定义与同类对照
 - **知识结构网**（`/map/`）：全书论证树可视化
 - **全站搜索**：懒加载 `/search-index.json`，支持整词、双字组合、单字组合匹配
@@ -61,8 +61,8 @@ src/
     reading.ts            阅读偏好/书签/批注/高亮的本地存储
   pages/
     index.astro           首页
-    quanwen/index.astro   全文直读（7594 段）
-    deng/index.astro      句读全库（217 条）
+    reading/index.astro    全文直读（7594 段）
+    quotes/index.astro     句读全库（217 条）
     glossary/index.astro  术语库
     map/index.astro       知识结构网
     aesthetic/ analytic/ dialectic/ method/   四大部导读
@@ -87,7 +87,7 @@ astro.config.mjs          Astro + Tailwind v4 配置
 
 ## 性能与实现要点
 
-- **全文页轻量化**：`/quanwen/` 的 HTML 仅约 80KB——7594 段全文**不内嵌**，构建期按页生成 `/fulltext/page-N.json`（每页约 20KB），客户端懒加载索引 + 按页取数并预取相邻页（SSR 首屏 15 段先行显示）。
+- **全文页轻量化**：`/reading/` 的 HTML 仅约 80KB——7594 段全文**不内嵌**，构建期按页生成 `/fulltext/page-N.json`（每页约 20KB），客户端懒加载索引 + 按页取数并预取相邻页（SSR 首屏 15 段先行显示）。
 - **暗色模式无闪烁**：主题恢复脚本放在 `<head>` 最前，首帧渲染前同步设置 `data-theme`。
 - **文字立即显示**：不隐藏文字等待 webfont（`font-display: swap` 自动切换），全文页翻页不等字体。
 - **翻页防卡顿**：全文页数据未就绪时操作会提示"全文加载中"，就绪后恢复位置静默定位（不高亮闪烁）。

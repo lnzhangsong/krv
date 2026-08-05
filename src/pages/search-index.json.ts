@@ -14,7 +14,7 @@ export const GET: APIRoute = () => {
   const db = new DatabaseSync(path.join(process.cwd(), 'data/kant.db'));
   const rows = db.prepare('SELECT id, seq, chapter, text FROM chunks ORDER BY seq').all() as ChunkRow[];
   db.close();
-  const chunks = rows.map((c) => ({ ...c, start: c.seq, end: c.seq, text: clean(c.text) }));
+  const chunks = rows.map((c) => ({ seq: c.seq, chapter: c.chapter, text: clean(c.text) }));
   return new Response(JSON.stringify({ total: chunks.length, chunks }), {
     headers: { 'content-type': 'application/json; charset=utf-8' },
   });

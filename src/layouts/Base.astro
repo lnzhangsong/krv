@@ -16,12 +16,12 @@ const {
 } = Astro.props;
 
 const navMain: { href: string; label: string }[] = [
-  { href: '/quanwen/', label: '全文直读' },
+  { href: '/reading/', label: '全文直读' },
   { href: '/aesthetic/', label: '感性论' },
   { href: '/analytic/', label: '分析论' },
   { href: '/dialectic/', label: '辩证论' },
   { href: '/method/', label: '方法论' },
-  { href: '/deng/', label: '句读全库' },
+  { href: '/quotes/', label: '句读全库' },
   { href: '/glossary/', label: '术语库' },
 ];
 const navMore: { href: string; label: string; desc: string }[] = [
@@ -49,7 +49,9 @@ const navMore: { href: string; label: string; desc: string }[] = [
       rel="stylesheet"
       href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;700;900&family=Inter:wght@400;600&family=JetBrains+Mono:wght@400;600&display=swap"
     />
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/lxgw-wenkai-webfont@1.7.0/style.css" />
+    <!-- 只加载正文实际使用的 regular/bold 两个字重，省掉 light/mono 变体的请求与解析 -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/lxgw-wenkai-webfont@1.7.0/lxgwwenkai-regular.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/lxgw-wenkai-webfont@1.7.0/lxgwwenkai-bold.css" />
     <style is:global>
       @import '../styles/global.css';
     </style>
