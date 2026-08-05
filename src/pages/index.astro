@@ -1,6 +1,12 @@
 ---
 import Base from '../layouts/Base.astro';
+import { commentDB } from '../lib/commentDB';
+import { wrapTerms } from '../lib/glossary';
 const title = '纯粹理性批判 · V5 完整版 | 217条句读 + 全文检索';
+const entries = Object.entries(commentDB).map(([key, v]) => ({ key, ...v }));
+const dayOfYear = Math.floor((Date.now() - new Date(new Date().getFullYear(), 0, 0).getTime()) / 86400000);
+const daily = entries[dayOfYear % entries.length];
+const dailyJson = JSON.stringify(entries.map((e) => ({ key: e.key, ref: e.ref, original: e.original, deng: e.deng, tip: e.tip }))).replace(/</g, '\\u003c');
 ---
 
 <Base title={title} desc="KRV 1781/1787 · 文档全聚合 · 邓晓芒句读217条精读 + 7594段全文检索 · Astro + Tailwind 现代重构">
@@ -33,6 +39,26 @@ const title = '纯粹理性批判 · V5 完整版 | 217条句读 + 全文检索'
           <div class="stat"><b>58</b><span>术语词条</span></div>
         </div>
         <div class="quote mt-4 text-xs">技术栈：Astro + Tailwind v4 · TypeScript · 数据本地内置，纯静态可部署。</div>
+      </div>
+    </section>
+
+    <!-- 每日一句 -->
+    <section class="card mt-10 daily-card">
+      <div class="flex items-center justify-between gap-2 flex-wrap">
+        <div class="h3 accent">每日一句 · 康德</div>
+        <div class="flex items-center gap-2 flex-wrap">
+          <span class="font-mono text-[10px] text-muted">按日期轮换 · 共 {entries.length} 条</span>
+          <button id="dailyNext" class="toggle">换一句</button>
+        </div>
+      </div>
+      <div id="dailyBody">
+        <div class="font-mono text-[10px] text-muted">{daily.ref}</div>
+        <div class="serif font-bold text-[17px] my-2" set:html={`「${wrapTerms(daily.original)}」`}></div>
+        <p class="p text-[13.5px]"><b>邓晓芒讲：</b><span set:html={wrapTerms(daily.deng)}></span></p>
+        <div class="mt-2 flex flex-wrap gap-1.5 items-center">
+          <span class="tag text-[10px]" set:html={wrapTerms(daily.tip)}></span>
+          <a class="tag hover:text-ink" href={`/deng/#${daily.key}`}>在句读全库看 →</a>
+        </div>
       </div>
     </section>
 
@@ -181,3 +207,32 @@ const title = '纯粹理性批判 · V5 完整版 | 217条句读 + 全文检索'
     </section>
   </main>
 </Base>
+
+<script is:inline type="application/json" id="daily-data" set:html={dailyJson}></script>
+
+<script>
+  import { wrapTerms } from '../lib/glossary';
+  const esc = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  const dataEl = document.getElementById('daily-data') as HTMLScriptElement | null;
+  const entries = dataEl ? (JSON.parse(dataEl.textContent || '[]') as { key: string; ref: string; original: string; deng: string; tip: string }[]) : [];
+  const body = document.getElementById('dailyBody') as HTMLElement | null;
+  let lastIdx = -1;
+  const renderDaily = (e: { key: string; ref: string; original: string; deng: string; tip: string }) => {
+    if (!body) return;
+    body.innerHTML = `
+      <div class="font-mono text-[10px] text-muted">${esc(e.ref)}</div>
+      <div class="serif font-bold text-[17px] my-2">「${wrapTerms(e.original)}」</div>
+      <p class="p text-[13.5px]"><b>邓晓芒讲：</b>${wrapTerms(e.deng)}</p>
+      <div class="mt-2 flex flex-wrap gap-1.5 items-center">
+        <span class="tag text-[10px]">${wrapTerms(e.tip)}</span>
+        <a class="tag hover:text-ink" href="/deng/#${esc(e.key)}">在句读全库看 →</a>
+      </div>`;
+  };
+  document.getElementById('dailyNext')?.addEventListener('click', () => {
+    if (!entries.length) return;
+    let i = Math.floor(Math.random() * entries.length);
+    if (entries.length > 1) while (i === lastIdx) i = Math.floor(Math.random() * entries.length);
+    lastIdx = i;
+    renderDaily(entries[i]);
+  });
+</script>

@@ -12,7 +12,7 @@
   --color-accent2: #b08d3e;
   --color-card: #fffdf8;
   --color-red: #8e2a2a;
-  --font-serif: "Noto Serif SC", "Songti SC", serif;
+  --font-serif: "LXGW WenKai", "Noto Serif SC", "Songti SC", serif;
   --font-sans: "Inter", "Noto Serif SC", system-ui, sans-serif;
   --font-mono: "JetBrains Mono", ui-monospace, monospace;
   --shadow-soft: 0 16px 44px rgba(26, 58, 95, 0.07);
@@ -20,6 +20,19 @@
   --radius: 18px;
   --content-wide: 1320px;
   --content-narrow: 1100px;
+}
+
+/* 深色模式：整体翻转主题变量 */
+[data-theme="dark"] {
+  --color-bg: #141419;
+  --color-bg2: #1c1c25;
+  --color-ink: #e7e2d6;
+  --color-muted: #918b7e;
+  --color-line: #2b2b37;
+  --color-accent: #8fb3d9;
+  --color-accent2: #d6b36a;
+  --color-card: #1a1a22;
+  --color-red: #df9a9a;
 }
 
 @layer base {
@@ -535,6 +548,12 @@
   }
 }
 
+/* ===== 划线高亮（CSS Custom Highlight API） ===== */
+::highlight(krv-hl) {
+  background: color-mix(in srgb, var(--color-accent2) 42%, transparent);
+  color: inherit;
+}
+
 /* ===== 长列表滚动优化：离屏内容跳过布局/绘制 ===== */
 .entry,
 .gitem,
@@ -676,3 +695,15 @@
     background: color-mix(in srgb, var(--color-accent2) 35%, transparent);
   }
 }
+
+/* ===== 字体加载（FOUT 缓解）：webfont 就绪前隐藏并淡入衬线文字 ===== */
+.serif,
+.rf-chapter,
+.h1-page,
+.h2,
+.stat b,
+.term-tip-head b,
+.entry .orig {
+  transition: opacity 0.25s ease;
+}
+/* 文字不再隐藏等待字体：立即用回退字体显示，webfont 就绪后 swap 切换 */

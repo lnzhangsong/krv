@@ -34,15 +34,26 @@ const navMore: { href: string; label: string; desc: string }[] = [
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <script is:inline>
+      // 首帧渲染前恢复主题，避免暗色模式下先闪浅色再变黑（FOUC）
+      (function () {
+        var t = null;
+        try { var v = localStorage.getItem('krv-theme'); if (v === 'dark' || v === 'light') t = v; } catch (e) { /* ignore */ }
+        if (!t) t = (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) ? 'dark' : 'light';
+        document.documentElement.dataset.theme = t;
+      })();
+    </script>
     <title>{title}</title>
     {desc && <meta name="description" content={desc} />}
     <link
       rel="stylesheet"
       href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;700;900&family=Inter:wght@400;600&family=JetBrains+Mono:wght@400;600&display=swap"
     />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/lxgw-wenkai-webfont@1.7.0/style.css" />
     <style is:global>
       @import '../styles/global.css';
     </style>
+    <!-- 文字不隐藏等待字体：font-display: swap 让文字立即用回退字体显示，webfont 就绪后自动切换，避免 CDN 慢时页面空白 -->
   </head>
   <body>
     <script is:inline type="application/json" id="term-data" set:html={TERMS_JSON}></script>
@@ -85,6 +96,7 @@ const navMore: { href: string; label: string; desc: string }[] = [
               </div>
             </div>
           </nav>
+          <button id="themeToggle" class="toggle hidden sm:inline-flex" title="切换深色/浅色">🌙</button>
           <button id="navToggle" class="lg:hidden hamburger" aria-label="打开菜单" aria-expanded="false">
             <span></span><span></span><span></span>
           </button>
@@ -148,6 +160,22 @@ const navMore: { href: string; label: string; desc: string }[] = [
     </script>
 
     <script>
+      // 深色 / 浅色主题
+      const themeToggle = document.getElementById('themeToggle') as HTMLButtonElement | null;
+      const applyTheme = (t: string) => {
+        document.documentElement.dataset.theme = t;
+        if (themeToggle) themeToggle.textContent = t === 'dark' ? '☀️' : '🌙';
+      };
+      let savedTheme: string | null = null;
+      try { const t = localStorage.getItem('krv-theme'); if (t === 'dark' || t === 'light') savedTheme = t; } catch { /* ignore */ }
+      const initTheme = savedTheme || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+      applyTheme(initTheme);
+      themeToggle?.addEventListener('click', () => {
+        const next = document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark';
+        applyTheme(next);
+        try { localStorage.setItem('krv-theme', next); } catch { /* ignore */ }
+      });
+
       // 原文术语悬浮释义：全文/句读中的 .term 悬停或点击显示定义
       const termDataEl = document.getElementById('term-data') as HTMLScriptElement | null;
       if (termDataEl) {

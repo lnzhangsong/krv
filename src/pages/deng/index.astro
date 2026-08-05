@@ -3,6 +3,8 @@ import Base from '../../layouts/Base.astro';
 import PageHead from '../../components/PageHead.astro';
 import { commentDB } from '../../lib/commentDB';
 import { wrapTerms } from '../../lib/glossary';
+import { DatabaseSync } from 'node:sqlite';
+import path from 'node:path';
 const title = '邓晓芒句读全库 · 217条精选 | 纯批精读库';
 
 const groupDefs: { key: string; title: string }[] = [
@@ -20,6 +22,44 @@ const groups: { title: string; items: { key: string; ref: string; original: stri
     .map(([k, v]) => ({ key: k, ...v })),
 })).filter((g) => g.items.length > 0);
 const total = Object.keys(commentDB).length;
+
+// 构建期把每条句读的康德原文定位到全文段号，用于「定位原文 →」跳转（仅当原文逐字出现在全文中）
+const db = new DatabaseSync(path.join(process.cwd(), 'data/kant.db'));
+const chunkRows = db.prepare('SELECT seq, text FROM chunks').all() as { seq: number; text: string }[];
+db.close();
+const cleanT = (t: string) => t.replace(/\s+/g, '');
+const cleanP = (t: string) => t.replace(/[，。、；：？！“”‘’（）·—…《》「」【】,.?!;:()'"·\s]/g, '');
+const cleanedChunks = chunkRows.map((r) => ({ seq: r.seq, text: cleanT(r.text) }));
+const seqByKey: Record<string, number> = {};
+for (const [key, e] of Object.entries(commentDB)) {
+  const ws = cleanT(e.original);
+  const ps = cleanP(e.original);
+  let found = -1;
+  for (const r of cleanedChunks) {
+    if (ws && r.text.includes(ws)) { found = r.seq; break; }
+  }
+  if (found === -1 && ps) {
+    for (const r of cleanedChunks) {
+      if (r.text.includes(ps)) { found = r.seq; break; }
+    }
+  }
+  if (found === -1) {
+    for (let i = 0; i + 8 <= ps.length; i++) {
+      const run = ps.slice(i, i + 8);
+      const hit = cleanedChunks.find((r) => r.text.includes(run));
+      if (hit) { found = hit.seq; break; }
+    }
+  }
+  if (found >= 0) seqByKey[key] = found;
+}
+// 章节条目 → 章节导读页（用于「章节导读 →」链接）
+const chapterRoute: Record<string, string> = {
+  ae: '/aesthetic/',
+  an: '/analytic/',
+  dia: '/dialectic/',
+  meth: '/method/',
+};
+const chapOf = (key: string) => chapterRoute[key.split('-')[0]];
 ---
 
 <Base title={title} current="/deng/" badge={`${total}条精选`} searchPlaceholder="全站搜索：二律背反/统觉/存在不是谓词…">
@@ -47,6 +87,14 @@ const total = Object.keys(commentDB).length;
                       <div class="orig" set:html={`「${wrapTerms(it.original)}」`}></div>
                       <div class="p text-[13px] mt-1.5"><b>邓晓芒讲：</b><span set:html={wrapTerms(it.deng)}></span></div>
                       <div class="mt-1.5"><span class="tag text-[10px]">{it.tip}</span></div>
+                      <div class="mt-2 flex flex-wrap gap-1.5 items-center">
+                        {seqByKey[it.key] !== undefined && (
+                          <a class="tag hover:text-ink" href={`/quanwen/#c${seqByKey[it.key]}`}>定位原文 →</a>
+                        )}
+                        {chapOf(it.key) && (
+                          <a class="tag hover:text-ink" href={chapOf(it.key)}>章节导读 →</a>
+                        )}
+                      </div>
                     </div>
                   ))
                 }

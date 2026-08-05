@@ -22,8 +22,7 @@ function highlightKant(text: string): string {
   return text.replace(/【([^】]+)】/g, '<b class="kant-q">「$1」</b>');
 }
 
-// 全文以 JSON 嵌入，客户端按页渲染，避免一次性渲染 7594 段造成 DOM 过大
-const chunksJson = JSON.stringify(chunks.map((c) => ({ id: c.id, seq: c.seq, chapter: c.chapter, text: c.text }))).replace(/</g, '\\u003c');
+// 全文数据不再内嵌 HTML（6MB 会让页面加载/解析卡顿），客户端懒加载 /search-index.json 按页渲染
 ---
 
 <Base title={title} current="/quanwen/" badge="全文阅览 7594段" searchPlaceholder="全站搜索：存在不是谓词/统觉…">
@@ -39,9 +38,15 @@ const chunksJson = JSON.stringify(chunks.map((c) => ({ id: c.id, seq: c.seq, cha
         <button id="fsMinus" class="toggle" title="缩小字号">A−</button>
         <button id="fsReset" class="toggle on" title="默认字号">A</button>
         <button id="fsPlus" class="toggle" title="放大字号">A+</button>
+        <button id="lhBtn" class="toggle" title="调节行距">行距:标</button>
         <span class="w-px self-stretch bg-line"></span>
         <select id="chapterJump" class="rf-select" aria-label="跳转章节"></select>
         <span id="nowChapter" class="rf-now"></span>
+        <span class="w-px self-stretch bg-line"></span>
+        <span class="relative inline-flex">
+          <button id="bmBtn" class="toggle" title="我的书签">书签 ★</button>
+          <div id="bmList" class="rf-bm-list" hidden></div>
+        </span>
       </div>
     </div>
 
@@ -77,30 +82,71 @@ const chunksJson = JSON.stringify(chunks.map((c) => ({ id: c.id, seq: c.seq, cha
     </div>
   </main>
 
-  <script is:inline type="application/json" id="qdata" set:html={chunksJson}></script>
-
   <script>
     import { wrapTerms } from '../../lib/glossary';
+    import { loadHls, saveHls, loadNotes, saveNotes, loadBms, saveBms, findRange, loadPos, savePos, FS_KEY, LH_KEY } from '../../lib/reading';
     // 延迟初始化：让 SSR 首屏先绘制，再解析全文数据并按页渲染
     const init = () => {
     const PAGE = 15;
-    const dataEl = document.getElementById('qdata') as HTMLScriptElement | null;
-    const chunks: { id: string; seq: number; chapter: string; text: string }[] = dataEl ? JSON.parse(dataEl.textContent || '[]') : [];
-    const totalPages = Math.max(1, Math.ceil(chunks.length / PAGE));
+    // 全文数据懒加载：复用全站搜索索引 /search-index.json，HTML 不再内嵌 6MB
+    let chunks: { id: string; seq: number; chapter: string; text: string }[] = [];
+    let totalPages = 1;
     let page = 1;
+    let dataReadyFlag = false;
+    const hintEl = document.getElementById('jumpHint') as HTMLElement | null;
+    const needData = (fn: (...a: any[]) => void) => (...a: any[]) => {
+      if (!dataReadyFlag) { if (hintEl) hintEl.textContent = '全文加载中…'; return; }
+      fn(...a);
+    };
 
     const esc = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
     const highlightKant = (text: string) => text.replace(/【([^】]+)】/g, '<b class="kant-q">「$1」</b>');
 
+    // 学习闭环状态
+    let hls = loadHls();
+    let notes = loadNotes();
+    let bms = loadBms();
+    const bmSet = new Set(bms.map((b) => b.seq));
+    const noteMap = new Map(notes.map((n) => [n.seq, n]));
+
     const itemHTML = (c: { id: string; seq: number; chapter: string; text: string }, newChapter: boolean) => {
       const chapter = newChapter ? `<div class="rf-chapter"><span class="rf-chapter-mark"></span>${esc(c.chapter)}</div>` : '';
-      return `<div class="rf-item" id="c${c.seq}" data-pt="${c.seq}" data-text="${esc(c.text)}">${chapter}<div class="rf-text serif">${highlightKant(wrapTerms(c.text))}</div><span class="rf-page" title="段 ${c.id}">${c.seq + 1}</span></div>`;
+      const isBm = bmSet.has(c.seq);
+      const note = noteMap.get(c.seq);
+      return `<div class="rf-item" id="c${c.seq}" data-pt="${c.seq}" data-text="${esc(c.text)}">
+        ${chapter}
+        <div class="rf-acts">
+          <button class="rf-act ${isBm ? 'on' : ''}" data-act="bm" data-seq="${c.seq}" title="${isBm ? '取消收藏' : '收藏本段'}">${isBm ? '★' : '☆'}</button>
+          <button class="rf-act ${note ? 'on' : ''}" data-act="note" data-seq="${c.seq}" title="${note ? '编辑批注' : '添加批注'}">${note ? '📝' : '✎'}</button>
+        </div>
+        <div class="rf-text serif">${highlightKant(wrapTerms(c.text))}</div>
+        ${note ? `<div class="rf-note-view" data-seq="${c.seq}">💬 ${esc(note.note)}</div>` : ''}
+        <span class="rf-page" title="段 ${c.id}">${c.seq + 1}</span>
+      </div>`;
     };
 
     const body = document.getElementById('body') as HTMLElement | null;
     const chapterOf = (el: HTMLElement) => {
       const ch = el.querySelector('.rf-chapter');
       return ch ? ch.textContent : '';
+    };
+
+    // 高亮：CSS Custom Highlight API
+    const hlHighlight = new Highlight();
+    try { (CSS as unknown as { highlights: { set: (n: string, h: Highlight) => void } }).highlights.set('krv-hl', hlHighlight); } catch { /* 不支持时静默 */ }
+    const applyHl = () => {
+      try {
+        hlHighlight.clear();
+        const lo = (page - 1) * PAGE;
+        const seqs = new Set(chunks.slice(lo, lo + PAGE).map((c) => c.seq));
+        for (const h of hls) {
+          if (!seqs.has(h.seq)) continue;
+          const el = document.getElementById('c' + h.seq);
+          if (!el) continue;
+          const r = findRange(el, h.text);
+          if (r) hlHighlight.add(r);
+        }
+      } catch { /* ignore */ }
     };
 
     function renderPage(p: number) {
@@ -115,13 +161,16 @@ const chunksJson = JSON.stringify(chunks.map((c) => ({ id: c.id, seq: c.seq, cha
         })
         .join('');
       body.innerHTML = html;
+      applyHl();
       syncPageUI();
-      // 更新当前章节指示
+      renderBmList();
       const cur = chunks[lo];
+      if (cur) savePos(cur.seq);
       if (nowChapter && cur) {
         nowChapter.textContent = cleanChapter(cur.chapter);
         if (chapterSelect) chapterSelect.value = String(chapterSeqMap.get(cur.chapter) ?? '');
       }
+      // 翻页立即显示：不隐藏文字、不等字体（font-display: swap 自动切换，无需人工等待）
     }
 
     function syncPageUI() {
@@ -190,8 +239,7 @@ const chunksJson = JSON.stringify(chunks.map((c) => ({ id: c.id, seq: c.seq, cha
     window.addEventListener('resize', onScroll);
     onScroll();
 
-    // 字号调节（记忆到 localStorage）
-    const FS_KEY = 'krv-fulltext-fs';
+    // 字号调节
     const FS_SIZES = [16, 18, 20];
     let fs = parseInt(localStorage.getItem(FS_KEY) || '18', 10);
     if (!FS_SIZES.includes(fs)) fs = 18;
@@ -207,29 +255,162 @@ const chunksJson = JSON.stringify(chunks.map((c) => ({ id: c.id, seq: c.seq, cha
     document.getElementById('fsReset')?.addEventListener('click', () => { fs = 18; applyFs(); });
     applyFs();
 
+    // 行距调节
+    const LH_VALUES = [1.7, 1.95, 2.2];
+    let lhIdx = LH_VALUES.indexOf(parseFloat(localStorage.getItem(LH_KEY) || '1.95'));
+    if (lhIdx < 0) lhIdx = 1;
+    const applyLh = () => {
+      const v = LH_VALUES[lhIdx];
+      document.documentElement.style.setProperty('--rf-lh', String(v));
+      const b = document.getElementById('lhBtn') as HTMLElement | null;
+      if (b) b.textContent = '行距:' + (v === 1.7 ? '紧' : v === 1.95 ? '标' : '宽');
+      localStorage.setItem(LH_KEY, String(v));
+    };
+    document.getElementById('lhBtn')?.addEventListener('click', () => { lhIdx = (lhIdx + 1) % LH_VALUES.length; applyLh(); });
+    applyLh();
+
     // 章节跳转
     const cleanChapter = (ch: string) => ch.replace(/^[&$＄§#*\s]+/, '');
-    const chapterList: { name: string; seq: number }[] = [];
-    {
-      const seen = new Set<string>();
-      for (const c of chunks) {
-        if (!seen.has(c.chapter)) { seen.add(c.chapter); chapterList.push({ name: c.chapter, seq: c.seq }); }
-      }
-    }
-    const chapterSeqMap = new Map(chapterList.map((c) => [c.name, c.seq]));
-    const chapterSelect = document.getElementById('chapterJump') as HTMLSelectElement | null;
-    if (chapterSelect) {
-      chapterSelect.innerHTML = '<option value="">跳转章节…</option>' + chapterList.map((c) => `<option value="${c.seq}">${esc(cleanChapter(c.name))}</option>`).join('');
-      chapterSelect.addEventListener('change', () => {
-        const seq = parseInt(chapterSelect.value, 10);
-        if (!Number.isNaN(seq)) gotoStart(seq);
-      });
-    }
     const nowChapter = document.getElementById('nowChapter') as HTMLElement | null;
+    const chapterSelect = document.getElementById('chapterJump') as HTMLSelectElement | null;
+    let chapterSeqMap = new Map<string, number>();
+
+    // 书签下拉
+    const bmBtn = document.getElementById('bmBtn') as HTMLButtonElement | null;
+    const bmList = document.getElementById('bmList') as HTMLElement | null;
+    const renderBmList = () => {
+      if (!bmList) return;
+      if (!bms.length) {
+        bmList.innerHTML = '<div class="rf-bm-empty">还没有书签。把鼠标移到段落上，点右上角 ☆ 收藏。</div>';
+        return;
+      }
+      bmList.innerHTML = bms
+        .slice()
+        .sort((a, b) => a.seq - b.seq)
+        .map((b) => `<button class="rf-bm-item" data-seq="${b.seq}"><span class="rf-bm-seq">段${b.seq + 1}</span>${esc(b.chapter)}${b.text ? ' · ' + esc(b.text) : ''}</button>`)
+        .join('');
+      bmList.querySelectorAll('.rf-bm-item').forEach((el) =>
+        el.addEventListener('click', needData(() => {
+          bmList.hidden = true;
+          gotoStart(parseInt((el as HTMLElement).dataset.seq ?? '', 10));
+        }))
+      );
+    };
+    bmBtn?.addEventListener('click', (e) => {
+      e.stopPropagation();
+      bmList!.hidden = !bmList!.hidden;
+      renderBmList();
+    });
+    document.addEventListener('click', (e) => {
+      const t = e.target as HTMLElement;
+      if (bmList && !bmList.hidden && !t.closest('#bmBtn') && !t.closest('#bmList')) bmList.hidden = true;
+    });
+
+    // 收藏 / 批注（事件委托）
+    body?.addEventListener('click', (e) => {
+      if (!dataReadyFlag) return;
+      const t = e.target as HTMLElement;
+      const act = t.closest('.rf-act') as HTMLElement | null;
+      if (act) {
+        const seq = parseInt(act.dataset.seq ?? '', 10);
+        if (act.dataset.act === 'bm') {
+          const c = chunks.find((x) => x.seq === seq);
+          if (!c) return;
+          if (bmSet.has(seq)) { bmSet.delete(seq); bms = bms.filter((b) => b.seq !== seq); }
+          else { bms.push({ seq, chapter: c.chapter, text: c.text.slice(0, 40), ts: Date.now() }); bmSet.add(seq); }
+          saveBms(bms);
+          renderPage(page);
+        } else if (act.dataset.act === 'note') {
+          const cur = noteMap.get(seq)?.note ?? '';
+          const val = prompt(cur ? '编辑批注' : '添加批注', cur);
+          if (val === null) return;
+          notes = notes.filter((n) => n.seq !== seq);
+          if (val.trim()) notes.push({ seq, text: '', note: val.trim(), ts: Date.now() });
+          noteMap.clear();
+          notes.forEach((n) => noteMap.set(n.seq, n));
+          saveNotes(notes);
+          renderPage(page);
+        }
+        return;
+      }
+      const nv = t.closest('.rf-note-view') as HTMLElement | null;
+      if (nv) {
+        const seq = parseInt(nv.dataset.seq ?? '', 10);
+        const cur = noteMap.get(seq)?.note ?? '';
+        const val = prompt('编辑批注', cur);
+        if (val === null) return;
+        notes = notes.filter((n) => n.seq !== seq);
+        if (val.trim()) notes.push({ seq, text: '', note: val.trim(), ts: Date.now() });
+        noteMap.clear();
+        notes.forEach((n) => noteMap.set(n.seq, n));
+        saveNotes(notes);
+        renderPage(page);
+      }
+    });
+
+    // 选中文字 → 悬浮工具条（高亮 / 批注）
+    const selbar = document.createElement('div');
+    selbar.className = 'rf-selbar';
+    selbar.innerHTML = '<button data-sel="hl">高亮</button><button data-sel="note">批注</button><button data-sel="off">✕</button>';
+    selbar.hidden = true;
+    document.body.appendChild(selbar);
+    document.addEventListener('mouseup', (e) => {
+      if ((e.target as HTMLElement).closest('.rf-selbar')) return;
+      const sel = window.getSelection();
+      if (!sel || sel.isCollapsed || !sel.rangeCount) { selbar.hidden = true; return; }
+      const range = sel.getRangeAt(0);
+      const anc = range.commonAncestorContainer as Element;
+      const item = anc.closest ? anc.closest('.rf-item') : null;
+      if (!item || !body || !body.contains(item)) { selbar.hidden = true; return; }
+      const text = sel.toString().trim();
+      if (!text) { selbar.hidden = true; return; }
+      const rect = range.getBoundingClientRect();
+      selbar.hidden = false;
+      selbar.style.left = Math.max(8, Math.min(window.innerWidth - 150, rect.left + rect.width / 2 - 60)) + 'px';
+      selbar.style.top = Math.max(8, rect.top - 44) + 'px';
+      selbar.dataset.seq = (item as HTMLElement).dataset.pt ?? '';
+      selbar.dataset.text = text;
+    });
+    document.addEventListener('mousedown', (e) => {
+      if ((e.target as HTMLElement).closest('.rf-selbar')) return;
+      selbar.hidden = true;
+    });
+    selbar.addEventListener('click', (e) => {
+      const b = (e.target as HTMLElement).closest('button') as HTMLElement | null;
+      if (!b) return;
+      const seq = parseInt(selbar.dataset.seq ?? '', 10);
+      const text = selbar.dataset.text ?? '';
+      if (b.dataset.sel === 'off') {
+        selbar.hidden = true;
+        window.getSelection()?.removeAllRanges();
+        return;
+      }
+      if (b.dataset.sel === 'hl') {
+        if (text) {
+          const idx = hls.findIndex((h) => h.seq === seq && h.text === text);
+          if (idx >= 0) hls.splice(idx, 1);
+          else hls.push({ seq, text, ts: Date.now() });
+          saveHls(hls);
+          applyHl();
+        }
+      } else if (b.dataset.sel === 'note') {
+        const val = prompt('写批注', '');
+        if (val !== null && val.trim()) {
+          notes = notes.filter((n) => n.seq !== seq);
+          notes.push({ seq, text, note: val.trim(), ts: Date.now() });
+          noteMap.clear();
+          notes.forEach((n) => noteMap.set(n.seq, n));
+          saveNotes(notes);
+          renderPage(page);
+        }
+      }
+      selbar.hidden = true;
+      window.getSelection()?.removeAllRanges();
+    });
 
     // 分页按钮
-    document.getElementById('prevB')?.addEventListener('click', () => goPage(page - 1));
-    document.getElementById('nextB')?.addEventListener('click', () => goPage(page + 1));
+    document.getElementById('prevB')?.addEventListener('click', needData(() => goPage(page - 1)));
+    document.getElementById('nextB')?.addEventListener('click', needData(() => goPage(page + 1)));
 
     // 段号跳转
     const jumpInput = document.getElementById('jumpInput') as HTMLInputElement | null;
@@ -238,36 +419,91 @@ const chunksJson = JSON.stringify(chunks.map((c) => ({ id: c.id, seq: c.seq, cha
       const p = parseInt(jumpInput?.value || '', 10);
       if (p >= 1 && p <= chunks.length) jumpToSeq(p);
     };
-    jumpBtn?.addEventListener('click', doJump);
+    jumpBtn?.addEventListener('click', needData(doJump));
     jumpInput?.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter') doJump();
+      if (e.key === 'Enter') needData(doJump)();
     });
 
     // 键盘翻页（排除输入框内按键）
-    document.addEventListener('keydown', (e) => {
+    document.addEventListener('keydown', needData((e) => {
       const tag = (e.target as HTMLElement).tagName;
       if (tag === 'INPUT' || tag === 'TEXTAREA') return;
       if (e.key === 'ArrowLeft') goPage(page - 1);
       if (e.key === 'ArrowRight') goPage(page + 1);
-    });
+    }));
 
-    // 初始：由客户端按页渲染（SSR 首屏仅第一页）
-    renderPage(1);
+    // 全文数据懒加载：复用全站搜索索引 /search-index.json（HTML 不再内嵌 6MB）
+    fetch('/search-index.json')
+      .then((r) => { if (!r.ok) throw new Error('加载失败'); return r.json(); })
+      .then((data) => {
+        chunks = (data && data.chunks) || [];
+        totalPages = Math.max(1, Math.ceil(chunks.length / PAGE));
+        dataReadyFlag = true;
 
-    // 定位：reader「定位全文 →」链接形如 /quanwen/#c{seq}（seq 为 0 基）
-    const initHash = location.hash.match(/^#c(\d+)/);
-    if (initHash) {
-      const seq = parseInt(initHash[1], 10);
-      if (!Number.isNaN(seq)) {
-        requestAnimationFrame(() => jumpToSeq(seq + 1));
-      }
-    }
+        // 章节下拉（数据就绪后填充）
+        const chapterList: { name: string; seq: number }[] = [];
+        {
+          const seen = new Set<string>();
+          for (const c of chunks) {
+            if (!seen.has(c.chapter)) { seen.add(c.chapter); chapterList.push({ name: c.chapter, seq: c.seq }); }
+          }
+        }
+        chapterSeqMap = new Map(chapterList.map((c) => [c.name, c.seq]));
+        if (chapterSelect) {
+          chapterSelect.innerHTML = '<option value="">跳转章节…</option>' + chapterList.map((c) => `<option value="${c.seq}">${esc(cleanChapter(c.name))}</option>`).join('');
+          chapterSelect.addEventListener('change', () => {
+            const seq = parseInt(chapterSelect.value, 10);
+            if (!Number.isNaN(seq)) gotoStart(seq);
+          });
+        }
+        renderBmList();
+
+        // 初始：优先回到上次阅读位置；其次处理 #c 定位；否则从第 1 页开始
+        const savedPos = loadPos();
+        const initHash = location.hash.match(/^#c(\d+)/);
+        if (initHash) {
+          renderPage(1);
+          const seq = parseInt(initHash[1], 10);
+          if (!Number.isNaN(seq)) requestAnimationFrame(() => jumpToSeq(seq + 1));
+        } else if (savedPos >= 0) {
+          requestAnimationFrame(() => gotoStart(savedPos));
+        } else {
+          renderPage(1);
+        }
+
+        // 空闲时分批预载文楷字形，降低一次性全量匹配/下载的压力；翻页不依赖它
+        try {
+          if (document.fonts && document.fonts.load) {
+            const BATCH = 1200;
+            let i = 0;
+            const pump = () => {
+              const slice = chunks.slice(i, i + BATCH).map((c) => c.text).join('');
+              if (slice) {
+                document.fonts.load('16px "LXGW WenKai"', slice);
+                document.fonts.load('700 16px "LXGW WenKai"', slice);
+              }
+              i += BATCH;
+              if (i < chunks.length) {
+                if ('requestIdleCallback' in window) window.requestIdleCallback(pump, { timeout: 2000 });
+                else setTimeout(pump, 300);
+              }
+            };
+            if ('requestIdleCallback' in window) window.requestIdleCallback(pump, { timeout: 2000 });
+            else setTimeout(pump, 300);
+          }
+        } catch { /* ignore */ }
+      })
+      .catch(() => { if (hintEl) hintEl.textContent = '全文数据加载失败'; });
     };
     if ('requestIdleCallback' in window) window.requestIdleCallback(init, { timeout: 1200 });
     else setTimeout(init, 0);
   </script>
 
   <style is:global>
+    /* 换页时等待字体就绪再淡入，避免 FOUT 闪动 */
+    #body .rf-item {
+      transition: opacity 0.18s ease, background-color 0.3s;
+    }
     .rf-item.flash {
       background: color-mix(in srgb, var(--color-accent2) 18%, transparent);
       border-radius: 6px;
@@ -279,7 +515,8 @@ const chunksJson = JSON.stringify(chunks.map((c) => ({ id: c.id, seq: c.seq, cha
     }
     .rf-item {
       position: relative;
-      padding: 0 0 0.9em;
+      /* 右侧留一条常驻操作栏（段号 + ★/✎），正文从不让位 */
+      padding: 0 44px 0.9em 0;
     }
     .rf-chapter {
       font-family: var(--font-serif);
@@ -308,7 +545,7 @@ const chunksJson = JSON.stringify(chunks.map((c) => ({ id: c.id, seq: c.seq, cha
     }
     .rf-text {
       font-size: var(--rf-size, 18px);
-      line-height: calc(var(--rf-size, 18px) * 1.95);
+      line-height: var(--rf-lh, 1.95);
       letter-spacing: 0.02em;
       color: var(--color-ink);
       text-align: justify;
@@ -327,8 +564,135 @@ const chunksJson = JSON.stringify(chunks.map((c) => ({ id: c.id, seq: c.seq, cha
     .rf-text .kant-q:hover {
       background: color-mix(in srgb, var(--color-accent) 14%, transparent);
     }
+    /* 右侧常驻栏：段落编号 */
     .rf-page {
+      display: block;
+      position: absolute;
+      top: 7px;
+      right: 5px;
+      font-family: var(--font-mono);
+      font-size: 10px;
+      line-height: 1;
+      color: var(--color-muted);
+      opacity: 0.55;
+      z-index: 4;
+    }
+    /* 右侧常驻栏：操作按钮（★ 收藏 / ✎ 批注），平时淡色、悬停清晰 */
+    .rf-acts {
+      position: absolute;
+      top: 22px;
+      right: 3px;
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+      opacity: 0.5;
+      transition: opacity 0.15s;
+      z-index: 5;
+    }
+    .rf-item:hover .rf-acts {
+      opacity: 1;
+    }
+    .rf-act {
+      border: 1px solid transparent;
+      background: transparent;
+      border-radius: 8px;
+      width: 26px;
+      height: 26px;
+      cursor: pointer;
+      font-size: 13px;
+      line-height: 1;
+      color: var(--color-muted);
+      transition: background 0.15s, border-color 0.15s, color 0.15s;
+    }
+    .rf-act:hover {
+      background: var(--color-card);
+      border-color: var(--color-line);
+    }
+    .rf-act.on {
+      color: var(--color-accent2);
+      border-color: color-mix(in srgb, var(--color-accent2) 50%, var(--color-line));
+      opacity: 1;
+    }
+    .rf-note-view {
+      font-size: 12.5px;
+      color: color-mix(in srgb, var(--color-ink) 70%, #6b4a12);
+      background: color-mix(in srgb, var(--color-accent2) 10%, transparent);
+      border-left: 3px solid var(--color-accent2);
+      border-radius: 0 8px 8px 0;
+      padding: 6px 10px;
+      margin-top: 6px;
+      cursor: pointer;
+    }
+    /* 选中文字工具条 */
+    .rf-selbar {
+      position: fixed;
+      z-index: 210;
+      display: flex;
+      gap: 4px;
+      background: var(--color-ink);
+      border-radius: 10px;
+      padding: 4px;
+      box-shadow: var(--shadow-pop);
+    }
+    .rf-selbar[hidden] {
       display: none;
+    }
+    .rf-selbar button {
+      border: none;
+      background: transparent;
+      color: var(--color-bg);
+      font-size: 12px;
+      padding: 4px 10px;
+      cursor: pointer;
+      border-radius: 6px;
+      font-family: var(--font-sans);
+    }
+    .rf-selbar button:hover {
+      background: rgba(255, 255, 255, 0.16);
+    }
+    /* 书签下拉 */
+    .rf-bm-list {
+      position: absolute;
+      top: calc(100% + 6px);
+      right: 0;
+      width: min(320px, 80vw);
+      max-height: 320px;
+      overflow: auto;
+      background: var(--color-card);
+      border: 1px solid var(--color-line);
+      border-radius: 12px;
+      box-shadow: var(--shadow-pop);
+      padding: 6px;
+      z-index: 50;
+    }
+    .rf-bm-list[hidden] {
+      display: none;
+    }
+    .rf-bm-item {
+      display: block;
+      width: 100%;
+      text-align: left;
+      border: none;
+      background: transparent;
+      font-size: 12px;
+      padding: 7px 10px;
+      border-radius: 8px;
+      cursor: pointer;
+      color: var(--color-ink);
+    }
+    .rf-bm-item:hover {
+      background: var(--color-bg2);
+    }
+    .rf-bm-seq {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      color: var(--color-accent2);
+      margin-right: 6px;
+    }
+    .rf-bm-empty {
+      font-size: 11px;
+      color: var(--color-muted);
+      padding: 10px;
     }
     /* 阅读工具栏 */
     .rf-toolbar {
@@ -376,6 +740,23 @@ const chunksJson = JSON.stringify(chunks.map((c) => ({ id: c.id, seq: c.seq, cha
       .rf-toolbar {
         top: 68px;
         padding: 7px 10px;
+      }
+      .rf-item {
+        padding-right: 36px;
+      }
+      .rf-page {
+        right: 3px;
+        font-size: 9px;
+      }
+      .rf-acts {
+        top: 20px;
+        right: 2px;
+        gap: 4px;
+      }
+      .rf-act {
+        width: 22px;
+        height: 22px;
+        font-size: 12px;
       }
       .rf-now {
         max-width: 120px;
