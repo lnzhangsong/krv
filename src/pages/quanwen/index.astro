@@ -187,7 +187,7 @@ function highlightKant(text: string): string {
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
 
-    function gotoStart(seq: number) {
+    function gotoStart(seq: number, flash = true) {
       const idx = chunks.findIndex((c) => c.seq === seq);
       if (idx === -1) return;
       page = Math.floor(idx / PAGE) + 1;
@@ -196,8 +196,13 @@ function highlightKant(text: string): string {
       if (card) {
         requestAnimationFrame(() => {
           card.scrollIntoView({ behavior: 'smooth', block: 'start' });
-          card.classList.add('flash');
-          setTimeout(() => card.classList.remove('flash'), 2000);
+          // 高亮定位仅用于用户主动跳转；恢复上次阅读位置时不闪
+          if (flash) {
+            card.classList.remove('flash');
+            void card.offsetWidth; // 强制重排，确保连续跳转时动画重新触发
+            card.classList.add('flash');
+            setTimeout(() => card.classList.remove('flash'), 1700);
+          }
         });
       }
     }
@@ -459,14 +464,18 @@ function highlightKant(text: string): string {
         renderBmList();
 
         // 初始：优先回到上次阅读位置；其次处理 #c 定位；否则从第 1 页开始
+        // 恢复位置时静默定位、不高亮闪烁（避免"第一段闪一下"的突兀感）
         const savedPos = loadPos();
         const initHash = location.hash.match(/^#c(\d+)/);
         if (initHash) {
-          renderPage(1);
           const seq = parseInt(initHash[1], 10);
-          if (!Number.isNaN(seq)) requestAnimationFrame(() => jumpToSeq(seq + 1));
+          if (!Number.isNaN(seq)) {
+            gotoStart(seq, true);
+          } else {
+            renderPage(1);
+          }
         } else if (savedPos >= 0) {
-          requestAnimationFrame(() => gotoStart(savedPos));
+          gotoStart(savedPos, false);
         } else {
           renderPage(1);
         }
@@ -505,9 +514,13 @@ function highlightKant(text: string): string {
       transition: opacity 0.18s ease, background-color 0.3s;
     }
     .rf-item.flash {
-      background: color-mix(in srgb, var(--color-accent2) 18%, transparent);
       border-radius: 6px;
-      transition: background-color 0.3s;
+      animation: rf-flash-fade 1.6s ease-out forwards;
+    }
+    @keyframes rf-flash-fade {
+      0% { background-color: color-mix(in srgb, var(--color-accent2) 34%, transparent); }
+      35% { background-color: color-mix(in srgb, var(--color-accent2) 22%, transparent); }
+      100% { background-color: transparent; }
     }
     /* 中文书籍式连续排版：首行缩进、无分隔线、段号淡色 */
     .read-flow {
