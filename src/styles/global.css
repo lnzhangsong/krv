@@ -707,3 +707,125 @@
   transition: opacity 0.25s ease;
 }
 /* 文字不再隐藏等待字体：立即用回退字体显示，webfont 就绪后 swap 切换 */
+
+/* ===== 论证链（四大部导读页）：极简文档流实现，杜绝布局重叠 ===== */
+.arg-step {
+  margin-top: 14px;
+  padding: 12px 14px;
+  background: var(--color-bg2);
+  border-radius: 10px;
+}
+.arg-step-head {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  line-height: 1.7;
+}
+.arg-step-tag {
+  color: var(--color-accent2);
+  font-weight: 700;
+}
+.arg-step-rel {
+  color: var(--color-muted);
+  margin-left: 8px;
+}
+.arg-step-concepts {
+  margin-top: 6px;
+  font-size: 12.5px;
+  line-height: 2;
+}
+.arg-concept-name,
+.arg-concept-link {
+  color: var(--color-accent);
+  font-weight: 700;
+}
+.arg-concept-note {
+  color: var(--color-muted);
+  font-size: 11.5px;
+}
+.arg-sep {
+  color: var(--color-line);
+  margin: 0 6px;
+}
+.arg-summary {
+  cursor: pointer;
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  color: var(--color-muted);
+  margin-top: 8px;
+  user-select: none;
+}
+.arg-summary:hover {
+  color: var(--color-accent2);
+}
+.arg-details-body {
+  margin-top: 8px;
+  border-top: 1px dashed var(--color-line);
+  padding-top: 8px;
+}
+.arg-ref {
+  margin: 8px 0;
+}
+.arg-ref-ref {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--color-muted);
+}
+.arg-ref-orig {
+  font-weight: 700;
+  margin: 3px 0;
+  color: var(--color-ink);
+}
+.arg-ref-deng {
+  font-size: 13px;
+  line-height: 1.8;
+  color: var(--color-ink);
+}
+
+
+/* ===== 术语书中出现位置（术语库页） ===== */
+.term-occ summary {
+  cursor: pointer;
+  list-style: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  color: var(--color-muted);
+  letter-spacing: 0.03em;
+  transition: color 0.18s;
+}
+.term-occ summary::-webkit-details-marker {
+  display: none;
+}
+.term-occ summary::before {
+  content: '▸';
+  color: var(--color-accent2);
+  transition: transform 0.18s;
+}
+.term-occ[open] summary::before {
+  transform: rotate(90deg);
+}
+.term-occ summary:hover {
+  color: var(--color-accent2);
+}
+.term-occ-row {
+  font-size: 11px;
+  line-height: 1.7;
+  color: var(--color-muted);
+  border-top: 1px dashed var(--color-line);
+  padding: 3px 6px;
+  border-radius: 6px;
+  transition: background 0.15s;
+}
+.term-occ-row:hover {
+  background: color-mix(in srgb, var(--color-accent2) 7%, transparent);
+}
+.term-occ-row a {
+  color: var(--color-accent);
+  font-weight: 600;
+}
+.term-occ-hl {
+  color: var(--color-accent2);
+  font-weight: 700;
+}

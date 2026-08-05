@@ -1,6 +1,7 @@
 ---
 import Base from '../../layouts/Base.astro';
 import PageHead from '../../components/PageHead.astro';
+import ArgChain from '../../components/ArgChain.astro';
 import { commentDB } from '../../lib/commentDB';
 import { wrapTerms } from '../../lib/glossary';
 const title = '先验分析论 · 导读：范畴、演绎与知识如何客观';
@@ -38,6 +39,8 @@ const total = Object.keys(commentDB).filter((k) => k.startsWith('an-')).length;
         <div class="step"><b>⑤ 原理体系</b><div>公理/预测/类比/公设——牛顿力学的先天版，回击休谟。</div></div>
       </div>
     </div>
+
+    <ArgChain branchKey="analytic" />
 
     <!-- 核心句读精选 -->
     <div class="section-head" style="margin:28px 0 12px">

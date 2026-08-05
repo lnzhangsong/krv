@@ -1,6 +1,7 @@
 ---
 import Base from '../../layouts/Base.astro';
 import PageHead from '../../components/PageHead.astro';
+import ArgChain from '../../components/ArgChain.astro';
 import { commentDB } from '../../lib/commentDB';
 import { wrapTerms } from '../../lib/glossary';
 const title = '先验辩证论 · 导读：理性为何必然越界';
@@ -53,6 +54,8 @@ const total = Object.keys(commentDB).filter((k) => k.startsWith('dia-')).length;
       </table>
       <div class="quote mt-3 text-xs">邓晓芒要点：数学二律把"世界整体"当成已完成的总体去问有限无限——预设错，故皆假；力学二律把自由/必然放在现象界与物自体两个层面——不冲突，故皆真，为道德留出地盘。</div>
     </div>
+
+    <ArgChain branchKey="dialectic" />
 
     <!-- 核心句读精选 -->
     <div class="section-head" style="margin:28px 0 12px">

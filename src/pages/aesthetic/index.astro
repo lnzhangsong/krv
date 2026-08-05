@@ -1,6 +1,7 @@
 ---
 import Base from '../../layouts/Base.astro';
 import PageHead from '../../components/PageHead.astro';
+import ArgChain from '../../components/ArgChain.astro';
 import { commentDB } from '../../lib/commentDB';
 import { wrapTerms } from '../../lib/glossary';
 const title = '先验感性论 · 导读：时空与数学如何可能';
@@ -37,6 +38,8 @@ const total = Object.keys(commentDB).filter((k) => k.startsWith('ae-')).length;
         <div class="step"><b>④ 先验观念性</b><div>时空只适用于现象，物自体不可知——为科学划界，同时区分康德与贝克莱。</div></div>
       </div>
     </div>
+
+    <ArgChain branchKey="aesthetic" />
 
     <!-- 核心句读精选 -->
     <div class="section-head" style="margin:28px 0 12px">

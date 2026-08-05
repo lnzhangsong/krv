@@ -1,6 +1,7 @@
 ---
 import Base from '../../layouts/Base.astro';
 import PageHead from '../../components/PageHead.astro';
+import ArgChain from '../../components/ArgChain.astro';
 import { commentDB } from '../../lib/commentDB';
 import { wrapTerms } from '../../lib/glossary';
 const title = '先验方法论 · 导读：未来形而上学的说明书';
@@ -37,6 +38,8 @@ const total = Object.keys(commentDB).filter((k) => k.startsWith('meth-')).length
         <div class="step"><b>④ 历史</b><div>哲学史三阶段：独断（沃尔夫）→ 怀疑（休谟）→ 批判（康德自己）。</div></div>
       </div>
     </div>
+
+    <ArgChain branchKey="method" />
 
     <!-- 核心句读精选 -->
     <div class="section-head" style="margin:28px 0 12px">

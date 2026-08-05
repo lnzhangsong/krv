@@ -9,7 +9,7 @@ const daily = entries[dayOfYear % entries.length];
 const dailyJson = JSON.stringify(entries.map((e) => ({ key: e.key, ref: e.ref, original: e.original, deng: e.deng, tip: e.tip }))).replace(/</g, '\\u003c');
 ---
 
-<Base title={title} desc="KRV 1781/1787 · 文档全聚合 · 邓晓芒句读217条精读 + 7594段全文检索 · Astro + Tailwind 现代重构">
+<Base title={title} desc="KRV 1781/1787 · 文档全聚合 · 邓晓芒句读217条精读 + 7594段全文检索">
   <main class="container py-7">
     <section class="pt-16 pb-6 grid grid-cols-1 lg:grid-cols-[1.2fr_.8fr] gap-10 items-start">
       <div>
@@ -38,7 +38,6 @@ const dailyJson = JSON.stringify(entries.map((e) => ({ key: e.key, ref: e.ref, o
           <div class="stat"><b>7594</b><span>段全文离线</span></div>
           <div class="stat"><b>58</b><span>术语词条</span></div>
         </div>
-        <div class="quote mt-4 text-xs">技术栈：Astro + Tailwind v4 · TypeScript · 数据本地内置，纯静态可部署。</div>
       </div>
     </section>
 

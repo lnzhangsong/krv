@@ -2,9 +2,43 @@
 import Base from '../../layouts/Base.astro';
 import PageHead from '../../components/PageHead.astro';
 import { TERM_GROUPS, type TermGroup } from '../../lib/glossary';
+import { DatabaseSync } from 'node:sqlite';
+import path from 'node:path';
 const title = `术语库 · ${TERM_GROUPS.reduce((s, g) => s + g.terms.length, 0)}词分类速查 | 纯批导读`;
 const groups: TermGroup[] = TERM_GROUPS;
 const total = groups.reduce((s, g) => s + g.terms.length, 0);
+
+// 术语在书中的出现位置（构建期从全文统计，供语境辨析：同一词在不同章节的用法）
+interface OccChapter { name: string; count: number; firstSeq: number; ctx: string }
+interface TermOcc { total: number; chapters: OccChapter[] }
+const db = new DatabaseSync(path.join(process.cwd(), 'data/kant.db'));
+const rows = db.prepare('SELECT seq, chapter, text FROM chunks ORDER BY seq').all() as { seq: number; chapter: string; text: string }[];
+db.close();
+
+const countTerm = (name: string): TermOcc => {
+  const byChapter = new Map<string, { count: number; firstSeq: number }>();
+  let totalCnt = 0;
+  for (const r of rows) {
+    if (r.text.includes(name)) {
+      totalCnt++;
+      const c = byChapter.get(r.chapter);
+      if (c) c.count++;
+      else byChapter.set(r.chapter, { count: 1, firstSeq: r.seq });
+    }
+  }
+  const chapters = Array.from(byChapter.entries())
+    .sort((a, b) => b[1].count - a[1].count)
+    .slice(0, 6)
+    .map(([ch, v]) => {
+      const r = rows[v.firstSeq];
+      const i = r.text.indexOf(name);
+      const ctx = (r.text.slice(Math.max(0, i - 10), i) + `<b class="term-occ-hl">` + name + `</b>` + r.text.slice(i + name.length, i + name.length + 14)).replace(/\s+/g, ' ');
+      return { name: ch, count: v.count, firstSeq: v.firstSeq, ctx };
+    });
+  return { total: totalCnt, chapters };
+};
+const occByTerm = new Map<string, TermOcc>();
+for (const g of groups) for (const t of g.terms) occByTerm.set(t.b, countTerm(t.b));
 ---
 
 <Base title={title} current="/glossary/" badge={`${total}词分类速查`} searchPlaceholder="全站搜索：先天/统觉/二律…">
@@ -12,7 +46,7 @@ const total = groups.reduce((s, g) => s + g.terms.length, 0);
     <PageHead
       chip={`术语库 · ${total}词 · 按批判哲学体系分类`}
       title="术语库 & 概念速查"
-      subtitle="按「总纲→感性论→分析论→辩证论→方法论」的课程顺序分组，每条含一句话定义与关键区别；点击右上角搜索可定位对应句读。"
+      subtitle="按「总纲→感性论→分析论→辩证论→方法论」的课程顺序分组，每条含一句话定义与关键区别；展开「书中出现」可看该词在原文各章的分布与语境，点击章节跳转到对应段落。"
     />
     <div class="my-4">
       <input
@@ -30,15 +64,34 @@ const total = groups.reduce((s, g) => s + g.terms.length, 0);
           </div>
           <div id="grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {
-              g.terms.map((t) => (
-                <div class="card p-4 gitem" data-k={t.k}>
-                  <div class="flex items-baseline justify-between gap-2">
-                    <b>{t.b}</b>
-                    {t.x && <span class="font-mono text-[10px] text-muted">{t.x}</span>}
+              g.terms.map((t) => {
+                const occ = occByTerm.get(t.b);
+                return (
+                  <div class="card p-4 gitem" data-k={t.k}>
+                    <div class="flex items-baseline justify-between gap-2">
+                      <b>{t.b}</b>
+                      {t.x && <span class="font-mono text-[10px] text-muted">{t.x}</span>}
+                    </div>
+                    <p class="p text-[12.5px] mt-1.5">{t.d}</p>
+                    {occ && occ.total > 0 && (
+                      <details class="term-occ mt-2">
+                        <summary class="font-mono text-[10px] text-muted">书中出现 · {occ.total} 处 · {occ.chapters.length} 章</summary>
+                        <div class="mt-1">
+                          {
+                            occ.chapters.map((c) => (
+                              <div class="term-occ-row">
+                                <a href={`/reading/#c${c.firstSeq}`}>{c.name}</a>
+                                <span>（{c.count}处）</span>
+                                <span set:html={`…${c.ctx}…`}></span>
+                              </div>
+                            ))
+                          }
+                        </div>
+                      </details>
+                    )}
                   </div>
-                  <p class="p text-[12.5px] mt-1.5">{t.d}</p>
-                </div>
-              ))
+                );
+              })
             }
           </div>
         </section>

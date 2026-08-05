@@ -1,0 +1,66 @@
+---
+import { ARG_BRANCHES } from '../lib/knowledge';
+import { commentDB } from '../lib/commentDB';
+import { wrapTerms } from '../lib/glossary';
+
+interface Props {
+  branchKey: string;
+}
+const { branchKey } = Astro.props;
+const branch = ARG_BRANCHES.find((b) => b.key === branchKey);
+if (!branch) throw new Error('未知论证分支: ' + branchKey);
+
+interface Item { key: string; ref: string; original: string; deng: string }
+const stepRefs = (st: (typeof branch.steps)[number]): Item[] =>
+  Array.from(new Set(st.nodes.flatMap((n) => n.refs ?? [])))
+    .map((k) => (commentDB[k] ? { key: k, ref: commentDB[k].ref, original: commentDB[k].original, deng: commentDB[k].deng } : null))
+    .filter((x): x is Item => x !== null);
+---
+
+<!-- 论证链：极简文档流实现，按论证步骤串联句读 -->
+<div class="card mt-5">
+  <div class="h3">论证链 · 一步步看它怎么推</div>
+  <p class="p text-[12.5px] text-muted">从概念到概念的推进过程，每步展开是这一步的句读讲解；建议按顺序读完。</p>
+  {
+    branch.steps.map((st, i) => {
+      const refs = stepRefs(st);
+      return (
+        <div class="arg-step">
+          <div class="arg-step-head">
+            <span class="arg-step-tag">第 {i + 1} 步</span>
+            {st.rel && <span class="arg-step-rel">↳ {st.rel}</span>}
+          </div>
+          <div class="arg-step-concepts">
+            {
+              st.nodes.map((n, j) => (
+                <span class="arg-concept">
+                  {n.k ? <a href="/glossary/" class="arg-concept-link">{n.label}</a> : <b class="arg-concept-name">{n.label}</b>}
+                  {n.note && <span class="arg-concept-note">（{n.note}）</span>}
+                  {j < st.nodes.length - 1 && <span class="arg-sep">·</span>}
+                </span>
+              ))
+            }
+          </div>
+          {
+            refs.length > 0 && (
+              <details class="arg-details">
+                <summary class="arg-summary">相关句读 · {refs.length} 条</summary>
+                <div class="arg-details-body">
+                  {
+                    refs.map((it) => (
+                      <div class="arg-ref">
+                        <div class="arg-ref-ref">{it.ref}</div>
+                        <div class="serif arg-ref-orig" set:html={`「${wrapTerms(it.original)}」`}></div>
+                        <div class="arg-ref-deng" set:html={wrapTerms(it.deng)}></div>
+                      </div>
+                    ))
+                  }
+                </div>
+              </details>
+            )
+          }
+        </div>
+      );
+    })
+  }
+</div>
