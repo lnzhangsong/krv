@@ -1,22 +1,92 @@
 @import "tailwindcss";
 
+/* daisyUI 5：组件库（prefix=dui- 避免与自绘类冲突；主题映射为纸墨配色） */
+@plugin "daisyui" {
+  prefix: "dui-";
+}
+@plugin "daisyui/theme" {
+  name: "light";
+  default: true;
+  color-scheme: light;
+  --color-base-100: #f6f1e6;
+  --color-base-200: #ece4d2;
+  --color-base-300: #ddd2bc;
+  --color-base-content: #2a251d;
+  --color-primary: #5c4226;
+  --color-primary-content: #f6f1e6;
+  --color-secondary: #b0812e;
+  --color-secondary-content: #f6f1e6;
+  --color-accent: #b0812e;
+  --color-accent-content: #2a251d;
+  --color-neutral: #2a251d;
+  --color-neutral-content: #f6f1e6;
+  --color-info: #3a5a8c;
+  --color-info-content: #f6f1e6;
+  --color-success: #1a5f4e;
+  --color-success-content: #f6f1e6;
+  --color-warning: #8e2a2a;
+  --color-warning-content: #f6f1e6;
+  --color-error: #94482f;
+  --color-error-content: #f6f1e6;
+  --radius-selector: 0.75rem;
+  --radius-field: 0.5rem;
+  --radius-box: 1rem;
+  --size-selector: 0.25rem;
+  --size-field: 0.25rem;
+  --border: 1px;
+  --depth: 0;
+  --noise: 0;
+}
+@plugin "daisyui/theme" {
+  name: "dark";
+  color-scheme: dark;
+  --color-base-100: #16130e;
+  --color-base-200: #201b13;
+  --color-base-300: #2e281d;
+  --color-base-content: #e8dfc9;
+  --color-primary: #c9a879;
+  --color-primary-content: #16130e;
+  --color-secondary: #d5b066;
+  --color-secondary-content: #16130e;
+  --color-accent: #d5b066;
+  --color-accent-content: #16130e;
+  --color-neutral: #e8dfc9;
+  --color-neutral-content: #16130e;
+  --color-info: #8fb3d9;
+  --color-info-content: #16130e;
+  --color-success: #7fb89a;
+  --color-success-content: #16130e;
+  --color-warning: #d6937c;
+  --color-warning-content: #16130e;
+  --color-error: #d6937c;
+  --color-error-content: #16130e;
+  --radius-selector: 0.75rem;
+  --radius-field: 0.5rem;
+  --radius-box: 1rem;
+  --size-selector: 0.25rem;
+  --size-field: 0.25rem;
+  --border: 1px;
+  --depth: 0;
+  --noise: 0;
+}
+
 @custom-variant dark (&:where(prefers-color-scheme: dark));
 
 @theme {
-  --color-bg: #fbf7f0;
-  --color-bg2: #f2ede3;
-  --color-ink: #14141a;
-  --color-muted: #80796b;
-  --color-line: #e9e1d2;
-  --color-accent: #1a3a5f;
-  --color-accent2: #b08d3e;
-  --color-card: #fffdf8;
-  --color-red: #8e2a2a;
+  --color-bg: #f6f1e6;
+  --color-bg2: #ece4d2;
+  --color-ink: #2a251d;
+  --color-muted: #857a66;
+  --color-line: #ddd2bc;
+  --color-accent: #5c4226;
+  --color-accent2: #b0812e;
+  --color-card: #fcf8ee;
+  --color-red: #94482f;
   --font-serif: "LXGW WenKai", "Noto Serif SC", "Songti SC", serif;
   --font-sans: "Inter", "Noto Serif SC", system-ui, sans-serif;
   --font-mono: "JetBrains Mono", ui-monospace, monospace;
-  --shadow-soft: 0 16px 44px rgba(26, 58, 95, 0.07);
-  --shadow-pop: 0 22px 60px rgba(26, 58, 95, 0.14);
+  --shadow-soft: 0 16px 44px rgba(92, 66, 38, 0.08);
+  --shadow-pop: 0 22px 60px rgba(92, 66, 38, 0.16);
   --radius: 18px;
   --content-wide: 1320px;
   --content-narrow: 1100px;
@@ -24,15 +94,15 @@
 
 /* 深色模式：整体翻转主题变量 */
 [data-theme="dark"] {
-  --color-bg: #141419;
-  --color-bg2: #1c1c25;
-  --color-ink: #e7e2d6;
-  --color-muted: #918b7e;
-  --color-line: #2b2b37;
-  --color-accent: #8fb3d9;
-  --color-accent2: #d6b36a;
-  --color-card: #1a1a22;
-  --color-red: #df9a9a;
+  --color-bg: #16130e;
+  --color-bg2: #201b13;
+  --color-ink: #e8dfc9;
+  --color-muted: #9a8e77;
+  --color-line: #2e281d;
+  --color-accent: #c9a879;
+  --color-accent2: #d5b066;
+  --color-card: #1d1811;
+  --color-red: #d6937c;
 }
 
 @layer base {
@@ -97,6 +167,10 @@
     max-width: var(--content-narrow);
     padding-inline: clamp(16px, 3vw, 24px);
   }
+  /* 全文直读页：更窄的阅读版心，中文正文舒适行长（约 42-45 字/行） */
+  .container.reading {
+    max-width: 880px;
+  }
   @media (min-width: 1440px) {
     .container,
     .container.narrow {
@@ -147,7 +221,7 @@
     height: 18px;
     border-radius: 6px;
     background: linear-gradient(135deg, var(--color-accent) 0%, var(--color-accent2) 100%);
-    box-shadow: 0 3px 8px rgba(26, 58, 95, 0.3);
+    box-shadow: 0 3px 8px rgba(92, 66, 38, 0.3);
     transition: transform 0.2s;
   }
   .group:hover .logo-dot {
@@ -615,7 +689,7 @@
 }
 .term-tip.pinned {
   border-color: color-mix(in srgb, var(--color-accent2) 60%, var(--color-line));
-  box-shadow: 0 22px 70px rgba(26, 58, 95, 0.2);
+  box-shadow: 0 22px 70px rgba(92, 66, 38, 0.2);
 }
 .term-tip-head {
   display: flex;

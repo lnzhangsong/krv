@@ -1,6 +1,5 @@
 ---
 import Base from '../../layouts/Base.astro';
-import PageHead from '../../components/PageHead.astro';
 import { DatabaseSync } from 'node:sqlite';
 import path from 'node:path';
 import { SEQ_COUNT } from '../../lib/chapters';
@@ -26,30 +25,42 @@ function highlightKant(text: string): string {
 ---
 
 <Base title={title} current="/reading/" badge="全文阅览 7594段" searchPlaceholder="全站搜索：存在不是谓词/统觉…">
-  <main class="container narrow py-7">
-    <PageHead
-      chip={`FULL TEXT · 全文直读 · ${chunks.length}段 · ${totalChars.toLocaleString()}字`}
-      title="邓晓芒《纯粹理性批判》句读 · 全文"
-    />
+  <main class="container reading py-6">
+    <!-- 页面头：轻量一行式 -->
+    <div class="rf-head">
+      <div class="rf-head-chip">FULL TEXT · 全文直读 · {chunks.length}段 · {totalChars.toLocaleString()}字</div>
+      <h1 class="rf-head-title">邓晓芒《纯粹理性批判》句读 · 全文</h1>
+    </div>
 
-    <div class="rf-toolbar">
-      <div class="flex items-center gap-2 flex-wrap">
+    <!-- 阅读工具栏：桌面常驻一行；移动端折叠为 Aa 按钮 -->
+    <div class="rf-toolbar" id="rfToolbar">
+      <button id="rfToolbarToggle" class="dui-btn dui-btn-sm rf-toolbar-toggle" aria-expanded="false" aria-controls="rfToolbarBody">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h10"/></svg>
+        阅读设置
+      </button>
+      <div class="rf-toolbar-body" id="rfToolbarBody">
         <span class="rf-toolbar-label">字号</span>
-        <button id="fsMinus" class="toggle" title="缩小字号">A−</button>
-        <button id="fsReset" class="toggle on" title="默认字号">A</button>
-        <button id="fsPlus" class="toggle" title="放大字号">A+</button>
-        <button id="lhBtn" class="toggle" title="调节行距">行距:标</button>
+        <button id="fsMinus" class="dui-btn dui-btn-sm dui-btn-outline" title="缩小字号">A−</button>
+        <button id="fsReset" class="dui-btn dui-btn-sm dui-btn-active" title="默认字号">A</button>
+        <button id="fsPlus" class="dui-btn dui-btn-sm dui-btn-outline" title="放大字号">A+</button>
+        <button id="lhBtn" class="dui-btn dui-btn-sm dui-btn-outline" title="调节行距">行距:标</button>
         <span class="w-px self-stretch bg-line"></span>
-        <select id="chapterJump" class="rf-select" aria-label="跳转章节"></select>
+        <select id="chapterJump" class="dui-select dui-select-sm rf-select" aria-label="跳转章节"></select>
         <span id="nowChapter" class="rf-now"></span>
         <span class="w-px self-stretch bg-line"></span>
         <span class="relative inline-flex">
-          <button id="bmBtn" class="toggle" title="我的书签">书签 ★</button>
+          <button id="bmBtn" class="dui-btn dui-btn-sm dui-btn-outline" title="我的书签">书签 ★</button>
           <div id="bmList" class="rf-bm-list" hidden></div>
+        </span>
+        <span class="w-px self-stretch bg-line"></span>
+        <span class="rf-jump">
+          <input id="jumpInput" type="number" min="1" max={SEQ_COUNT} placeholder="段号 如 500" class="dui-input dui-input-sm fp-jump" />
+          <button id="jumpBtn" class="dui-btn dui-btn-sm dui-btn-outline">跳转</button>
         </span>
       </div>
     </div>
 
+    <!-- 正文：书籍式连续排版，段号 + 操作按钮内联行首，正文全宽 -->
     <div id="body" class="read-flow">
       {
         firstPage.map((c, i) => {
@@ -58,28 +69,32 @@ function highlightKant(text: string): string {
           return (
             <div class="rf-item" id={`c${c.seq}`} data-pt={c.seq} data-text={c.text}>
               {newChapter && (
-                <div class="rf-chapter">
+                <div class="rf-chapter" data-chapter>
                   <span class="rf-chapter-mark"></span>
                   {c.chapter}
                 </div>
               )}
-              <div class="rf-text serif" set:html={highlightKant(wrapTerms(c.text))} />
-              <span class="rf-page" title={`段 ${c.id}`}>{c.seq + 1}</span>
+              <div class="rf-text serif">
+                <span class="rf-flag">
+                  <span class="rf-page" title={`段 ${c.id}`}>{c.seq + 1}</span>
+                  <button class="rf-act" data-act="bm" data-seq={c.seq} title="收藏本段">☆</button>
+                  <button class="rf-act" data-act="note" data-seq={c.seq} title="添加批注">✎</button>
+                </span>
+                <span class="rf-body" set:html={highlightKant(wrapTerms(c.text))} />
+              </div>
             </div>
           );
         })
       }
     </div>
 
+    <!-- 底部翻页：只做翻页，段号跳转已移入工具栏 -->
     <div id="pagerBottom" class="float-pager">
-      <button id="prevB" class="toggle">← 上一段</button>
-      <span class="font-mono text-xs text-muted">第 <b id="pageNumB" class="text-ink">1</b> / <span id="pageTotalB">--</span> 段</span>
-      <button id="nextB" class="toggle">下一段 →</button>
-      <span class="w-px self-stretch bg-line"></span>
-      <input id="jumpInput" type="number" min="1" max={SEQ_COUNT} placeholder="段号 如 500" class="w-[110px] border border-line rounded-full px-3 py-1.5 bg-bg2 font-mono text-sm outline-none focus:border-accent2 transition-colors" />
-      <button id="jumpBtn" class="toggle">跳转</button>
-      <span id="jumpHint" class="font-mono text-[11px] text-muted max-w-[160px] truncate"></span>
+      <button id="prevB" class="dui-btn dui-btn-circle dui-btn-outline fp-nav" title="上一页">←</button>
+      <span class="fp-page">第 <b id="pageNumB">1</b> / <span id="pageTotalB">--</span> 页</span>
+      <button id="nextB" class="dui-btn dui-btn-circle dui-btn-outline fp-nav" title="下一页">→</button>
     </div>
+    <span id="jumpHint" class="fp-hint"></span>
   </main>
 
   <script>
@@ -111,18 +126,20 @@ function highlightKant(text: string): string {
     const noteMap = new Map(notes.map((n) => [n.seq, n]));
 
     const itemHTML = (c: { id: string; seq: number; chapter: string; text: string }, newChapter: boolean) => {
-      const chapter = newChapter ? `<div class="rf-chapter"><span class="rf-chapter-mark"></span>${esc(c.chapter)}</div>` : '';
+      const chapter = newChapter ? `<div class="rf-chapter" data-chapter><span class="rf-chapter-mark"></span>${esc(c.chapter)}</div>` : '';
       const isBm = bmSet.has(c.seq);
       const note = noteMap.get(c.seq);
       return `<div class="rf-item" id="c${c.seq}" data-pt="${c.seq}" data-text="${esc(c.text)}">
         ${chapter}
-        <div class="rf-acts">
-          <button class="rf-act ${isBm ? 'on' : ''}" data-act="bm" data-seq="${c.seq}" title="${isBm ? '取消收藏' : '收藏本段'}">${isBm ? '★' : '☆'}</button>
-          <button class="rf-act ${note ? 'on' : ''}" data-act="note" data-seq="${c.seq}" title="${note ? '编辑批注' : '添加批注'}">${note ? '📝' : '✎'}</button>
+        <div class="rf-text serif">
+          <span class="rf-flag">
+            <span class="rf-page" title="段 ${c.id}">${c.seq + 1}</span>
+            <button class="rf-act ${isBm ? 'on' : ''}" data-act="bm" data-seq="${c.seq}" title="${isBm ? '取消收藏' : '收藏本段'}">${isBm ? '★' : '☆'}</button>
+            <button class="rf-act ${note ? 'on' : ''}" data-act="note" data-seq="${c.seq}" title="${note ? '编辑批注' : '添加批注'}">${note ? '📝' : '✎'}</button>
+          </span>
+          <span class="rf-body">${highlightKant(wrapTerms(c.text))}</span>
         </div>
-        <div class="rf-text serif">${highlightKant(wrapTerms(c.text))}</div>
         ${note ? `<div class="rf-note-view" data-seq="${c.seq}">💬 ${esc(note.note)}</div>` : ''}
-        <span class="rf-page" title="段 ${c.id}">${c.seq + 1}</span>
       </div>`;
     };
 
@@ -189,6 +206,10 @@ function highlightKant(text: string): string {
         })
         .join('');
       body.innerHTML = html;
+      // 换页淡入：重新触发动画，避免整页瞬切感
+      body.style.animation = 'none';
+      void body.offsetWidth;
+      body.style.animation = 'rf-fade-in 0.28s ease';
       applyHl();
       syncPageUI();
       renderBmList();
@@ -289,19 +310,19 @@ function highlightKant(text: string): string {
     window.addEventListener('resize', onScroll);
     onScroll();
 
-    // 字号调节
-    const FS_SIZES = [16, 18, 20];
+    // 字号调节：四档（16 / 18 / 20 / 22），大字号档便于长时间阅读
+    const FS_SIZES = [16, 18, 20, 22];
     let fs = parseInt(localStorage.getItem(FS_KEY) || '18', 10);
     if (!FS_SIZES.includes(fs)) fs = 18;
     const applyFs = () => {
       document.documentElement.style.setProperty('--rf-size', fs + 'px');
-      (document.getElementById('fsMinus') as HTMLElement | null)?.classList.toggle('on', fs === 16);
-      (document.getElementById('fsReset') as HTMLElement | null)?.classList.toggle('on', fs === 18);
-      (document.getElementById('fsPlus') as HTMLElement | null)?.classList.toggle('on', fs === 20);
+      (document.getElementById('fsMinus') as HTMLElement | null)?.classList.toggle('dui-btn-active', fs < 18);
+      (document.getElementById('fsReset') as HTMLElement | null)?.classList.toggle('dui-btn-active', fs === 18);
+      (document.getElementById('fsPlus') as HTMLElement | null)?.classList.toggle('dui-btn-active', fs > 18);
       localStorage.setItem(FS_KEY, String(fs));
     };
     document.getElementById('fsMinus')?.addEventListener('click', () => { fs = Math.max(16, fs - 2); applyFs(); });
-    document.getElementById('fsPlus')?.addEventListener('click', () => { fs = Math.min(20, fs + 2); applyFs(); });
+    document.getElementById('fsPlus')?.addEventListener('click', () => { fs = Math.min(22, fs + 2); applyFs(); });
     document.getElementById('fsReset')?.addEventListener('click', () => { fs = 18; applyFs(); });
     applyFs();
 
@@ -319,6 +340,20 @@ function highlightKant(text: string): string {
     document.getElementById('lhBtn')?.addEventListener('click', () => { lhIdx = (lhIdx + 1) % LH_VALUES.length; applyLh(); });
     applyLh();
 
+    // 移动端工具栏：Aa 按钮展开/收起设置面板
+    const rfToggle = document.getElementById('rfToolbarToggle') as HTMLButtonElement | null;
+    const rfBody = document.getElementById('rfToolbarBody') as HTMLElement | null;
+    rfToggle?.addEventListener('click', () => {
+      const open = rfBody?.classList.toggle('open') ?? false;
+      rfToggle.setAttribute('aria-expanded', String(open));
+    });
+    document.addEventListener('click', (e) => {
+      if (rfBody?.classList.contains('open') && !(e.target as HTMLElement).closest('#rfToolbar')) {
+        rfBody.classList.remove('open');
+        rfToggle?.setAttribute('aria-expanded', 'false');
+      }
+    });
+
     // 章节跳转
     const cleanChapter = (ch: string) => ch.replace(/^[&$＄§#*\s]+/, '');
     const nowChapter = document.getElementById('nowChapter') as HTMLElement | null;
@@ -331,7 +366,7 @@ function highlightKant(text: string): string {
     const renderBmList = () => {
       if (!bmList) return;
       if (!bms.length) {
-        bmList.innerHTML = '<div class="rf-bm-empty">还没有书签。把鼠标移到段落上，点右上角 ☆ 收藏。</div>';
+        bmList.innerHTML = '<div class="rf-bm-empty">还没有书签。段首行前的 ☆ 可收藏。</div>';
         return;
       }
       bmList.innerHTML = bms
@@ -511,6 +546,7 @@ function highlightKant(text: string): string {
             void loadPage(1).then(() => renderCurPage());
           }
         } else if (savedPos >= 0) {
+          if (hintEl) hintEl.textContent = `已恢复到 段 ${savedPos + 1}`;
           gotoStart(savedPos, false);
         } else {
           void loadPage(1).then(() => renderCurPage());
@@ -523,123 +559,245 @@ function highlightKant(text: string): string {
   </script>
 
   <style is:global>
-    /* 换页时等待字体就绪再淡入，避免 FOUT 闪动 */
-    #body .rf-item {
-      transition: opacity 0.18s ease, background-color 0.3s;
+    /* ================= 阅读主题：书籍式排版 ================= */
+
+    /* 换页淡入动画（renderCurPage 中触发） */
+    @keyframes rf-fade-in {
+      from { opacity: 0; }
+      to { opacity: 1; }
     }
     .rf-item.flash {
       border-radius: 6px;
       animation: rf-flash-fade 1.6s ease-out forwards;
     }
     @keyframes rf-flash-fade {
-      0% { background-color: color-mix(in srgb, var(--color-accent2) 34%, transparent); }
-      35% { background-color: color-mix(in srgb, var(--color-accent2) 22%, transparent); }
+      0% { background-color: color-mix(in srgb, var(--color-accent2) 30%, transparent); }
+      35% { background-color: color-mix(in srgb, var(--color-accent2) 18%, transparent); }
       100% { background-color: transparent; }
     }
-    /* 中文书籍式连续排版：首行缩进、无分隔线、段号淡色 */
+
+    /* ---- 页面头：轻量一行式 ---- */
+    .rf-head {
+      margin: 4px 0 18px;
+    }
+    .rf-head-chip {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--color-muted);
+      margin-bottom: 6px;
+    }
+    .rf-head-title {
+      font-family: var(--font-serif);
+      font-size: clamp(22px, 3vw, 30px);
+      line-height: 1.3;
+      letter-spacing: 0.02em;
+      margin: 0;
+    }
+
+    /* ---- 阅读工具栏 ---- */
+    .rf-toolbar {
+      position: sticky;
+      top: 76px;
+      z-index: 40;
+      background: color-mix(in srgb, var(--color-card) 88%, transparent);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      border: 1px solid var(--color-line);
+      border-radius: 16px;
+      padding: 8px 12px;
+      margin-bottom: 14px;
+    }
+    .rf-toolbar-body {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    .rf-toolbar-toggle {
+      display: none;
+    }
+    .rf-toolbar-label {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      letter-spacing: 0.1em;
+      color: var(--color-muted);
+      text-transform: uppercase;
+    }
+    .rf-select {
+      border: 1px solid var(--color-line);
+      background: var(--color-card);
+      border-radius: 10px;
+      padding: 6px 10px;
+      font-family: var(--font-mono);
+      font-size: 12px;
+      color: var(--color-ink);
+      outline: none;
+      max-width: 260px;
+      cursor: pointer;
+    }
+    .rf-select:focus {
+      border-color: var(--color-accent2);
+    }
+    .rf-now {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      color: var(--color-accent2);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 200px;
+    }
+    @media (max-width: 640px) {
+      .rf-toolbar {
+        position: static;
+        top: auto;
+        background: transparent;
+        backdrop-filter: none;
+        border: none;
+        border-radius: 0;
+        padding: 0;
+        margin-bottom: 10px;
+      }
+      .rf-toolbar-toggle {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 8px 14px;
+        border-radius: 999px;
+        border: 1px solid var(--color-line);
+        background: var(--color-card);
+        font-size: 12px;
+        color: var(--color-ink);
+        cursor: pointer;
+        transition: border-color 0.15s, background 0.15s;
+      }
+      .rf-toolbar-toggle:hover {
+        border-color: color-mix(in srgb, var(--color-accent2) 50%, var(--color-line));
+      }
+      .rf-toolbar-toggle[aria-expanded="true"] {
+        background: var(--color-ink);
+        color: var(--color-bg);
+        border-color: var(--color-ink);
+      }
+      .rf-toolbar-body {
+        display: none;
+        margin-top: 8px;
+        padding: 10px 12px;
+        background: var(--color-card);
+        border: 1px solid var(--color-line);
+        border-radius: 14px;
+        box-shadow: var(--shadow-soft);
+      }
+      .rf-toolbar-body.open {
+        display: flex;
+      }
+      .rf-toolbar-body .rf-now {
+        display: none;
+      }
+      .rf-toolbar-body .rf-select {
+        order: 10;
+        flex: 1 1 100%;
+        max-width: none;
+      }
+      .rf-toolbar-body .bg-line {
+        display: none;
+      }
+      /* 行首小标：移动端扩大按钮触控区域（负 margin 不占布局空间） */
+      .rf-flag {
+        font-size: 0.6em;
+        margin-right: 0.4em;
+      }
+      .rf-flag .rf-act {
+        padding: 6px 5px;
+        margin: -6px -4px;
+      }
+    }
+
+    /* ---- 正文：书籍式连续排版 ---- */
     .read-flow {
-      padding: 12px 0 96px;
+      padding: 8px 0 110px;
     }
     .rf-item {
       position: relative;
-      /* 右侧留一条常驻操作栏（段号 + ★/✎），正文从不让位 */
-      padding: 0 44px 0.9em 0;
+      padding: 0.35em 0 1.15em;
     }
+    /* 章节标题：书卷式（左竖线 + 大字距） */
     .rf-chapter {
       font-family: var(--font-serif);
       font-size: 21px;
       font-weight: 800;
-      letter-spacing: 0.04em;
-      margin: 2.4em 0 0.9em;
+      letter-spacing: 0.08em;
+      line-height: 1.4;
+      margin: 2.2em 0 0.8em;
+      padding: 2px 0 2px 14px;
       color: var(--color-accent);
+      border-left: 4px solid var(--color-accent2);
       display: flex;
       align-items: center;
-      gap: 10px;
-      text-indent: 0;
-      background: color-mix(in srgb, var(--color-accent) 5%, transparent);
-      border-radius: 12px;
-      padding: 8px 16px;
     }
     .rf-chapter-mark {
-      width: 4px;
-      height: 1.1em;
-      border-radius: 2px;
-      background: var(--color-accent2);
-      flex-shrink: 0;
+      display: none;
     }
     .rf-chapter + .rf-text {
-      margin-top: 0.1em;
+      margin-top: 0.2em;
     }
     .rf-text {
       font-size: var(--rf-size, 18px);
       line-height: var(--rf-lh, 1.95);
-      letter-spacing: 0.02em;
+      letter-spacing: 0.03em;
       color: var(--color-ink);
       text-align: justify;
-      text-indent: 2em;
+      text-justify: inter-ideograph;
+      /* 首行缩进在行首小标之后自然形成（rf-flag 不参与缩进） */
     }
-    /* 康德原文高亮：与句读原文的视觉语言一致（蓝色系） */
-    .rf-text .kant-q {
-      color: var(--color-accent);
-      font-weight: 700;
-      background: color-mix(in srgb, var(--color-accent) 6%, transparent);
-      border-bottom: 1.5px solid color-mix(in srgb, var(--color-accent) 32%, transparent);
-      border-radius: 3px;
-      padding: 0 2px;
-      text-indent: 0;
-    }
-    .rf-text .kant-q:hover {
-      background: color-mix(in srgb, var(--color-accent) 14%, transparent);
-    }
-    /* 右侧常驻栏：段落编号 */
-    .rf-page {
-      display: block;
-      position: absolute;
-      top: 7px;
-      right: 5px;
+    /* 行首小标：段号 + 收藏/批注，不占正文宽度 */
+    .rf-flag {
+      display: inline;
       font-family: var(--font-mono);
-      font-size: 10px;
-      line-height: 1;
+      font-size: 0.52em;
       color: var(--color-muted);
-      opacity: 0.55;
-      z-index: 4;
+      white-space: nowrap;
+      user-select: none;
+      margin-right: 0.55em;
+      vertical-align: 0.32em;
+      letter-spacing: 0;
     }
-    /* 右侧常驻栏：操作按钮（★ 收藏 / ✎ 批注），平时淡色、悬停清晰 */
-    .rf-acts {
-      position: absolute;
-      top: 22px;
-      right: 3px;
-      display: flex;
-      flex-direction: column;
-      gap: 5px;
-      opacity: 0.5;
-      transition: opacity 0.15s;
-      z-index: 5;
-    }
-    .rf-item:hover .rf-acts {
-      opacity: 1;
+    .rf-page {
+      opacity: 0.85;
     }
     .rf-act {
-      border: 1px solid transparent;
+      border: none;
       background: transparent;
-      border-radius: 8px;
-      width: 26px;
-      height: 26px;
       cursor: pointer;
-      font-size: 13px;
+      font-size: 1.15em;
       line-height: 1;
+      padding: 0 2px;
       color: var(--color-muted);
-      transition: background 0.15s, border-color 0.15s, color 0.15s;
+      vertical-align: -0.05em;
+      transition: color 0.15s, transform 0.15s;
     }
     .rf-act:hover {
-      background: var(--color-card);
-      border-color: var(--color-line);
+      color: var(--color-accent2);
+      transform: scale(1.15);
     }
     .rf-act.on {
       color: var(--color-accent2);
-      border-color: color-mix(in srgb, var(--color-accent2) 50%, var(--color-line));
-      opacity: 1;
     }
+    /* 康德原文高亮：纸墨底 + 下划线 */
+    .rf-text .kant-q {
+      color: var(--color-accent);
+      font-weight: 700;
+      background: color-mix(in srgb, var(--color-accent2) 9%, transparent);
+      border-bottom: 1.5px solid color-mix(in srgb, var(--color-accent2) 40%, transparent);
+      border-radius: 3px;
+      padding: 0 2px;
+    }
+    .rf-text .kant-q:hover {
+      background: color-mix(in srgb, var(--color-accent2) 16%, transparent);
+    }
+    /* 批注条 */
     .rf-note-view {
       font-size: 12.5px;
       color: color-mix(in srgb, var(--color-ink) 70%, #6b4a12);
@@ -647,10 +805,11 @@ function highlightKant(text: string): string {
       border-left: 3px solid var(--color-accent2);
       border-radius: 0 8px 8px 0;
       padding: 6px 10px;
-      margin-top: 6px;
+      margin-top: 8px;
       cursor: pointer;
     }
-    /* 选中文字工具条 */
+
+    /* ---- 选中文字工具条 ---- */
     .rf-selbar {
       position: fixed;
       z-index: 210;
@@ -677,7 +836,8 @@ function highlightKant(text: string): string {
     .rf-selbar button:hover {
       background: rgba(255, 255, 255, 0.16);
     }
-    /* 书签下拉 */
+
+    /* ---- 书签下拉 ---- */
     .rf-bm-list {
       position: absolute;
       top: calc(100% + 6px);
@@ -721,78 +881,8 @@ function highlightKant(text: string): string {
       color: var(--color-muted);
       padding: 10px;
     }
-    /* 阅读工具栏 */
-    .rf-toolbar {
-      position: sticky;
-      top: 76px;
-      z-index: 40;
-      background: var(--color-bg);
-      border: 1px solid var(--color-line);
-      border-radius: 14px;
-      padding: 8px 12px;
-      margin-bottom: 12px;
-    }
-    .rf-toolbar-label {
-      font-family: var(--font-mono);
-      font-size: 10px;
-      letter-spacing: 0.1em;
-      color: var(--color-muted);
-      text-transform: uppercase;
-    }
-    .rf-select {
-      border: 1px solid var(--color-line);
-      background: var(--color-card);
-      border-radius: 10px;
-      padding: 6px 10px;
-      font-family: var(--font-mono);
-      font-size: 12px;
-      color: var(--color-ink);
-      outline: none;
-      max-width: 240px;
-      cursor: pointer;
-    }
-    .rf-select:focus {
-      border-color: var(--color-accent2);
-    }
-    .rf-now {
-      font-family: var(--font-mono);
-      font-size: 11px;
-      color: var(--color-accent2);
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      max-width: 220px;
-    }
-    @media (max-width: 640px) {
-      .rf-toolbar {
-        top: 68px;
-        padding: 7px 10px;
-      }
-      .rf-item {
-        padding-right: 36px;
-      }
-      .rf-page {
-        right: 3px;
-        font-size: 9px;
-      }
-      .rf-acts {
-        top: 20px;
-        right: 2px;
-        gap: 4px;
-      }
-      .rf-act {
-        width: 22px;
-        height: 22px;
-        font-size: 12px;
-      }
-      .rf-now {
-        max-width: 120px;
-      }
-      .rf-select {
-        max-width: 150px;
-      }
-    }
-    /* 顶部阅读进度条 */
+
+    /* ---- 顶部阅读进度条 ---- */
     .rf-progress {
       position: fixed;
       top: 68px;
@@ -809,30 +899,120 @@ function highlightKant(text: string): string {
       transition: width 0.08s linear;
       border-radius: 0 3px 3px 0;
     }
+
+    /* ---- 底部翻页浮条：纯翻页三件套 ---- */
     .float-pager {
       position: fixed;
-      bottom: 20px;
+      bottom: 16px;
       left: 50%;
       transform: translateX(-50%);
       z-index: 60;
       display: flex;
       align-items: center;
-      gap: 10px;
-      padding: 10px 18px;
+      gap: 14px;
+      padding: 8px 18px;
       border-radius: 999px;
       background: var(--color-card);
       border: 1px solid var(--color-line);
-      box-shadow: 0 14px 44px rgba(16, 41, 71, 0.16);
-      max-width: calc(100vw - 24px);
-      overflow-x: auto;
+      box-shadow: 0 14px 44px rgba(92, 66, 38, 0.18);
     }
+    .fp-nav {
+      width: 88px;
+      justify-content: center;
+      padding: 10px 0;
+      font-size: 13px;
+    }
+    .fp-page {
+      font-family: var(--font-mono);
+      font-size: 12px;
+      color: var(--color-muted);
+      white-space: nowrap;
+      min-width: 74px;
+      text-align: center;
+    }
+    .fp-page b {
+      color: var(--color-ink);
+      font-size: 14px;
+    }
+
+    /* ---- 工具栏内的段号跳转（桌面常显 / 移动端面板内） ---- */
+    .rf-jump {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .fp-jump {
+      width: 110px;
+      border: 1px solid var(--color-line);
+      border-radius: 999px;
+      padding: 6px 12px;
+      background: var(--color-bg2);
+      font-family: var(--font-mono);
+      font-size: 13px;
+      color: var(--color-ink);
+      outline: none;
+      transition: border-color 0.15s;
+    }
+    .fp-jump:focus {
+      border-color: var(--color-accent2);
+    }
+
+    /* ---- 全局提示 toast（加载中 / 已定位 / 恢复位置） ---- */
+    .fp-hint {
+      position: fixed;
+      bottom: 84px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 65;
+      max-width: min(420px, 84vw);
+      padding: 7px 16px;
+      border-radius: 999px;
+      background: var(--color-ink);
+      color: var(--color-bg);
+      font-family: var(--font-mono);
+      font-size: 11.5px;
+      box-shadow: var(--shadow-pop);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.2s ease;
+    }
+    .fp-hint:not(:empty) {
+      opacity: 1;
+    }
+
     @media (max-width: 640px) {
-      .float-pager #jumpHint,
-      .float-pager .bg-line {
-        display: none;
+      .float-pager {
+        bottom: 12px;
+        gap: 10px;
+        padding: 7px 14px;
       }
-      .float-pager #jumpInput {
-        width: 84px;
+      .fp-nav {
+        width: 76px;
+        padding: 11px 0;
+        font-size: 13px;
+      }
+      .fp-page {
+        min-width: 64px;
+        font-size: 11px;
+      }
+      .fp-page b {
+        font-size: 13px;
+      }
+      .fp-hint {
+        bottom: 78px;
+        font-size: 11px;
+      }
+      /* 工具栏面板内的跳转控件：随面板单列排布 */
+      .rf-jump {
+        width: 100%;
+        margin-top: 4px;
+      }
+      .rf-jump .fp-jump {
+        flex: 1;
+        width: auto;
       }
     }
   </style>

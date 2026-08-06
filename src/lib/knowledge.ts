@@ -143,7 +143,7 @@ export const ARG_BRANCHES: ArgBranch[] = [
     key: 'analytic',
     title: '先验分析论',
     question: '自然科学（知识）如何可能？',
-    color: '#1a3a5f',
+    color: '#3a5a8c',
     steps: [
       {
         nodes: [
