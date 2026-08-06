@@ -97,6 +97,24 @@ function highlightKant(text: string): string {
     <span id="jumpHint" class="fp-hint"></span>
   </main>
 
+  <!-- 批注编辑弹窗：替代系统 prompt -->
+  <div id="noteModal" class="rf-note-modal" hidden>
+    <div class="rf-note-modal-box">
+      <div class="flex items-center justify-between gap-2 mb-2">
+        <b class="rf-note-title" id="noteModalTitle">添加批注</b>
+        <button id="noteModalClose" class="toggle" aria-label="关闭" title="关闭">✕</button>
+      </div>
+      <textarea id="noteModalInput" class="rf-note-input" rows="5" placeholder="写下你的想法…"></textarea>
+      <div class="flex items-center justify-between gap-3 mt-3">
+        <span id="noteModalSel" class="rf-note-sel"></span>
+        <div class="flex gap-2 shrink-0">
+          <button id="noteModalCancel" class="dui-btn dui-btn-sm dui-btn-outline">取消</button>
+          <button id="noteModalSave" class="dui-btn dui-btn-sm dui-btn-primary">保存</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <script>
     import { wrapTerms } from '../../lib/glossary';
     import { loadHls, saveHls, loadNotes, saveNotes, loadBms, saveBms, findRange, loadPos, savePos, FS_KEY, LH_KEY } from '../../lib/reading';
@@ -110,8 +128,15 @@ function highlightKant(text: string): string {
     let dataReadyFlag = false; // 索引就绪
     let curData: { page: number; prevChapter: string; chunks: { id: string; seq: number; chapter: string; text: string }[] } | null = null;
     const hintEl = document.getElementById('jumpHint') as HTMLElement | null;
+    // 提示 toast：显示后约 3 秒自动消失，新提示会重置计时
+    let hintTimer: number | undefined;
+    const setHint = (msg: string) => {
+      if (hintEl) hintEl.textContent = msg;
+      window.clearTimeout(hintTimer);
+      hintTimer = window.setTimeout(() => { if (hintEl) hintEl.textContent = ''; }, 3000);
+    };
     const needData = (fn: (...a: any[]) => void) => (...a: any[]) => {
-      if (!dataReadyFlag) { if (hintEl) hintEl.textContent = '全文加载中…'; return; }
+      if (!dataReadyFlag) { setHint('全文加载中…'); return; }
       fn(...a);
     };
 
@@ -190,7 +215,7 @@ function highlightKant(text: string): string {
         page = target;
         return true;
       } catch {
-        if (my === loadSeq && hintEl) hintEl.textContent = '页面加载失败';
+        if (my === loadSeq && hintEl) setHint('页面加载失败');
         return false;
       }
     };
@@ -279,10 +304,10 @@ function highlightKant(text: string): string {
     function jumpToSeq(q: number) {
       const seq = q - 1;
       if (seq < 0 || seq >= total) {
-        if (hintEl) hintEl.textContent = `未找到段 ${q}`;
+        setHint(`未找到段 ${q}`);
         return;
       }
-      if (hintEl) hintEl.textContent = `已定位到 段 ${q}${chapterNameOf(seq) ? `（${chapterNameOf(seq)}）` : ''}`;
+      setHint(`已定位到 段 ${q}${chapterNameOf(seq) ? `（${chapterNameOf(seq)}）` : ''}`);
       gotoStart(seq);
     }
 
@@ -392,6 +417,48 @@ function highlightKant(text: string): string {
     });
 
     // 收藏 / 批注（事件委托；守卫：当前页数据就绪）
+    // ---- 批注弹窗（替代系统 prompt） ----
+    const noteModal = document.getElementById('noteModal') as HTMLElement | null;
+    const noteInput = document.getElementById('noteModalInput') as HTMLTextAreaElement | null;
+    const noteTitle = document.getElementById('noteModalTitle') as HTMLElement | null;
+    const noteSel = document.getElementById('noteModalSel') as HTMLElement | null;
+    let notePending: { seq: number; selText: string } | null = null;
+    const openNote = (seq: number, cur: string, selText = '') => {
+      if (!noteModal || !noteInput || !noteTitle) return;
+      notePending = { seq, selText };
+      noteTitle.textContent = cur ? '编辑批注' : '添加批注';
+      noteInput.value = cur;
+      if (noteSel) noteSel.textContent = selText ? `选中：「${selText.length > 36 ? selText.slice(0, 36) + '…' : selText}」` : '';
+      noteModal.hidden = false;
+      noteInput.focus();
+    };
+    const closeNote = () => {
+      notePending = null;
+      if (noteModal) noteModal.hidden = true;
+    };
+    const saveNote = () => {
+      if (!notePending || !noteInput) return;
+      const { seq, selText } = notePending;
+      const val = noteInput.value;
+      notes = notes.filter((n) => n.seq !== seq);
+      if (val.trim()) notes.push({ seq, text: selText, note: val.trim(), ts: Date.now() });
+      noteMap.clear();
+      notes.forEach((n) => noteMap.set(n.seq, n));
+      saveNotes(notes);
+      closeNote();
+      renderCurPage();
+    };
+    noteModal?.addEventListener('click', (e) => {
+      if (e.target === noteModal) closeNote();
+    });
+    document.getElementById('noteModalClose')?.addEventListener('click', closeNote);
+    document.getElementById('noteModalCancel')?.addEventListener('click', closeNote);
+    document.getElementById('noteModalSave')?.addEventListener('click', saveNote);
+    noteInput?.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') closeNote();
+      if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) saveNote();
+    });
+
     body?.addEventListener('click', (e) => {
       if (!curData) return;
       const t = e.target as HTMLElement;
@@ -407,14 +474,7 @@ function highlightKant(text: string): string {
           renderCurPage();
         } else if (act.dataset.act === 'note') {
           const cur = noteMap.get(seq)?.note ?? '';
-          const val = prompt(cur ? '编辑批注' : '添加批注', cur);
-          if (val === null) return;
-          notes = notes.filter((n) => n.seq !== seq);
-          if (val.trim()) notes.push({ seq, text: '', note: val.trim(), ts: Date.now() });
-          noteMap.clear();
-          notes.forEach((n) => noteMap.set(n.seq, n));
-          saveNotes(notes);
-          renderCurPage();
+          openNote(seq, cur);
         }
         return;
       }
@@ -422,14 +482,7 @@ function highlightKant(text: string): string {
       if (nv) {
         const seq = parseInt(nv.dataset.seq ?? '', 10);
         const cur = noteMap.get(seq)?.note ?? '';
-        const val = prompt('编辑批注', cur);
-        if (val === null) return;
-        notes = notes.filter((n) => n.seq !== seq);
-        if (val.trim()) notes.push({ seq, text: '', note: val.trim(), ts: Date.now() });
-        noteMap.clear();
-        notes.forEach((n) => noteMap.set(n.seq, n));
-        saveNotes(notes);
-        renderCurPage();
+        openNote(seq, cur);
       }
     });
 
@@ -479,15 +532,7 @@ function highlightKant(text: string): string {
           applyHl();
         }
       } else if (b.dataset.sel === 'note') {
-        const val = prompt('写批注', '');
-        if (val !== null && val.trim()) {
-          notes = notes.filter((n) => n.seq !== seq);
-          notes.push({ seq, text, note: val.trim(), ts: Date.now() });
-          noteMap.clear();
-          notes.forEach((n) => noteMap.set(n.seq, n));
-          saveNotes(notes);
-          renderCurPage();
-        }
+        openNote(seq, '', text);
       }
       selbar.hidden = true;
       window.getSelection()?.removeAllRanges();
@@ -546,13 +591,13 @@ function highlightKant(text: string): string {
             void loadPage(1).then(() => renderCurPage());
           }
         } else if (savedPos >= 0) {
-          if (hintEl) hintEl.textContent = `已恢复到 段 ${savedPos + 1}`;
+          setHint(`已恢复到 段 ${savedPos + 1}`);
           gotoStart(savedPos, false);
         } else {
           void loadPage(1).then(() => renderCurPage());
         }
       })
-      .catch(() => { if (hintEl) hintEl.textContent = '全文数据加载失败'; });
+      .catch(() => setHint('全文数据加载失败'));
     };
     if ('requestIdleCallback' in window) window.requestIdleCallback(init, { timeout: 1200 });
     else setTimeout(init, 0);
@@ -835,6 +880,60 @@ function highlightKant(text: string): string {
     }
     .rf-selbar button:hover {
       background: rgba(255, 255, 255, 0.16);
+    }
+
+    /* ---- 批注编辑弹窗 ---- */
+    .rf-note-modal {
+      position: fixed;
+      inset: 0;
+      z-index: 250;
+      display: grid;
+      place-items: center;
+      background: rgba(20, 16, 10, 0.45);
+      padding: 20px;
+    }
+    .rf-note-modal[hidden] {
+      display: none;
+    }
+    .rf-note-modal-box {
+      width: min(480px, 92vw);
+      max-height: 80vh;
+      overflow: auto;
+      background: var(--color-card);
+      border: 1px solid var(--color-line);
+      border-radius: 16px;
+      box-shadow: var(--shadow-pop);
+      padding: 18px;
+      font-size: 13px;
+    }
+    .rf-note-title {
+      font-family: var(--font-serif);
+      font-size: 17px;
+    }
+    .rf-note-input {
+      width: 100%;
+      min-height: 110px;
+      border: 1px solid var(--color-line);
+      background: var(--color-bg2);
+      color: var(--color-ink);
+      border-radius: 10px;
+      padding: 10px 12px;
+      font-family: var(--font-serif);
+      font-size: 16px; /* ≥16px 避免 iOS 唤起缩放 */
+      line-height: 1.7;
+      outline: none;
+      resize: vertical;
+    }
+    .rf-note-input:focus {
+      border-color: var(--color-accent2);
+    }
+    .rf-note-sel {
+      font-size: 11px;
+      color: var(--color-muted);
+      min-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
     }
 
     /* ---- 书签下拉 ---- */

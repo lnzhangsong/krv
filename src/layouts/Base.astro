@@ -41,6 +41,8 @@ const navMore: { href: string; label: string; desc: string }[] = [
         try { var v = localStorage.getItem('krv-theme'); if (v === 'dark' || v === 'light') t = v; } catch (e) { /* ignore */ }
         if (!t) t = (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) ? 'dark' : 'light';
         document.documentElement.dataset.theme = t;
+        // 仅 macOS 标记 .mac：Windows/Linux 不启用 antialiased，避免关闭 ClearType 后小字号发虚
+        if (navigator.platform === 'MacIntel') document.documentElement.classList.add('mac');
       })();
     </script>
     <title>{title}</title>
@@ -80,7 +82,7 @@ const navMore: { href: string; label: string; desc: string }[] = [
             />
             <div id="searchResults" class="hidden absolute top-[42px] left-0 right-0 bg-card border border-line rounded-xl shadow-[var(--shadow-pop)] max-h-[420px] overflow-auto z-50 text-left"></div>
           </div>
-          <nav class="hidden lg:flex items-center gap-1 font-mono text-[11px] text-muted">
+          <nav class="hidden lg:flex items-center gap-1">
             {navMain.map((n) => (
               <a href={n.href} class={`navlink ${current === n.href ? 'text-ink font-bold bg-bg2' : 'hover:text-ink hover:bg-bg2'}`} aria-current={current === n.href ? 'page' : undefined}>{n.label}</a>
             ))}
@@ -210,9 +212,13 @@ const navMore: { href: string; label: string; desc: string }[] = [
           }
           tip.classList.add('show');
           const r = tip.getBoundingClientRect();
+          const M = 10;
           let left = x + 14, top = y + 14;
-          if (left + r.width > window.innerWidth - 8) left = x - r.width - 14;
-          if (top + r.height > window.innerHeight - 8) top = y - r.height - 14;
+          if (left + r.width > window.innerWidth - M) left = Math.max(M, x - r.width - 14);
+          if (top + r.height > window.innerHeight - M) top = Math.max(M, y - r.height - 14);
+          // 手机关卡：卡片超高或触点靠边时，强制回夹到视口内，避免整卡落在屏幕外
+          left = Math.min(Math.max(M, left), Math.max(M, window.innerWidth - r.width - M));
+          top = Math.min(Math.max(M, top), Math.max(M, window.innerHeight - r.height - M));
           tip.style.left = left + 'px';
           tip.style.top = top + 'px';
         };
